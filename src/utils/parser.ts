@@ -12,6 +12,9 @@ export interface Task {
   priority: 'low' | 'medium' | 'high' | null;
   status: 'todo' | 'in-progress' | 'done';
   assignee: string | null;
+  workspace_id: string | null;
+  isRecurring: boolean;
+  frequency: string | null;
 }
 
 // Function to generate a unique ID
@@ -60,6 +63,39 @@ const extractAssignee = (text: string): string | null => {
   return match ? match[1].trim() : null;
 };
 
+// Function to extract status from text
+const extractStatus = (text: string): 'todo' | 'in-progress' | 'done' => {
+  const inProgressRegex = /\b(?:in progress|started|working on|ongoing)\b/i;
+  const doneRegex = /\b(?:done|completed|finished|closed)\b/i;
+  
+  if (inProgressRegex.test(text)) return 'in-progress';
+  if (doneRegex.test(text)) return 'done';
+  
+  return 'todo';
+};
+
+// Function to check if task is recurring
+const isRecurringTask = (text: string): { isRecurring: boolean, frequency: string | null } => {
+  const recurringRegex = /\b(?:recurring|every|each|repeat|weekly|daily|monthly|biweekly)\b/i;
+  
+  if (recurringRegex.test(text)) {
+    // Try to extract frequency information
+    const dailyRegex = /\b(?:every day|daily)\b/i;
+    const weeklyRegex = /\b(?:every week|weekly)\b/i;
+    const biweeklyRegex = /\b(?:every other week|biweekly|bi-weekly)\b/i;
+    const monthlyRegex = /\b(?:every month|monthly)\b/i;
+    
+    if (dailyRegex.test(text)) return { isRecurring: true, frequency: 'daily' };
+    if (weeklyRegex.test(text)) return { isRecurring: true, frequency: 'weekly' };
+    if (biweeklyRegex.test(text)) return { isRecurring: true, frequency: 'biweekly' };
+    if (monthlyRegex.test(text)) return { isRecurring: true, frequency: 'monthly' };
+    
+    return { isRecurring: true, frequency: null };
+  }
+  
+  return { isRecurring: false, frequency: null };
+};
+
 // Main function to parse text into potential tasks
 export const parseTextIntoTasks = (text: string): Task[] => {
   if (!text.trim()) return [];
@@ -90,10 +126,12 @@ export const parseTextIntoTasks = (text: string): Task[] => {
       taskText = taskText.replace(indicator, '');
     });
     
-    // Create a new task object
+    // Extract task information
     const dueDate = extractDate(taskText);
     const priority = extractPriority(taskText);
     const assignee = extractAssignee(taskText);
+    const status = extractStatus(taskText);
+    const recurring = isRecurringTask(taskText);
     
     // Try to separate title from description if there's a colon or dash
     let title = taskText;
@@ -124,8 +162,11 @@ export const parseTextIntoTasks = (text: string): Task[] => {
       description: description.trim(),
       dueDate,
       priority,
-      status: 'todo',
-      assignee
+      status,
+      assignee,
+      workspace_id: null,
+      isRecurring: recurring.isRecurring,
+      frequency: recurring.frequency
     });
   }
   
@@ -137,5 +178,43 @@ export const refineTask = (task: Task, updates: Partial<Task>): Task => {
   return {
     ...task,
     ...updates
+  };
+};
+
+// Function to check if a task has all required fields
+export const validateTask = (task: Task): { valid: boolean; missingFields: string[] } => {
+  const missingFields: string[] = [];
+  
+  if (!task.title || task.title.trim() === '') {
+    missingFields.push('title');
+  }
+  
+  if (!task.workspace_id) {
+    missingFields.push('workspace_id');
+  }
+  
+  if (task.isRecurring && !task.frequency) {
+    missingFields.push('frequency');
+  }
+  
+  return {
+    valid: missingFields.length === 0,
+    missingFields
+  };
+};
+
+// Function to validate multiple tasks
+export const validateTasks = (tasks: Task[]): { allValid: boolean; tasksWithMissingFields: { task: Task; missingFields: string[] }[] } => {
+  const tasksWithMissingFields = tasks.map(task => {
+    const validation = validateTask(task);
+    return {
+      task,
+      missingFields: validation.missingFields
+    };
+  }).filter(result => result.missingFields.length > 0);
+  
+  return {
+    allValid: tasksWithMissingFields.length === 0,
+    tasksWithMissingFields
   };
 };

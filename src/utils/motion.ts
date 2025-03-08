@@ -7,17 +7,26 @@ import { Task } from './parser';
 
 // Motion API Types
 interface MotionTask {
-  title: string;
+  name: string;
   description: string;
   due_date?: string;
   priority?: 'LOW' | 'MEDIUM' | 'HIGH';
   status: string;
   assignee_id?: string;
+  workspace_id: string;
+  recurring?: {
+    frequency: string;
+  };
 }
 
 interface MotionApiError {
   message: string;
   code?: string;
+}
+
+interface MotionWorkspace {
+  id: string;
+  name: string;
 }
 
 // Mock function for Motion API integration
@@ -27,11 +36,33 @@ export const addTaskToMotion = async (task: Task): Promise<{ success: boolean; e
   
   // Simulate API call
   try {
+    // Validate required fields
+    if (!task.title) {
+      return {
+        success: false,
+        error: {
+          message: 'Task name is required',
+          code: 'MISSING_FIELD'
+        }
+      };
+    }
+    
+    if (!task.workspace_id) {
+      return {
+        success: false,
+        error: {
+          message: 'Workspace ID is required',
+          code: 'MISSING_FIELD'
+        }
+      };
+    }
+    
     // Convert our task format to Motion's format
     const motionTask: MotionTask = {
-      title: task.title,
+      name: task.title,
       description: task.description,
-      status: 'TODO',
+      status: convertStatusToMotion(task.status),
+      workspace_id: task.workspace_id
     };
     
     if (task.dueDate) {
@@ -45,6 +76,12 @@ export const addTaskToMotion = async (task: Task): Promise<{ success: boolean; e
     if (task.assignee) {
       // In a real implementation, you would look up the assignee's ID in Motion
       motionTask.assignee_id = task.assignee;
+    }
+    
+    if (task.isRecurring && task.frequency) {
+      motionTask.recurring = {
+        frequency: task.frequency
+      };
     }
     
     // Simulate API delay
@@ -79,7 +116,13 @@ export const validateMotionApiKey = async (apiKey: string): Promise<boolean> => 
 };
 
 // Batch add multiple tasks
-export const addTasksToMotion = async (tasks: Task[]): Promise<{ success: boolean; successCount: number; failedCount: number; errors?: MotionApiError[] }> => {
+export const addTasksToMotion = async (tasks: Task[]): Promise<{ 
+  success: boolean; 
+  successCount: number; 
+  failedCount: number; 
+  errors?: MotionApiError[];
+  taskErrors?: {taskId: string; errors: string[]}[];
+}> => {
   const results = await Promise.all(tasks.map(task => addTaskToMotion(task)));
   
   const successCount = results.filter(result => result.success).length;
@@ -88,10 +131,51 @@ export const addTasksToMotion = async (tasks: Task[]): Promise<{ success: boolea
     .filter(result => !result.success && result.error)
     .map(result => result.error as MotionApiError);
   
+  // Track errors by task
+  const taskErrors = tasks
+    .map((task, index) => ({
+      taskId: task.id,
+      success: results[index].success,
+      error: results[index].error
+    }))
+    .filter(item => !item.success && item.error)
+    .map(item => ({
+      taskId: item.taskId,
+      errors: [item.error?.message || 'Unknown error']
+    }));
+  
   return {
     success: failedCount === 0,
     successCount,
     failedCount,
-    errors: errors.length > 0 ? errors : undefined
+    errors: errors.length > 0 ? errors : undefined,
+    taskErrors: taskErrors.length > 0 ? taskErrors : undefined
   };
+};
+
+// Helper function to convert status to Motion format
+const convertStatusToMotion = (status: 'todo' | 'in-progress' | 'done'): string => {
+  switch (status) {
+    case 'todo':
+      return 'TODO';
+    case 'in-progress':
+      return 'IN_PROGRESS';
+    case 'done':
+      return 'DONE';
+    default:
+      return 'TODO';
+  }
+};
+
+// Fetch workspaces (mock function)
+export const fetchWorkspaces = async (): Promise<MotionWorkspace[]> => {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 600));
+  
+  // Return mock workspaces
+  return [
+    { id: 'workspace-1', name: 'Personal' },
+    { id: 'workspace-2', name: 'Team Projects' },
+    { id: 'workspace-3', name: 'Client Work' }
+  ];
 };

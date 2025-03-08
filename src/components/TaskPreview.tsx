@@ -89,11 +89,25 @@ const TaskPreview: React.FC<TaskPreviewProps> = ({ tasks, onBack, onComplete }) 
           onComplete();
         }, 400);
       } else {
-        toast({
-          title: "Warning",
-          description: `${result.successCount} added, ${result.failedCount} failed`,
-          variant: "destructive",
-        });
+        // Show more detailed errors
+        if (result.taskErrors && result.taskErrors.length > 0) {
+          result.taskErrors.forEach(taskError => {
+            const task = tasks.find(t => t.id === taskError.taskId);
+            if (task) {
+              toast({
+                title: `Error with task: ${task.title}`,
+                description: taskError.errors.join(', '),
+                variant: "destructive",
+              });
+            }
+          });
+        } else {
+          toast({
+            title: "Warning",
+            description: `${result.successCount} added, ${result.failedCount} failed`,
+            variant: "destructive",
+          });
+        }
       }
     } catch (error) {
       toast({
@@ -111,6 +125,19 @@ const TaskPreview: React.FC<TaskPreviewProps> = ({ tasks, onBack, onComplete }) 
     setTimeout(() => {
       onBack();
     }, 400);
+  };
+
+  const getWorkspaceName = (workspaceId: string | null) => {
+    if (!workspaceId) return "None";
+    
+    // This is a placeholder - in a real app, you'd look up the workspace name
+    const workspaceMap: Record<string, string> = {
+      'workspace-1': 'Personal',
+      'workspace-2': 'Team Projects',
+      'workspace-3': 'Client Work'
+    };
+    
+    return workspaceMap[workspaceId] || 'Unknown';
   };
 
   return (
@@ -183,11 +210,16 @@ const TaskPreview: React.FC<TaskPreviewProps> = ({ tasks, onBack, onComplete }) 
                       <p className="text-sm text-muted-foreground mt-1">{task.description}</p>
                     )}
                     <div className="flex flex-wrap gap-2 mt-2">
+                      <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-xs">
+                        Workspace: {getWorkspaceName(task.workspace_id)}
+                      </Badge>
+                      
                       {task.dueDate && (
                         <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-xs">
                           Due: {format(new Date(task.dueDate), "MMM d, yyyy")}
                         </Badge>
                       )}
+                      
                       {task.priority && (
                         <Badge 
                           variant="outline" 
@@ -202,9 +234,30 @@ const TaskPreview: React.FC<TaskPreviewProps> = ({ tasks, onBack, onComplete }) 
                           {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)} Priority
                         </Badge>
                       )}
+                      
                       {task.assignee && (
                         <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 text-xs">
                           Assignee: {task.assignee}
+                        </Badge>
+                      )}
+                      
+                      <Badge 
+                        variant="outline" 
+                        className={`text-xs ${
+                          task.status === 'done' 
+                            ? 'bg-green-50 text-green-700 border-green-200'
+                            : task.status === 'in-progress'
+                              ? 'bg-yellow-50 text-yellow-700 border-yellow-200'
+                              : 'bg-gray-50 text-gray-700 border-gray-200'
+                        }`}
+                      >
+                        {task.status === 'todo' ? 'To Do' : 
+                         task.status === 'in-progress' ? 'In Progress' : 'Done'}
+                      </Badge>
+                      
+                      {task.isRecurring && (
+                        <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-200 text-xs">
+                          Recurring: {task.frequency ? task.frequency.charAt(0).toUpperCase() + task.frequency.slice(1) : 'Not set'}
                         </Badge>
                       )}
                     </div>
