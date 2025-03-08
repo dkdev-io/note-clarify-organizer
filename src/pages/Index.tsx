@@ -22,14 +22,10 @@ const Index = () => {
   const { toast } = useToast();
 
   // Handle moving from note input to task extraction
-  const handleParseText = (text: string) => {
+  const handleParseText = (text: string, providedProjectName: string | null) => {
     setNoteText(text);
-    const tasks = parseTextIntoTasks(text);
-    
-    // Check if any task has a project name
-    const foundProject = tasks.find(task => task.project)?.project || null;
-    setProjectName(foundProject);
-    
+    setProjectName(providedProjectName);
+    const tasks = parseTextIntoTasks(text, providedProjectName);
     setExtractedTasks(tasks);
     setStep('extract');
   };

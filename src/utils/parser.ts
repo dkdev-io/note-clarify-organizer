@@ -1,4 +1,3 @@
-
 /**
  * Utility functions for parsing text notes into structured tasks
  */
@@ -744,6 +743,15 @@ export const parseTextIntoTasks = (text: string, defaultProjectName: string | nu
         frequency: recurring.frequency,
         project: projectName
       });
+    }
+  }
+  
+  // Ensure all tasks have the project name set
+  if (overallProjectName) {
+    for (const task of tasks) {
+      if (!task.project) {
+        task.project = overallProjectName;
+      }
     }
   }
   
