@@ -4,8 +4,6 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { FileTextIcon, SendIcon, ArrowRightIcon, PlusIcon } from 'lucide-react';
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 
 interface NoteInputProps {
   onParseTasks: (text: string, projectName: string | null) => void;
@@ -13,15 +11,14 @@ interface NoteInputProps {
 
 const NoteInput: React.FC<NoteInputProps> = ({ onParseTasks }) => {
   const [noteText, setNoteText] = useState('');
-  const [projectName, setProjectName] = useState('');
   const [isTransitioning, setIsTransitioning] = useState(false);
 
   const handleSubmit = () => {
     if (noteText.trim()) {
       setIsTransitioning(true);
       setTimeout(() => {
-        // Pass project name if provided, otherwise pass null to extract from text
-        onParseTasks(noteText, projectName.trim() || null);
+        // Pass null for project name to extract from text
+        onParseTasks(noteText, null);
         setIsTransitioning(false);
       }, 400);
     }
@@ -35,10 +32,7 @@ const NoteInput: React.FC<NoteInputProps> = ({ onParseTasks }) => {
 
   const loadSample = (index: number) => {
     setNoteText(sampleNotes[index]);
-    
-    // Set a default project name based on the sample
-    const projectNames = ["Team Meeting", "Project Alpha", "Weekly Stand-up"];
-    setProjectName(projectNames[index]);
+    // Project name will be extracted from text
   };
 
   return (
@@ -54,22 +48,6 @@ const NoteInput: React.FC<NoteInputProps> = ({ onParseTasks }) => {
           </p>
         </CardHeader>
         <CardContent>
-          <div className="mb-4">
-            <Label htmlFor="project-name" className="text-sm font-medium">
-              Project Name (optional)
-            </Label>
-            <Input
-              id="project-name"
-              placeholder="Enter project name"
-              className="mt-1"
-              value={projectName}
-              onChange={(e) => setProjectName(e.target.value)}
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              If left empty, we'll try to detect it from your notes
-            </p>
-          </div>
-          
           <Textarea
             placeholder="Paste your meeting notes, to-do lists, or any text here..."
             className="min-h-[240px] p-4 text-base leading-relaxed resize-none bg-white border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary transition-all"
