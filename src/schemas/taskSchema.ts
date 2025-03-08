@@ -12,7 +12,7 @@ export const TaskSchema = z.object({
   priority: z.enum(['low', 'medium', 'high']).nullable(),
   status: z.enum(['todo', 'in-progress', 'done']),
   assignee: z.string().nullable(),
-  workspace_id: z.string().min(1, "Workspace ID is required"),
+  workspace_id: z.string().nullable(),
   isRecurring: z.boolean(),
   frequency: z.string().nullable().refine(
     (val) => !z.boolean().parse(true) || val !== null, 

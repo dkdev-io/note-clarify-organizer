@@ -1,6 +1,9 @@
+
 /**
  * Utility functions for parsing text notes into structured tasks
  */
+
+import { validateTaskSchema, validateTasksSchema } from '../schemas/taskSchema';
 
 // Task type definition
 export interface Task {
