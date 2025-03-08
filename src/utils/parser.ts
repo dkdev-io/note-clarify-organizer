@@ -1,3 +1,4 @@
+
 /**
  * Utility functions for parsing text notes into structured tasks
  */
@@ -299,8 +300,10 @@ const extractProjectName = (text: string): string | null => {
   console.log("Extracting project name from:", firstLine);
   
   // First priority - specific pattern for "Here's our plan for the xyz marketing campaign" format
-  const planForPattern = /(?:here(?:'s|\sis|\sare)?\s+(?:our|the|some|my)?\s+(?:plan|notes|agenda|update|overview|summary|ideas|thoughts)\s+(?:for|on|about|regarding)\s+(?:the\s+)?)([\w\s]+)/i;
+  // Modified pattern to properly capture the content after "for/on/about/regarding"
+  const planForPattern = /(?:here(?:'s|\sis|\sare)?\s+(?:our|the|some|my)?\s+(?:plan|notes|agenda|update|overview|summary|ideas|thoughts)\s+(?:for|on|about|regarding)\s+(?:the\s+)?)(.+?)(?:\.|\s*$)/i;
   const planForMatch = firstLine.match(planForPattern);
+  
   if (planForMatch && planForMatch[1]) {
     const extractedName = planForMatch[1].trim();
     // Ensure we don't just capture "for the" or similar phrases
