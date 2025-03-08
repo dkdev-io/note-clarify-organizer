@@ -285,7 +285,23 @@ const isRecurringTask = (text: string): { isRecurring: boolean, frequency: strin
 const extractProjectName = (text: string): string | null => {
   if (!text || !text.trim()) return null;
   
-  // First look for explicit project indicators
+  // Split the text into lines for analysis
+  const lines = text.split(/\r?\n/);
+  const firstLine = lines.length > 0 ? lines[0].trim() : '';
+  
+  // First, check for "Project X" pattern in the first line (highest priority)
+  // This specific pattern is given priority to catch "Marketing Project" cases
+  const projectTitlePattern = /^(.+?)\s+(?:project|plan|initiative)\b/i;
+  const titleMatch = firstLine.match(projectTitlePattern);
+  if (titleMatch && titleMatch[1]) {
+    const candidateProject = titleMatch[1].trim();
+    if (candidateProject.length > 2 && !/^(the|a|an|this|our)$/i.test(candidateProject)) {
+      console.log("Extracted project name from title pattern:", candidateProject);
+      return candidateProject;
+    }
+  }
+  
+  // Check for explicit project indicators throughout the text
   const projectIndicators = [
     /project\s*(?:name|title)?[:\s]+([^,.;]+)/i,
     /for project[:\s]+([^,.;]+)/i,
@@ -295,8 +311,6 @@ const extractProjectName = (text: string): string | null => {
     /#([a-zA-Z0-9_-]+)/,  // Hashtag style project names
     /meeting(?:\s+for|\s+about|\s+on|\s*:)?\s+([^,.;:]+)(?:\s*:)?/i, // Meeting for/about Project X
     /^([^:]+):(?:\s*)/m, // Lines with a title followed by colon (common in meeting notes)
-    /([a-zA-Z0-9\s]+)\s+project/i,  // "Marketing Project" pattern
-    /^([a-zA-Z0-9\s]+)\s+(?:notes|meeting)/i,  // "Marketing Notes" or "Marketing Meeting" pattern
   ];
   
   // Try each explicit pattern
@@ -306,97 +320,74 @@ const extractProjectName = (text: string): string | null => {
       const extractedName = match[1].trim();
       // Check if the extracted name is substantial (not just "the", "a", etc.)
       if (extractedName.length > 2 && !/^(the|a|an|this|our)$/i.test(extractedName)) {
+        console.log("Extracted project name from project indicators:", extractedName);
         return extractedName;
       }
     }
   }
   
-  // Look at the beginning of the text for a title/subject line
-  const lines = text.split(/\r?\n/);
-  if (lines.length > 0) {
-    const firstLine = lines[0].trim();
-    
+  // Look for conversation/meeting intro patterns
+  if (firstLine.length > 0) {
     // Skip first lines that appear to be task-like or bullets
     if (firstLine.match(/^[\-\*•]/) || firstLine.match(/^\d+\./) || 
         /^(?:task|to-do|action item)/i.test(firstLine)) {
-      return null;
-    }
-    
-    // Look for title patterns in the first line
-    const firstLinePatterns = [
-      // "Marketing Project" pattern in the first line
-      /^([a-zA-Z0-9\s]+)\s+project\b/i,
-      // Project name at the beginning of the first line
-      /^([a-zA-Z0-9\s]+?)(?:\s+[-:–]|\s*$)/i
-    ];
-    
-    for (const pattern of firstLinePatterns) {
-      const match = firstLine.match(pattern);
-      if (match && match[1]) {
-        const candidateProject = match[1].trim();
-        // Validate the extracted name (not too short, not just articles or common words)
-        if (candidateProject.length > 2 && 
-            !/^(task|to-do|meeting|discussion|call|chat|note|agenda|minutes)$/i.test(candidateProject) &&
-            !/^(the|a|an|this|our)$/i.test(candidateProject)) {
-          return candidateProject;
+      // Continue to next strategy
+    } else {
+      // Check if the first line looks like a title (short, no verbs)
+      const actionVerbs = /\b(?:create|update|review|prepare|schedule|organize|develop|design|implement|test|fix|build|draft|edit|add|remove|change|modify|analyze|evaluate|assess|report|present|discuss|meet|call|email|post|share|upload|download|generate|produce|deliver|submit|approve|verify|check|complete|finish|send|write)\b/i;
+      
+      if (firstLine.length < 60 && firstLine.length > 3 && 
+          !actionVerbs.test(firstLine) && 
+          !firstLine.includes("need to") && 
+          !firstLine.includes("should") && 
+          !firstLine.includes("must") && 
+          !firstLine.includes("will have to") && 
+          !firstLine.includes("going to")) {
+          
+        // Clean up the potential project name
+        let cleanFirstLine = firstLine;
+        
+        // Remove common prefixes
+        cleanFirstLine = cleanFirstLine.replace(/^(?:re:|subject:|topic:|about:)\s*/i, '');
+        
+        // Make sure it's substantial and not just a generic word
+        if (cleanFirstLine.length > 3 && 
+            !/^(meeting|discussion|agenda|notes|minutes|summary|recap|update)$/i.test(cleanFirstLine) &&
+            !/^(team|status|weekly|daily|monthly|the|a|an|this|our)$/i.test(cleanFirstLine)) {
+          console.log("Extracted project name from first line:", cleanFirstLine);
+          return cleanFirstLine;
         }
       }
-    }
-    
-    // Look for conversation/meeting intro patterns
-    const introPatterns = [
-      // Conversation/meeting about X patterns
-      /(?:conversation|discussion|meeting|call|chat|talk)\s+(?:about|regarding|on|for|with)\s+(?:the\s+)?(.+?)(?:\.|$)/i,
-      // Notes for X patterns
-      /(?:notes|summary|recap|minutes)\s+(?:for|about|on|from|of)\s+(?:the\s+)?(.+?)(?:\.|$)/i,
-      // Project X notes/discussion patterns
-      /(.+?)\s+(?:project|initiative|campaign|program)\s+(?:notes|discussion|meeting|updates|status)/i
-    ];
-    
-    for (const pattern of introPatterns) {
-      const match = firstLine.match(pattern);
-      if (match && match[1]) {
-        // Clean up the project name
-        let projectName = match[1].trim();
-        
-        // Remove leading words like "our", "the", etc.
-        projectName = projectName.replace(/^(?:our|the|this|that|these|those)\s+/i, '');
-        
-        // Remove trailing "project", "initiative", etc. if it wasn't part of the original match
-        if (!match[0].includes('project')) {
-          projectName = projectName.replace(/\s+(?:project|initiative|campaign|program)$/i, '');
-        }
-        
-        if (projectName.length > 2) {
-          return projectName;
-        }
-      }
-    }
-    
-    // If first line is short (less than 60 chars) and doesn't look like a task, use it as project name
-    // But exclude lines that are clearly tasks or have action verbs
-    const actionVerbs = /\b(?:create|update|review|prepare|schedule|organize|develop|design|implement|test|fix|build|draft|edit|add|remove|change|modify|analyze|evaluate|assess|report|present|discuss|meet|call|email|post|share|upload|download|generate|produce|deliver|submit|approve|verify|check|complete|finish|send|write)\b/i;
-    
-    if (firstLine.length < 60 && firstLine.length > 3 && !actionVerbs.test(firstLine) && 
-        !firstLine.includes("need to") && !firstLine.includes("should") && 
-        !firstLine.includes("must") && !firstLine.includes("will have to") && 
-        !firstLine.includes("going to")) {
-        
-      // Clean it up if needed
-      let cleanFirstLine = firstLine;
       
-      // Remove common prefixes
-      cleanFirstLine = cleanFirstLine.replace(/^(?:re:|subject:|topic:|about:)\s*/i, '');
+      // Try to extract from patterns like "X Notes", "X Meeting", etc.
+      const introPatterns = [
+        // Notes for X, Meeting about X patterns
+        /(?:(?:meeting|discussion|call|chat)\s+(?:about|regarding|on|for|with)\s+(?:the\s+)?|(?:notes|recap|summary)\s+(?:for|on|about)\s+(?:the\s+)?)(.+?)(?:\.|$)/i,
+        // X Project patterns
+        /(.+?)\s+(?:project|meeting|notes|discussion|updates|status)/i
+      ];
       
-      // Check if it's not just a generic word
-      if (!/^(meeting|discussion|agenda|notes|minutes|summary|recap|update)$/i.test(cleanFirstLine)) {
-        return cleanFirstLine;
+      for (const pattern of introPatterns) {
+        const match = firstLine.match(pattern);
+        if (match && match[1]) {
+          let projectName = match[1].trim();
+          
+          // Clean up the project name
+          projectName = projectName.replace(/^(?:our|the|this|that|these|those)\s+/i, '');
+          
+          if (projectName.length > 3 && 
+              !/^(meeting|discussion|agenda|notes|minutes|summary|recap|update|team|status|weekly|daily|monthly)$/i.test(projectName)) {
+            console.log("Extracted project name from intro patterns:", projectName);
+            return projectName;
+          }
+        }
       }
     }
   }
   
   // If we couldn't extract a project name from the text, use a default
-  return "Tasks";
+  console.log("Could not extract project name, using default");
+  return null;
 };
 
 // Function to convert conversational text to task-oriented language
@@ -691,7 +682,10 @@ export const parseTextIntoTasks = (text: string, defaultProjectName: string | nu
   
   // Extract a project name first from the overall text or use the provided default
   const extractedProjectName = extractProjectName(text);
+  
+  // Use the extracted project name or default to "Tasks"
   const projectName = defaultProjectName || extractedProjectName || "Tasks";
+  console.log("Using project name:", projectName);
   
   // Split text into lines
   const lines = text.split(/\r?\n/).filter(filterMeetingChatter);
@@ -742,9 +736,8 @@ export const parseTextIntoTasks = (text: string, defaultProjectName: string | nu
       const status = extractStatus(subtaskText);
       const recurring = isRecurringTask(subtaskText);
       
-      // Try to extract a project name specific to this task, or use the overall project name
-      const taskSpecificProject = extractProjectName(subtaskText);
-      const taskProjectName = taskSpecificProject || projectName;
+      // We use the global project name for all tasks
+      // This ensures all tasks from the same note share the same project
       
       // Clean up the task title - remove names, dates, priority, etc.
       let processedTitle = cleanupTaskTitle(subtaskText, assignee, dueDate);
@@ -793,8 +786,8 @@ export const parseTextIntoTasks = (text: string, defaultProjectName: string | nu
       }
       
       // Add project information to description if there's a project
-      if (taskProjectName && !description.includes("Project:")) {
-        description = description ? `${description}\nProject: ${taskProjectName}` : `Project: ${taskProjectName}`;
+      if (projectName && !description.includes("Project:")) {
+        description = description ? `${description}\nProject: ${projectName}` : `Project: ${projectName}`;
       }
       
       // Add a task with the project name explicitly set
@@ -809,7 +802,7 @@ export const parseTextIntoTasks = (text: string, defaultProjectName: string | nu
         workspace_id: null,
         isRecurring: recurring.isRecurring,
         frequency: recurring.frequency,
-        project: taskProjectName // Ensure project is explicitly set
+        project: projectName // Ensure project is explicitly set
       });
     }
   }
