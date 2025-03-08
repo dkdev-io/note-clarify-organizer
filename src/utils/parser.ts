@@ -1,3 +1,4 @@
+
 /**
  * Utility functions for parsing text notes into structured tasks
  */
@@ -293,7 +294,6 @@ const extractProjectName = (text: string): string | null => {
     /#([a-zA-Z0-9_-]+)/,  // Hashtag style project names
     /meeting(?:\s+for|\s+about|\s+on|\s*:)?\s+([^,.;:]+)(?:\s*:)?/i, // Meeting for/about Project X
     /^([^:]+):(?:\s*)/m, // Lines with a title followed by colon (common in meeting notes)
-    /^([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,3})(?:\s+-|\s+Notes|\s+Meeting|\s+Summary|\s+Recap|\s+Discussion)/i, // Title-like starting lines
   ];
   
   // Try each explicit pattern
@@ -618,13 +618,40 @@ const cleanupTaskTitle = (title: string, assignee: string | null, dueDate: strin
   return cleanTitle;
 };
 
+// Improved function to check if text is an introduction/header rather than a task
+const isIntroductionText = (text: string): boolean => {
+  // Skip if it's empty or too short
+  if (!text.trim() || text.length < 10) return true;
+  
+  // Check for common intro patterns
+  const introPatterns = [
+    /^(?:welcome|hello|hi|hey|greetings|good\s+morning|good\s+afternoon|good\s+evening)/i,
+    /^(?:agenda|topics|discussion\s+items|minutes|notes|action\s+items|to-dos?|next\s+steps)/i,
+    /^(?:meeting|call|discussion|session|workshop|brainstorm)\s+(?:notes|minutes|summary|recap)/i,
+    /^(?:team|project|department|company|group|committee)\s+(?:update|status|meeting|sync)/i,
+    /^(?:date|time|location|venue|participants|attendees|present):/i,
+    /^(?:overview|introduction|background|context|summary|recap|review)/i
+  ];
+  
+  if (introPatterns.some(pattern => pattern.test(text))) {
+    return true;
+  }
+  
+  // Check if it's a heading with no verbs
+  const isHeading = text.length < 50 && 
+                   !/\b(?:need|must|should|will|can|have to|going to|shall)\b/i.test(text) &&
+                   !/\b(?:create|update|review|prepare|schedule|organize|develop|design|implement|test|fix|build|draft|edit|add|remove|change|modify|analyze|evaluate|assess|report|present|discuss|meet|call|email|post|share|upload|download|generate|produce|deliver|submit|approve|verify|check|complete|finish|send|write)\b/i.test(text);
+  
+  return isHeading;
+};
+
 // Main function to parse text into potential tasks
 export const parseTextIntoTasks = (text: string, defaultProjectName: string | null = null): Task[] => {
   if (!text.trim()) return [];
   
   // Extract a project name first from the overall text or use the provided default
   const extractedProjectName = extractProjectName(text);
-  const overallProjectName = defaultProjectName || extractedProjectName;
+  const overallProjectName = defaultProjectName || extractedProjectName || "Tasks";
   
   // Split text into lines
   const lines = text.split(/\r?\n/).filter(filterMeetingChatter);
@@ -639,13 +666,25 @@ export const parseTextIntoTasks = (text: string, defaultProjectName: string | nu
   ];
   
   const tasks: Task[] = [];
+  let isFirstLine = true;
   
   for (const line of lines) {
     let isTaskLine = taskIndicators.some(regex => regex.test(line));
     let taskText = line;
     
     // Skip very short lines unless they're clearly tasks
-    if (!isTaskLine && line.length < 15) continue;
+    if (!isTaskLine && line.length < 15) {
+      isFirstLine = false;
+      continue;
+    }
+    
+    // Skip lines that appear to be introductions or headers rather than tasks
+    if (isFirstLine && isIntroductionText(line)) {
+      isFirstLine = false;
+      continue;
+    }
+    
+    isFirstLine = false;
     
     // Clean up the task text (remove bullet points, numbering, etc.)
     taskIndicators.forEach(indicator => {
@@ -664,7 +703,8 @@ export const parseTextIntoTasks = (text: string, defaultProjectName: string | nu
       const recurring = isRecurringTask(subtaskText);
       
       // Try to extract a project name specific to this task, or use the overall project name
-      let projectName = extractProjectName(subtaskText) || overallProjectName;
+      const taskSpecificProject = extractProjectName(subtaskText);
+      let projectName = taskSpecificProject || overallProjectName;
       
       // Clean up the task title - remove names, dates, priority, etc.
       let processedTitle = cleanupTaskTitle(subtaskText, assignee, dueDate);
@@ -712,6 +752,11 @@ export const parseTextIntoTasks = (text: string, defaultProjectName: string | nu
         description = description ? `${description}\nAssigned to: ${assignee}` : `Assigned to: ${assignee}`;
       }
       
+      // Add project information to description if there's a project
+      if (projectName && !description.includes("Project:")) {
+        description = description ? `${description}\nProject: ${projectName}` : `Project: ${projectName}`;
+      }
+      
       // Add a clean copy of the task that doesn't have any extra info that might have been moved to metadata
       tasks.push({
         id: generateId(),
@@ -729,11 +774,10 @@ export const parseTextIntoTasks = (text: string, defaultProjectName: string | nu
     }
   }
   
-  // Ensure all tasks have the project name set - always use a project name
-  const finalProjectName = overallProjectName || "Tasks"; // Fallback to "Tasks" if no project name found
+  // Ensure all tasks have the project name set
   for (const task of tasks) {
     if (!task.project) {
-      task.project = finalProjectName;
+      task.project = overallProjectName;
     }
   }
   
