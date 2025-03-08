@@ -39,7 +39,7 @@ const extractDate = (text: string): string | null => {
     /\bwithin\s+(\d+)\s+hours?\b/i  // Added explicit pattern for "within X hours"
   ];
   
-  // Day-based deadline patterns
+  // Day-based deadline patterns with words like "two" instead of "2"
   const dayBasedPatterns = [
     // "within X days", "in X days", "X day turnaround", etc.
     /\b(?:within|in)\s+(\d+)\s+days?\b/i,
@@ -47,7 +47,15 @@ const extractDate = (text: string): string | null => {
     /\bturnaround\s+(?:time|of)?\s+(\d+)\s+days?\b/i,
     /\bdue\s+in\s+(\d+)\s+days?\b/i,
     /\bcomplete\s+(?:within|in)\s+(\d+)\s+days?\b/i,
-    /\bwithin\s+(\d+)\s+days?\b/i   // Added explicit pattern for "within X days"
+    /\bwithin\s+(\d+)\s+days?\b/i,  // Added explicit pattern for "within X days"
+    
+    // Patterns with written numbers
+    /\b(?:within|in)\s+(one|two|three|four|five|six|seven|eight|nine|ten)\s+days?\b/i,
+    /\b(one|two|three|four|five|six|seven|eight|nine|ten)\s+days?\s+(?:turnaround|deadline|timeframe)\b/i,
+    /\bturnaround\s+(?:time|of)?\s+(one|two|three|four|five|six|seven|eight|nine|ten)\s+days?\b/i,
+    /\bdue\s+in\s+(one|two|three|four|five|six|seven|eight|nine|ten)\s+days?\b/i,
+    /\bcomplete\s+(?:within|in)\s+(one|two|three|four|five|six|seven|eight|nine|ten)\s+days?\b/i,
+    /\bwithin\s+(one|two|three|four|five|six|seven|eight|nine|ten)\s+days?\b/i
   ];
   
   // Check for hour-based deadlines first
@@ -67,7 +75,19 @@ const extractDate = (text: string): string | null => {
   for (const pattern of dayBasedPatterns) {
     const match = text.match(pattern);
     if (match && match[1]) {
-      const days = parseInt(match[1], 10);
+      let days;
+      
+      // Convert written numbers to digits
+      if (isNaN(parseInt(match[1], 10))) {
+        const numberMapping: Record<string, number> = {
+          'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
+          'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10
+        };
+        days = numberMapping[match[1].toLowerCase()];
+      } else {
+        days = parseInt(match[1], 10);
+      }
+      
       if (!isNaN(days)) {
         const deadline = new Date(baseDate);
         deadline.setDate(deadline.getDate() + days);
@@ -318,6 +338,41 @@ const convertToTaskLanguage = (text: string): string => {
   taskText = taskText.replace(namePattern, (match, name, action) => {
     return `${action.trim().charAt(0).toUpperCase() + action.trim().slice(1)}. Assigned to: ${name.trim()}`;
   });
+  
+  // Convert passive voice to imperative/active voice
+  taskText = taskText
+    .replace(/\bshould be\s+(\w+ed)\b/gi, (match, verb) => `${verb}`)
+    .replace(/\bneeds? to be\s+(\w+ed)\b/gi, (match, verb) => `${verb}`)
+    .replace(/\bhas to be\s+(\w+ed)\b/gi, (match, verb) => `${verb}`)
+    .replace(/\bwill be\s+(\w+ed)\b/gi, (match, verb) => `${verb}`)
+    .replace(/\bmust be\s+(\w+ed)\b/gi, (match, verb) => `${verb}`);
+  
+  // Start with imperative verbs for tasks
+  taskText = taskText
+    .replace(/\bwe should\b/gi, '')
+    .replace(/\bwe need to\b/gi, '')
+    .replace(/\bwe must\b/gi, '')
+    .replace(/\bwe have to\b/gi, '')
+    .replace(/\byou should\b/gi, '')
+    .replace(/\byou need to\b/gi, '')
+    .replace(/\byou must\b/gi, '')
+    .replace(/\byou have to\b/gi, '');
+  
+  // Remove filler words
+  taskText = taskText
+    .replace(/\bin order to\b/gi, 'to')
+    .replace(/\bbasically\b/gi, '')
+    .replace(/\bactually\b/gi, '')
+    .replace(/\bhowever\b/gi, '')
+    .replace(/\btherefore\b/gi, '')
+    .replace(/\bso\b/gi, '')
+    .replace(/\bjust\b/gi, '')
+    .replace(/\bvery\b/gi, '')
+    .replace(/\breally\b/gi, '')
+    .replace(/\bpretty\b/gi, '')
+    .replace(/\ba bit\b/gi, '')
+    .replace(/\bkind of\b/gi, '')
+    .replace(/\bsort of\b/gi, '');
   
   // Capitalize first letter if it's not already
   if (taskText.length > 0) {
