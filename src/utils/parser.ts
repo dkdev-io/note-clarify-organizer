@@ -283,6 +283,8 @@ const isRecurringTask = (text: string): { isRecurring: boolean, frequency: strin
 
 // Improved function to extract project name from text
 const extractProjectName = (text: string): string | null => {
+  if (!text || !text.trim()) return null;
+  
   // First look for explicit project indicators
   const projectIndicators = [
     /project\s*(?:name|title)?[:\s]+([^,.;]+)/i,
@@ -293,13 +295,19 @@ const extractProjectName = (text: string): string | null => {
     /#([a-zA-Z0-9_-]+)/,  // Hashtag style project names
     /meeting(?:\s+for|\s+about|\s+on|\s*:)?\s+([^,.;:]+)(?:\s*:)?/i, // Meeting for/about Project X
     /^([^:]+):(?:\s*)/m, // Lines with a title followed by colon (common in meeting notes)
+    /([a-zA-Z0-9\s]+)\s+project/i,  // "Marketing Project" pattern
+    /^([a-zA-Z0-9\s]+)\s+(?:notes|meeting)/i,  // "Marketing Notes" or "Marketing Meeting" pattern
   ];
   
   // Try each explicit pattern
   for (const pattern of projectIndicators) {
     const match = text.match(pattern);
     if (match && match[1]) {
-      return match[1].trim();
+      const extractedName = match[1].trim();
+      // Check if the extracted name is substantial (not just "the", "a", etc.)
+      if (extractedName.length > 2 && !/^(the|a|an|this|our)$/i.test(extractedName)) {
+        return extractedName;
+      }
     }
   }
   
@@ -312,6 +320,27 @@ const extractProjectName = (text: string): string | null => {
     if (firstLine.match(/^[\-\*•]/) || firstLine.match(/^\d+\./) || 
         /^(?:task|to-do|action item)/i.test(firstLine)) {
       return null;
+    }
+    
+    // Look for title patterns in the first line
+    const firstLinePatterns = [
+      // "Marketing Project" pattern in the first line
+      /^([a-zA-Z0-9\s]+)\s+project\b/i,
+      // Project name at the beginning of the first line
+      /^([a-zA-Z0-9\s]+?)(?:\s+[-:–]|\s*$)/i
+    ];
+    
+    for (const pattern of firstLinePatterns) {
+      const match = firstLine.match(pattern);
+      if (match && match[1]) {
+        const candidateProject = match[1].trim();
+        // Validate the extracted name (not too short, not just articles or common words)
+        if (candidateProject.length > 2 && 
+            !/^(task|to-do|meeting|discussion|call|chat|note|agenda|minutes)$/i.test(candidateProject) &&
+            !/^(the|a|an|this|our)$/i.test(candidateProject)) {
+          return candidateProject;
+        }
+      }
     }
     
     // Look for conversation/meeting intro patterns
@@ -338,19 +367,31 @@ const extractProjectName = (text: string): string | null => {
           projectName = projectName.replace(/\s+(?:project|initiative|campaign|program)$/i, '');
         }
         
-        return projectName;
+        if (projectName.length > 2) {
+          return projectName;
+        }
       }
     }
     
-    // If first line is short (less than 60 chars) and looks like a title, use it as project name
+    // If first line is short (less than 60 chars) and doesn't look like a task, use it as project name
     // But exclude lines that are clearly tasks or have action verbs
     const actionVerbs = /\b(?:create|update|review|prepare|schedule|organize|develop|design|implement|test|fix|build|draft|edit|add|remove|change|modify|analyze|evaluate|assess|report|present|discuss|meet|call|email|post|share|upload|download|generate|produce|deliver|submit|approve|verify|check|complete|finish|send|write)\b/i;
     
-    if (firstLine.length < 60 && !actionVerbs.test(firstLine) && 
+    if (firstLine.length < 60 && firstLine.length > 3 && !actionVerbs.test(firstLine) && 
         !firstLine.includes("need to") && !firstLine.includes("should") && 
         !firstLine.includes("must") && !firstLine.includes("will have to") && 
         !firstLine.includes("going to")) {
-      return firstLine;
+        
+      // Clean it up if needed
+      let cleanFirstLine = firstLine;
+      
+      // Remove common prefixes
+      cleanFirstLine = cleanFirstLine.replace(/^(?:re:|subject:|topic:|about:)\s*/i, '');
+      
+      // Check if it's not just a generic word
+      if (!/^(meeting|discussion|agenda|notes|minutes|summary|recap|update)$/i.test(cleanFirstLine)) {
+        return cleanFirstLine;
+      }
     }
   }
   
