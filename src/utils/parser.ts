@@ -315,7 +315,7 @@ const extractProjectName = (text: string): string | null => {
   }
 
   // First priority - specific pattern for "client's marketing campaign" format
-  const clientCampaignPattern = /\b(?:for|about)\s+(?:the\s+)?([A-Za-z0-9]+(?:\s+[A-Za-z0-9]+){0,2}(?:'s)?\s+[A-Za-z0-9]+(?:\s+[A-Za-z0-9]+){0,2})\b/i;
+  const clientCampaignPattern = /(?:for|about)\s+(?:the\s+)?([A-Za-z0-9]+(?:\s+[A-Za-z0-9]+){0,2}(?:'s)?\s+[A-Za-z0-9]+(?:\s+[A-Za-z0-9]+){0,2})/i;
   const clientMatch = firstLine.match(clientCampaignPattern);
   if (clientMatch && clientMatch[1]) {
     const extractedName = clientMatch[1].trim();
