@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,11 +12,17 @@ import { format } from "date-fns";
 
 interface TaskPreviewProps {
   tasks: Task[];
+  projectName: string | null;
   onBack: () => void;
   onComplete: () => void;
 }
 
-const TaskPreview: React.FC<TaskPreviewProps> = ({ tasks, onBack, onComplete }) => {
+const TaskPreview: React.FC<TaskPreviewProps> = ({ 
+  tasks, 
+  projectName,
+  onBack, 
+  onComplete 
+}) => {
   const [apiKey, setApiKey] = useState('');
   const [isValidatingKey, setIsValidatingKey] = useState(false);
   const [isKeyValid, setIsKeyValid] = useState<boolean | null>(null);
@@ -89,7 +94,6 @@ const TaskPreview: React.FC<TaskPreviewProps> = ({ tasks, onBack, onComplete }) 
           onComplete();
         }, 400);
       } else {
-        // Show more detailed errors
         if (result.taskErrors && result.taskErrors.length > 0) {
           result.taskErrors.forEach(taskError => {
             const task = tasks.find(t => t.id === taskError.taskId);
@@ -130,7 +134,6 @@ const TaskPreview: React.FC<TaskPreviewProps> = ({ tasks, onBack, onComplete }) 
   const getWorkspaceName = (workspaceId: string | null) => {
     if (!workspaceId) return "None";
     
-    // This is a placeholder - in a real app, you'd look up the workspace name
     const workspaceMap: Record<string, string> = {
       'workspace-1': 'Personal',
       'workspace-2': 'Team Projects',

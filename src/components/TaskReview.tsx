@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,11 +17,17 @@ import { useToast } from "@/components/ui/use-toast";
 
 interface TaskReviewProps {
   tasks: Task[];
+  projectName: string | null;
   onBack: () => void;
-  onContinue: (tasks: Task[]) => void;
+  onContinue: (tasks: Task[], updatedProjectName?: string) => void;
 }
 
-const TaskReview: React.FC<TaskReviewProps> = ({ tasks, onBack, onContinue }) => {
+const TaskReview: React.FC<TaskReviewProps> = ({ 
+  tasks, 
+  projectName,
+  onBack, 
+  onContinue 
+}) => {
   const [reviewedTasks, setReviewedTasks] = useState<Task[]>(tasks);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -35,7 +40,6 @@ const TaskReview: React.FC<TaskReviewProps> = ({ tasks, onBack, onContinue }) =>
   }>({ allValid: true, tasksWithMissingFields: [] });
   const { toast } = useToast();
 
-  // Fetch workspaces when component mounts
   useEffect(() => {
     const getWorkspaces = async () => {
       setIsLoadingWorkspaces(true);
@@ -43,7 +47,6 @@ const TaskReview: React.FC<TaskReviewProps> = ({ tasks, onBack, onContinue }) =>
         const fetchedWorkspaces = await fetchWorkspaces();
         setWorkspaces(fetchedWorkspaces);
         
-        // Auto-assign the first workspace if none is set
         if (fetchedWorkspaces.length > 0) {
           const firstWorkspaceId = fetchedWorkspaces[0].id;
           setReviewedTasks(prevTasks => 
@@ -68,7 +71,6 @@ const TaskReview: React.FC<TaskReviewProps> = ({ tasks, onBack, onContinue }) =>
     getWorkspaces();
   }, [toast]);
 
-  // Validate tasks whenever they change
   useEffect(() => {
     const validationResult = validateTasks(reviewedTasks);
     setValidation(validationResult);
@@ -99,7 +101,6 @@ const TaskReview: React.FC<TaskReviewProps> = ({ tasks, onBack, onContinue }) =>
   };
 
   const handleContinue = () => {
-    // Check if all tasks are valid
     const validationResult = validateTasks(reviewedTasks);
     if (!validationResult.allValid) {
       setValidation(validationResult);
@@ -110,7 +111,6 @@ const TaskReview: React.FC<TaskReviewProps> = ({ tasks, onBack, onContinue }) =>
         variant: "destructive",
       });
       
-      // Automatically start editing the first task with missing fields
       if (validationResult.tasksWithMissingFields.length > 0) {
         const firstInvalidTask = validationResult.tasksWithMissingFields[0].task;
         handleEditTask(firstInvalidTask);
@@ -121,7 +121,7 @@ const TaskReview: React.FC<TaskReviewProps> = ({ tasks, onBack, onContinue }) =>
     
     setIsTransitioning(true);
     setTimeout(() => {
-      onContinue(reviewedTasks);
+      onContinue(reviewedTasks, projectName);
     }, 400);
   };
 

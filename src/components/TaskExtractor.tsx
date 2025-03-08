@@ -10,13 +10,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 interface TaskExtractorProps {
   rawText: string;
   extractedTasks: Task[];
+  projectName: string | null;
   onBack: () => void;
   onContinue: (tasks: Task[]) => void;
 }
 
 const TaskExtractor: React.FC<TaskExtractorProps> = ({ 
   rawText, 
-  extractedTasks, 
+  extractedTasks,
+  projectName,
   onBack, 
   onContinue 
 }) => {
