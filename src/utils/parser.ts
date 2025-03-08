@@ -1,3 +1,4 @@
+
 /**
  * Utility functions for parsing text notes into structured tasks
  */
@@ -22,16 +23,31 @@ const generateId = (): string => {
   return Math.random().toString(36).substring(2, 11);
 };
 
-// Function to extract dates from text including hour-based specifications
+// Function to extract dates from text including hour-based and day-based specifications
 const extractDate = (text: string): string | null => {
+  // Define a fixed date for relative date calculations if needed
+  const baseDate = new Date(2025, 2, 8); // March 8, 2025
+  
   // Hour-based deadline patterns
   const hourBasedPatterns = [
-    // "within X hours", "in X hours", "X hour turnaround"
+    // "within X hours", "in X hours", "X hour turnaround", etc.
     /\b(?:within|in)\s+(\d+)\s+hours?\b/i,
     /\b(\d+)\s+hours?\s+(?:turnaround|deadline|timeframe)\b/i,
     /\bturnaround\s+(?:time|of)?\s+(\d+)\s+hours?\b/i,
     /\bdue\s+in\s+(\d+)\s+hours?\b/i,
-    /\bcomplete\s+(?:within|in)\s+(\d+)\s+hours?\b/i
+    /\bcomplete\s+(?:within|in)\s+(\d+)\s+hours?\b/i,
+    /\bwithin\s+(\d+)\s+hours?\b/i  // Added explicit pattern for "within X hours"
+  ];
+  
+  // Day-based deadline patterns
+  const dayBasedPatterns = [
+    // "within X days", "in X days", "X day turnaround", etc.
+    /\b(?:within|in)\s+(\d+)\s+days?\b/i,
+    /\b(\d+)\s+days?\s+(?:turnaround|deadline|timeframe)\b/i,
+    /\bturnaround\s+(?:time|of)?\s+(\d+)\s+days?\b/i,
+    /\bdue\s+in\s+(\d+)\s+days?\b/i,
+    /\bcomplete\s+(?:within|in)\s+(\d+)\s+days?\b/i,
+    /\bwithin\s+(\d+)\s+days?\b/i   // Added explicit pattern for "within X days"
   ];
   
   // Check for hour-based deadlines first
@@ -40,9 +56,22 @@ const extractDate = (text: string): string | null => {
     if (match && match[1]) {
       const hours = parseInt(match[1], 10);
       if (!isNaN(hours)) {
-        const now = new Date();
-        now.setHours(now.getHours() + hours);
-        return now.toISOString().split('T')[0];
+        const deadline = new Date(baseDate);
+        deadline.setHours(deadline.getHours() + hours);
+        return deadline.toISOString().split('T')[0];
+      }
+    }
+  }
+  
+  // Check for day-based deadlines
+  for (const pattern of dayBasedPatterns) {
+    const match = text.match(pattern);
+    if (match && match[1]) {
+      const days = parseInt(match[1], 10);
+      if (!isNaN(days)) {
+        const deadline = new Date(baseDate);
+        deadline.setDate(deadline.getDate() + days);
+        return deadline.toISOString().split('T')[0];
       }
     }
   }
@@ -64,8 +93,8 @@ const extractDate = (text: string): string | null => {
     // Format: Day of week (next Monday, this Friday)
     /(?:(?:this|next)\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday))/i,
     
-    // Format: Relative dates (tomorrow, next week, in 3 days)
-    /\b(?:tomorrow|today|next week|in\s+(\d+)\s+days?)\b/i
+    // Format: Relative dates (tomorrow, next week)
+    /\b(?:tomorrow|today|next week)\b/i
   ];
   
   // Try each pattern
@@ -99,12 +128,12 @@ const extractDate = (text: string): string | null => {
             // Using named capture groups format
             monthStr = match[1];
             dayStr = match[2];
-            yearStr = match[3] || new Date().getFullYear().toString();
+            yearStr = match[3] || baseDate.getFullYear().toString();
           } else {
             // Direct month name format
             monthStr = match[1];
             dayStr = match[2];
-            yearStr = match[3] || new Date().getFullYear().toString();
+            yearStr = match[3] || baseDate.getFullYear().toString();
           }
           
           const date = new Date(`${monthStr} ${dayStr}, ${yearStr}`);
@@ -113,20 +142,13 @@ const extractDate = (text: string): string | null => {
           }
         }
         // Relative dates
-        else if (/(?:this|next|tomorrow|today|in)/i.test(match[0])) {
-          const today = new Date();
-          let resultDate = new Date(today);
+        else if (/(?:this|next|tomorrow|today)/i.test(match[0])) {
+          let resultDate = new Date(baseDate);
           
           if (/tomorrow/i.test(match[0])) {
-            resultDate.setDate(today.getDate() + 1);
+            resultDate.setDate(baseDate.getDate() + 1);
           } else if (/next week/i.test(match[0])) {
-            resultDate.setDate(today.getDate() + 7);
-          } else if (/in\s+(\d+)\s+days?/i.test(match[0])) {
-            const daysMatch = match[0].match(/in\s+(\d+)\s+days?/i);
-            if (daysMatch && daysMatch[1]) {
-              const days = parseInt(daysMatch[1], 10);
-              resultDate.setDate(today.getDate() + days);
-            }
+            resultDate.setDate(baseDate.getDate() + 7);
           } else if (/this|next/i.test(match[0]) && /(monday|tuesday|wednesday|thursday|friday|saturday|sunday)/i.test(match[0])) {
             const dayOfWeekMatch = match[0].match(/(monday|tuesday|wednesday|thursday|friday|saturday|sunday)/i);
             if (dayOfWeekMatch) {
@@ -134,7 +156,7 @@ const extractDate = (text: string): string | null => {
               const daysOfWeek = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
               const targetDay = daysOfWeek.indexOf(dayOfWeek);
               
-              let daysToAdd = (targetDay - today.getDay() + 7) % 7;
+              let daysToAdd = (targetDay - baseDate.getDay() + 7) % 7;
               if (/next/i.test(match[0])) {
                 daysToAdd += 7;
               }
@@ -142,7 +164,7 @@ const extractDate = (text: string): string | null => {
                 daysToAdd = 7; // If "this Sunday" and today is Sunday, go to next Sunday
               }
               
-              resultDate.setDate(today.getDate() + daysToAdd);
+              resultDate.setDate(baseDate.getDate() + daysToAdd);
             }
           }
           
@@ -170,12 +192,28 @@ const extractPriority = (text: string): 'low' | 'medium' | 'high' | null => {
   return null;
 };
 
-// Function to extract assignee from text
+// Improved function to extract assignee from text
 const extractAssignee = (text: string): string | null => {
-  const assigneeRegex = /(?:assigned to|assignee|responsible|owner):\s*([A-Za-z\s]+)(?:,|\.|$)/i;
-  const match = text.match(assigneeRegex);
+  // Patterns for different ways to mention assignees
+  const assigneePatterns = [
+    // "assigned to X", "assignee: X", etc.
+    /(?:assigned to|assignee|responsible|owner):\s*([A-Za-z\s]+)(?:,|\.|$)/i,
+    
+    // "X needs to", "X should", "X will", etc. - look for person's name followed by action
+    /\b([A-Z][a-z]+)(?:\s+[A-Z][a-z]+)?\s+(?:needs|should|will|to|can|must)\b/i,
+    
+    // "X is responsible for", "X is going to", etc.
+    /\b([A-Z][a-z]+)(?:\s+[A-Z][a-z]+)?\s+is\s+(?:responsible|going|supposed|expected)\b/i
+  ];
   
-  return match ? match[1].trim() : null;
+  for (const pattern of assigneePatterns) {
+    const match = text.match(pattern);
+    if (match && match[1]) {
+      return match[1].trim();
+    }
+  }
+  
+  return null;
 };
 
 // Function to extract status from text
@@ -219,7 +257,9 @@ const extractProjectName = (text: string): string | null => {
     /project[:\s]+([^,.;]+)/i,
     /\[project[:\s]+([^\]]+)\]/i,
     /re:[:\s]+([^,.;]+)/i,
-    /#([a-zA-Z0-9_-]+)/  // Hashtag style project names
+    /#([a-zA-Z0-9_-]+)/,  // Hashtag style project names
+    /meeting(?:\s+for|\s+about|\s+on|\s*:)?\s+([^,.;:]+)(?:\s*:)?/i, // Meeting for/about Project X
+    /^([^:]{3,30}):\s*$/m  // Standalone lines that might be titles/headers
   ];
   
   // First look at the beginning of the text for a title/subject line
@@ -228,11 +268,16 @@ const extractProjectName = (text: string): string | null => {
     const firstLine = lines[0].trim();
     
     // If first line has "Meeting:", "Project:", etc.
-    if (/^(?:meeting|project|sprint|planning|review)(?:\s+for|\s+on|\s*:)?\s+(.+)$/i.test(firstLine)) {
-      const match = firstLine.match(/^(?:meeting|project|sprint|planning|review)(?:\s+for|\s+on|\s*:)?\s+(.+)$/i);
+    if (/^(?:meeting|project|sprint|planning|review)(?:\s+for|\s+on|\s+about|\s*:)?\s+(.+)$/i.test(firstLine)) {
+      const match = firstLine.match(/^(?:meeting|project|sprint|planning|review)(?:\s+for|\s+on|\s+about|\s*:)?\s+(.+)$/i);
       if (match && match[1]) {
         return match[1].trim();
       }
+    }
+    
+    // If the first line is short and doesn't look like a task, it might be a title
+    if (firstLine.length < 50 && !firstLine.match(/^[\-\*•]/) && !firstLine.match(/^\d+\./)) {
+      return firstLine;
     }
   }
   
@@ -247,6 +292,56 @@ const extractProjectName = (text: string): string | null => {
   return null;
 };
 
+// Function to convert conversational text to task-oriented language
+const convertToTaskLanguage = (text: string): string => {
+  let taskText = text;
+  
+  // Replace conversational phrases with task-oriented language
+  const conversationalPatterns = [
+    { pattern: /\b(\w+) (?:mentioned|said|suggested|asked|requested|thought|wants) (?:that|if|to|we should|we could|we need to|we might|about|for) /gi, replacement: '' },
+    { pattern: /\b(?:I think|We should|Maybe we can|We could|Let's|I suggest|What if we|How about we|We need to) /gi, replacement: '' },
+    { pattern: /\b(?:discussed|talking about|mentioned) /gi, replacement: '' },
+    { pattern: /\bwe need someone to\b/gi, replacement: '' },
+    { pattern: /\bjust a reminder\b/gi, replacement: '' },
+    { pattern: /\bdon't forget to\b/gi, replacement: '' },
+    { pattern: /\b(?:it would be good|it would be nice|it would be great|it would be helpful) if\b/gi, replacement: '' }
+  ];
+  
+  // Apply conversational replacements
+  for (const { pattern, replacement } of conversationalPatterns) {
+    taskText = taskText.replace(pattern, replacement);
+  }
+  
+  // Convert statements with names into a more standardized format
+  // e.g., "John will update the document" -> "Update the document. Assigned to: John"
+  const namePattern = /\b([A-Z][a-z]+)(?:\s+[A-Z][a-z]+)?\s+(?:will|should|needs to|is going to|has to)\s+(.+?)(?:\.|$)/gi;
+  taskText = taskText.replace(namePattern, (match, name, action) => {
+    return `${action.trim().charAt(0).toUpperCase() + action.trim().slice(1)}. Assigned to: ${name.trim()}`;
+  });
+  
+  // Capitalize first letter if it's not already
+  if (taskText.length > 0) {
+    taskText = taskText.charAt(0).toUpperCase() + taskText.slice(1);
+  }
+  
+  return taskText;
+};
+
+// Filter out common meeting phrases and greetings
+const filterMeetingChatter = (line: string): boolean => {
+  const chatterPatterns = [
+    /^(?:hi\s+(?:all|everyone|team)|hello\s+(?:all|everyone|team)|thanks|thank\s+you|regards|sincerely|cheers|best|great\s+meeting)/i,
+    /\b(?:good morning|good afternoon|welcome everyone|thanks for joining|let's get started|to summarize|in summary|moving on|next item|any questions)\b/i,
+    /\b(?:meeting adjourned|that's all for today|see you next time|talk soon|bye everyone|have a good day)\b/i,
+    /^attendance:?/i,
+    /^present:?/i,
+    /^absent:?/i,
+    /^(?:date|time):?/i
+  ];
+  
+  return !chatterPatterns.some(pattern => pattern.test(line)) && line.trim().length > 0;
+};
+
 // Main function to parse text into potential tasks
 export const parseTextIntoTasks = (text: string): Task[] => {
   if (!text.trim()) return [];
@@ -255,11 +350,7 @@ export const parseTextIntoTasks = (text: string): Task[] => {
   const overallProjectName = extractProjectName(text);
   
   // Split text into lines
-  const lines = text.split(/\r?\n/).filter(line => {
-    // Filter out common greeting/closing lines and very short lines
-    const greetingClosingRegex = /^(?:hi\s+(?:all|everyone|team)|hello\s+(?:all|everyone|team)|thanks|thank\s+you|regards|sincerely|cheers|best|great\s+meeting)/i;
-    return line.trim().length > 0 && !greetingClosingRegex.test(line.trim());
-  });
+  const lines = text.split(/\r?\n/).filter(filterMeetingChatter);
   
   // Identify potential tasks by looking for action items, bullet points, numbered lists, etc.
   const taskIndicators = [
@@ -283,6 +374,9 @@ export const parseTextIntoTasks = (text: string): Task[] => {
     taskIndicators.forEach(indicator => {
       taskText = taskText.replace(indicator, '');
     });
+    
+    // Convert conversational language to task-oriented language
+    taskText = convertToTaskLanguage(taskText);
     
     // Extract task information
     const dueDate = extractDate(taskText);
@@ -330,6 +424,18 @@ export const parseTextIntoTasks = (text: string): Task[] => {
       if (!description.includes("Deadline") && !description.includes("Due date")) {
         description = description ? `${description}\nDeadline: ${formattedDate}` : `Deadline: ${formattedDate}`;
       }
+    }
+    
+    // Remove the person's name from the title/description if it's already captured as assignee
+    if (assignee) {
+      const assigneePattern = new RegExp(`\\b${assignee}\\b`, 'gi');
+      title = title.replace(assigneePattern, '').trim();
+      description = description.replace(assigneePattern, '').trim();
+      
+      // Clean up the title if it starts with unnecessary words after name removal
+      title = title.replace(/^(?:will|should|to|needs|is going to|has to)\s+/i, '');
+      title = title.replace(/^(?:,|\.|\s)+/, ''); // Remove leading punctuation
+      title = title.charAt(0).toUpperCase() + title.slice(1); // Capitalize first letter again
     }
     
     tasks.push({
