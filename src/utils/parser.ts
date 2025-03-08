@@ -1,4 +1,3 @@
-
 /**
  * Utility functions for parsing text notes into structured tasks
  */
@@ -651,7 +650,7 @@ export const parseTextIntoTasks = (text: string, defaultProjectName: string | nu
   
   // Extract a project name first from the overall text or use the provided default
   const extractedProjectName = extractProjectName(text);
-  const overallProjectName = defaultProjectName || extractedProjectName || "Tasks";
+  const projectName = defaultProjectName || extractedProjectName || "Tasks";
   
   // Split text into lines
   const lines = text.split(/\r?\n/).filter(filterMeetingChatter);
@@ -704,7 +703,7 @@ export const parseTextIntoTasks = (text: string, defaultProjectName: string | nu
       
       // Try to extract a project name specific to this task, or use the overall project name
       const taskSpecificProject = extractProjectName(subtaskText);
-      let projectName = taskSpecificProject || overallProjectName;
+      const taskProjectName = taskSpecificProject || projectName;
       
       // Clean up the task title - remove names, dates, priority, etc.
       let processedTitle = cleanupTaskTitle(subtaskText, assignee, dueDate);
@@ -753,11 +752,11 @@ export const parseTextIntoTasks = (text: string, defaultProjectName: string | nu
       }
       
       // Add project information to description if there's a project
-      if (projectName && !description.includes("Project:")) {
-        description = description ? `${description}\nProject: ${projectName}` : `Project: ${projectName}`;
+      if (taskProjectName && !description.includes("Project:")) {
+        description = description ? `${description}\nProject: ${taskProjectName}` : `Project: ${taskProjectName}`;
       }
       
-      // Add a clean copy of the task that doesn't have any extra info that might have been moved to metadata
+      // Add a task with the project name explicitly set
       tasks.push({
         id: generateId(),
         title: title.trim(),
@@ -769,15 +768,8 @@ export const parseTextIntoTasks = (text: string, defaultProjectName: string | nu
         workspace_id: null,
         isRecurring: recurring.isRecurring,
         frequency: recurring.frequency,
-        project: projectName
+        project: taskProjectName // Ensure project is explicitly set
       });
-    }
-  }
-  
-  // Ensure all tasks have the project name set
-  for (const task of tasks) {
-    if (!task.project) {
-      task.project = overallProjectName;
     }
   }
   
@@ -829,4 +821,3 @@ export const validateTasks = (tasks: Task[]): { allValid: boolean; tasksWithMiss
     tasksWithMissingFields
   };
 };
-
