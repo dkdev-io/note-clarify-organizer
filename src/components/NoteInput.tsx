@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { parseTextIntoTasks } from '@/utils/parser';
 import { PlusIcon, ArrowRightIcon, FileTextIcon, SendIcon } from 'lucide-react';
 
 interface NoteInputProps {
@@ -26,7 +27,7 @@ const NoteInput: React.FC<NoteInputProps> = ({ onParseTasks }) => {
   const sampleNotes = [
     "Team Meeting Notes - April 5:\n- Sarah needs to prepare the Q2 sales report by May 1st.\n- Update the client presentation with new metrics - high priority.\n- Schedule follow-up meeting with the marketing team next week.\n- John to review the product roadmap document before Friday.",
     "Project Alpha Planning:\n1. Research competitors by end of month\n2. Create wireframes for the new dashboard - assigned to Mike\n3. Urgent: Fix the login bug reported by users\n4. Schedule user interviews for next sprint",
-    "Weekly Stand-up:\n• Implement new search functionality within 24 hours\n• Create documentation for API - low priority\n• Meet with stakeholders about budget concerns on Tuesday\n• Danny must finish the website before March 20th. He'll need to send the MVP of the site by March 18th to Edward and James for approval"
+    "Weekly Stand-up:\n• Implement new search functionality\n• Create documentation for API - low priority\n• Meet with stakeholders about budget concerns on Tuesday\n• Review PR #234 before deployment"
   ];
 
   const loadSample = (index: number) => {
