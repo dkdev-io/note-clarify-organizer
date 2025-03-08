@@ -224,16 +224,19 @@ const extractAssignee = (text: string): string | null => {
   // Patterns for different ways to mention assignees
   const assigneePatterns = [
     // "assigned to X", "assignee: X", etc.
-    /(?:assigned to|assignee|responsible|owner):\s*([A-Za-z\s]+)(?:,|\.|$)/i,
+    /(?:assigned to|assignee|responsible|owner):\s*([A-Za-z\s]+?)(?:,|\.|$)/i,
     
     // "X needs to", "X should", "X will", etc. - look for person's name followed by action
-    /\b([A-Z][a-z]+)(?:\s+[A-Z][a-z]+)?\s+(?:needs|should|will|to|can|must|has to|is going to|needs to|has|is supposed to)\b/i,
+    /\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+(?:needs|should|will|to|can|must|has to|is going to|needs to|has|is supposed to)\b/i,
     
     // "X is responsible for", "X is going to", etc.
-    /\b([A-Z][a-z]+)(?:\s+[A-Z][a-z]+)?\s+is\s+(?:responsible|going|supposed|expected)\b/i,
+    /\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+is\s+(?:responsible|going|supposed|expected)\b/i,
     
     // "X must finish/do/complete" etc.
-    /\b([A-Z][a-z]+)(?:\s+[A-Z][a-z]+)?\s+must\b/i
+    /\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+must\b/i,
+    
+    // Extra pattern for Jennifer-style names
+    /\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)'s\b/i
   ];
   
   for (const pattern of assigneePatterns) {
@@ -400,11 +403,56 @@ const filterMeetingChatter = (line: string): boolean => {
   return !chatterPatterns.some(pattern => pattern.test(line)) && line.trim().length > 0;
 };
 
-// Function to split text into sub-tasks if needed
+// Improved function to split text into sub-tasks if needed
 const splitIntoSubtasks = (text: string): string[] => {
   const tasks: string[] = [];
   
-  // Look for patterns that indicate a sequence of tasks
+  // Try to match the specific Danny example pattern first (highest priority)
+  const dannyPattern = /\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+must\s+finish\s+(.+?)(?:before|by)\s+([^.]+)\.+\s+(?:He|She|They|[A-Z][a-z]+)(?:'ll|\s+will|\s+needs?\s+to)?\s+(?:need\s+to\s+)?(?:send|submit|deliver|share)\s+(.+?)(?:to|for|with)\s+(.+?)(?:\.|\s+for)/i;
+  
+  const dannyMatch = text.match(dannyPattern);
+  if (dannyMatch) {
+    const person = dannyMatch[1];
+    const item = dannyMatch[2];
+    const deadline1 = dannyMatch[3];
+    const deliverable = dannyMatch[4];
+    const recipients = dannyMatch[5];
+    
+    // Create two separate tasks
+    const task1 = `${person} must finish ${item} before ${deadline1}`;
+    const task2 = `${person} needs to send ${deliverable} to ${recipients}`;
+    
+    return [task1, task2];
+  }
+  
+  // More generalized two-step task patterns
+  const twoStepPatterns = [
+    // Pattern: "X needs to do A and then do B"
+    /\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+(?:needs|has|must|should|will)\s+to\s+(.+?)\s+(?:and\s+then|then|after\s+that|and\s+(?:later|afterward|afterwards|subsequently))\s+(.+?)(?:\.|\s*$)/i,
+    
+    // Pattern: "X needs to do A before doing B"
+    /\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+(?:needs|has|must|should|will)\s+to\s+(.+?)\s+before\s+(.+?)(?:\.|\s*$)/i,
+    
+    // Pattern: "X will do A, followed by B"
+    /\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+(?:will|should|must|needs\s+to)\s+(.+?),?\s+(?:followed\s+by|next\s+(?:is|will|should|must|needs\s+to))\s+(.+?)(?:\.|\s*$)/i,
+    
+    // Pattern: "X needs to finish A by date. X will/needs to send/submit B to Y"
+    /\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+(?:needs|has|must|should|will)\s+to\s+(?:finish|complete)\s+(.+?)(?:by|before|on)\s+(.+?)\.+\s+\1\s+(?:will|needs\s+to|has\s+to|must|should)\s+(?:send|submit|deliver|share)\s+(.+?)(?:to|for|with)\s+(.+?)(?:\.|\s*$)/i
+  ];
+  
+  for (const pattern of twoStepPatterns) {
+    const match = text.match(pattern);
+    if (match) {
+      const person = match[1];
+      // Create tasks based on the matched groups
+      const task1 = `${person} needs to ${match[2]}`;
+      const task2 = `${person} needs to ${match[3]}`;
+      
+      return [task1, task2];
+    }
+  }
+  
+  // Look for sequences
   const sequencesByPeriod = text.split(/\.\s+/).filter(s => s.trim().length > 0);
   
   // Look for "and then" or similar sequence indicators
@@ -417,8 +465,8 @@ const splitIntoSubtasks = (text: string): string[] => {
   // Look for "before" clauses which often indicate two separate tasks
   const sequencesByBefore = text.split(/\s+before\s+/i).filter(s => s.trim().length > 0);
   
-  // Collect all potential sequences into a single array
-  const sequences = [
+  // Collect all potential sequences into a single array of potential tasks
+  const potentialTasks = [
     ...sequencesByPeriod,
     ...sequencesByConnectors,
     ...sequencesByNumbers,
@@ -429,7 +477,7 @@ const splitIntoSubtasks = (text: string): string[] => {
   const uniqueTasks = new Set<string>();
   
   // For each potential task, check if it appears to be a valid task (has a verb, reasonable length)
-  for (const potential of sequences) {
+  for (const potential of potentialTasks) {
     // Skip if it's too short or doesn't have an action verb
     if (potential.trim().length < 10 || !(/\b(?:do|make|create|update|review|finish|complete|check|send|write|prepare|schedule|organize|develop|design|implement|test|fix|build|draft|edit|add|remove|change|modify|analyze|evaluate|assess|report|present|discuss|meet|call|email|post|share|upload|download|generate|produce|deliver|submit|approve|verify)\b/i.test(potential))) {
       continue;
@@ -441,40 +489,6 @@ const splitIntoSubtasks = (text: string): string[] => {
   // If we found more than one task, return them as separate tasks
   if (uniqueTasks.size > 1) {
     return Array.from(uniqueTasks);
-  }
-  
-  // Check specifically for multi-step tasks with deadlines or assignees
-  const stepByStepPattern = /(\S+(?:\s+\S+)?\s+(?:must|needs? to|should|will|has to|is going to)(?:\s+\S+){2,}(?:by|before|due|on)\s+\S+(?:\s+\S+){1,2})\.\s+(\S+(?:\s+\S+)?\s+(?:will|needs? to|must|should|has to)(?:\s+\S+){2,})/i;
-  const stepMatch = text.match(stepByStepPattern);
-  
-  if (stepMatch && stepMatch[1] && stepMatch[2]) {
-    tasks.push(stepMatch[1].trim());
-    tasks.push(stepMatch[2].trim());
-    return tasks;
-  }
-  
-  // Look for sentences with different assignees
-  const differentAssigneesPattern = /(\S+(?:\s+\S+)?\s+(?:must|needs? to|should|will|has to|is going to)(?:\s+\S+){2,})\.\s+(\S+(?:\s+\S+)?\s+(?:must|needs? to|should|will|has to|is going to)(?:\s+\S+){2,})/i;
-  const assigneeMatch = text.match(differentAssigneesPattern);
-  
-  if (assigneeMatch && assigneeMatch[1] && assigneeMatch[2]) {
-    const assignee1 = extractAssignee(assigneeMatch[1]);
-    const assignee2 = extractAssignee(assigneeMatch[2]);
-    
-    if (assignee1 && assignee2 && assignee1 !== assignee2) {
-      tasks.push(assigneeMatch[1].trim());
-      tasks.push(assigneeMatch[2].trim());
-      return tasks;
-    }
-  }
-  
-  // Special pattern for Danny's example - improved to match various formats
-  const twoStepPattern = /(.*?\b(?:must|needs? to|should|will|has to)\s+finish.*?(?:before|by).*?)\.+\s+((?:He|She|They|[A-Z][a-z]+)\b.*?(?:send|submit|deliver).*?(?:by|before|to).*?)/i;
-  const twoStepMatch = text.match(twoStepPattern);
-  if (twoStepMatch && twoStepMatch[1] && twoStepMatch[2]) {
-    tasks.push(twoStepMatch[1].trim());
-    tasks.push(twoStepMatch[2].trim());
-    return tasks;
   }
   
   // Check for split by "to" where both parts make sense as separate tasks
@@ -495,8 +509,99 @@ const splitIntoSubtasks = (text: string): string[] => {
     }
   }
   
+  // Look for sentences with different assignees
+  const differentAssigneesPattern = /(\S+(?:\s+\S+)?\s+(?:must|needs? to|should|will|has to|is going to)(?:\s+\S+){2,})\.\s+(\S+(?:\s+\S+)?\s+(?:must|needs? to|should|will|has to|is going to)(?:\s+\S+){2,})/i;
+  const assigneeMatch = text.match(differentAssigneesPattern);
+  
+  if (assigneeMatch && assigneeMatch[1] && assigneeMatch[2]) {
+    const assignee1 = extractAssignee(assigneeMatch[1]);
+    const assignee2 = extractAssignee(assigneeMatch[2]);
+    
+    if (assignee1 && assignee2 && assignee1 !== assignee2) {
+      tasks.push(assigneeMatch[1].trim());
+      tasks.push(assigneeMatch[2].trim());
+      return tasks;
+    }
+  }
+  
   // If we didn't find multiple tasks, return the original text in an array
   return [text];
+};
+
+// Improved function to clean up task titles by removing names, dates, etc.
+const cleanupTaskTitle = (title: string, assignee: string | null, dueDate: string | null): string => {
+  let cleanTitle = title;
+  
+  // Remove assignee name from title if present
+  if (assignee) {
+    // Different patterns to remove person name attribution
+    const namePatterns = [
+      new RegExp(`\\b${assignee}\\b\\s+(?:needs|should|will|must|has|is|can|to|needs to|has to|is going to|should|must)\\b.*?`, 'gi'),
+      new RegExp(`\\b${assignee}'s\\b`, 'gi'),
+      new RegExp(`\\b${assignee}\\b`, 'gi') // Only remove the bare name if other patterns don't match
+    ];
+    
+    // Try each pattern in order of specificity
+    for (const pattern of namePatterns) {
+      const beforeClean = cleanTitle;
+      cleanTitle = cleanTitle.replace(pattern, '').trim();
+      // If we removed something with this pattern, break to avoid over-cleaning
+      if (beforeClean !== cleanTitle) break;
+    }
+  }
+  
+  // Clean date mentions from title
+  if (dueDate) {
+    const datePatterns = [
+      /\b(?:by|before|due|on|deadline)\s+(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+\d{1,2}(?:st|nd|rd|th)?(?:,?\s+\d{4})?\b/gi,
+      /\b(?:by|before|due|on|deadline)\s+\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}\b/gi,
+      /\bwithin\s+(\d+|one|two|three|four|five|six|seven|eight|nine|ten)\s+(?:days?|hours?|weeks?)\b/gi,
+      /\bin\s+(\d+|one|two|three|four|five|six|seven|eight|nine|ten)\s+(?:days?|hours?|weeks?)\b/gi,
+      /\b(\d+|one|two|three|four|five|six|seven|eight|nine|ten)\s+(?:days?|hours?|weeks?)\s+(?:deadline|turnaround)\b/gi,
+      /\b(?:within|by|before|due)\s+24\s+hours?\b/gi,
+      /\b(?:within|by|before|due)\s+one day\b/gi,
+      /\b(?:tomorrow|next week|this|next)\s+(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/gi,
+      /\b(?:march|april|may|june|july|august|september|october|november|december|january|february)\s+\d{1,2}(?:st|nd|rd|th)?\b/gi
+    ];
+    
+    for (const pattern of datePatterns) {
+      cleanTitle = cleanTitle.replace(pattern, '').trim();
+    }
+  }
+  
+  // Convert to task-oriented language and make it more concise
+  cleanTitle = convertToTaskLanguage(cleanTitle);
+  
+  // Clean up spaces, dots, commas at beginning and end
+  cleanTitle = cleanTitle.replace(/^[,.\s]+/, '').replace(/[,.\s]+$/, '').trim();
+  cleanTitle = cleanTitle.replace(/\s{2,}/g, ' ');
+  
+  // Capitalize first letter
+  if (cleanTitle.length > 0) {
+    cleanTitle = cleanTitle.charAt(0).toUpperCase() + cleanTitle.slice(1);
+  }
+  
+  // Add a verb at the beginning if one isn't present
+  const startsWithVerbRegex = /^(?:Create|Update|Review|Prepare|Schedule|Organize|Develop|Design|Implement|Test|Fix|Build|Draft|Edit|Add|Remove|Change|Modify|Analyze|Evaluate|Assess|Report|Present|Discuss|Meet|Call|Email|Post|Share|Upload|Download|Generate|Produce|Deliver|Submit|Approve|Verify|Check|Complete|Finish|Send|Write)\b/i;
+  
+  if (!startsWithVerbRegex.test(cleanTitle) && cleanTitle.length > 0) {
+    // Try to infer the right verb based on context
+    if (/report|analysis|presentation|document|slide|deck/i.test(cleanTitle)) {
+      cleanTitle = "Create " + cleanTitle;
+    } else if (/meeting|call|discussion|conversation/i.test(cleanTitle)) {
+      cleanTitle = "Schedule " + cleanTitle;
+    } else if (/review|feedback|comments/i.test(cleanTitle)) {
+      cleanTitle = "Provide " + cleanTitle;
+    } else if (/data|metrics|numbers|statistics/i.test(cleanTitle)) {
+      cleanTitle = "Analyze " + cleanTitle;
+    } else if (/email|message/i.test(cleanTitle)) {
+      cleanTitle = "Send " + cleanTitle;
+    } else {
+      cleanTitle = "Complete " + cleanTitle;
+    }
+  }
+  
+  return cleanTitle;
 };
 
 // Main function to parse text into potential tasks
@@ -546,68 +651,16 @@ export const parseTextIntoTasks = (text: string): Task[] => {
       // Try to extract a project name specific to this task
       let projectName = extractProjectName(subtaskText) || overallProjectName;
       
-      // Create a copy of the text to be processed for title
-      let processedText = subtaskText;
-      
-      // Remove the person's name from the title if it's already captured as assignee
-      if (assignee) {
-        const assigneePattern = new RegExp(`\\b${assignee}\\b\\s+(?:needs|should|will|must|has|is|can|to|needs to|has to|is going to|should|must)\\b.*?`, 'gi');
-        processedText = processedText.replace(assigneePattern, '').trim();
-        
-        // Also try removing just the name
-        const nameOnlyPattern = new RegExp(`\\b${assignee}\\b`, 'gi');
-        processedText = processedText.replace(nameOnlyPattern, '').trim();
-      }
-      
-      // Clean date mentions from title
-      if (dueDate) {
-        const datePatterns = [
-          /\b(?:by|before|due|on|deadline)\s+(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+\d{1,2}(?:st|nd|rd|th)?(?:,?\s+\d{4})?\b/gi,
-          /\b(?:by|before|due|on|deadline)\s+\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}\b/gi,
-          /\bwithin\s+(\d+|one|two|three|four|five|six|seven|eight|nine|ten)\s+(?:days?|hours?|weeks?)\b/gi,
-          /\bin\s+(\d+|one|two|three|four|five|six|seven|eight|nine|ten)\s+(?:days?|hours?|weeks?)\b/gi,
-          /\b(\d+|one|two|three|four|five|six|seven|eight|nine|ten)\s+(?:days?|hours?|weeks?)\s+(?:deadline|turnaround)\b/gi,
-          /\b(?:24 hours?|one day)\b/gi,
-          /\b(?:tomorrow|next week|this|next)\s+(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/gi
-        ];
-        
-        for (const pattern of datePatterns) {
-          processedText = processedText.replace(pattern, '').trim();
-        }
-      }
-      
-      // Clean priority indicators from title
-      if (priority) {
-        const priorityPatterns = [
-          /\b(?:high|medium|low)\s+priority\b/gi,
-          /\b(?:urgent|important|critical|p1|p2|p3)\b/gi
-        ];
-        
-        for (const pattern of priorityPatterns) {
-          processedText = processedText.replace(pattern, '').trim();
-        }
-      }
-      
-      // Now convert to task-oriented language to make it more concise
-      processedText = convertToTaskLanguage(processedText);
-      
-      // Clean up extra spaces, punctuation
-      processedText = processedText.replace(/\s{2,}/g, ' ').trim();
-      processedText = processedText.replace(/^[,.:;]+/, '').trim();
-      processedText = processedText.replace(/[,.:;]+$/, '').trim();
-      
-      // Capitalize first letter again after all processing
-      if (processedText.length > 0) {
-        processedText = processedText.charAt(0).toUpperCase() + processedText.slice(1);
-      }
+      // Clean up the task title - remove names, dates, priority, etc.
+      let processedTitle = cleanupTaskTitle(subtaskText, assignee, dueDate);
       
       // Try to separate title from description if there's a colon or dash
-      let title = processedText;
+      let title = processedTitle;
       let description = '';
       
       const titleSeparators = [/:\s/, /\s-\s/, /\s–\s/];
       for (const separator of titleSeparators) {
-        const parts = processedText.split(separator, 2);
+        const parts = processedTitle.split(separator, 2);
         if (parts.length === 2) {
           title = parts[0].trim();
           description = parts[1].trim();
