@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import NoteInput from '@/components/NoteInput';
 import TaskExtractor from '@/components/TaskExtractor';
@@ -24,8 +23,12 @@ const Index = () => {
   // Handle moving from note input to task extraction
   const handleParseText = (text: string, providedProjectName: string | null) => {
     setNoteText(text);
-    setProjectName(providedProjectName);
     const tasks = parseTextIntoTasks(text, providedProjectName);
+    
+    // Extract project name from tasks if not provided
+    const extractedProjectName = tasks.find(task => task.project)?.project || null;
+    setProjectName(extractedProjectName);
+    
     setExtractedTasks(tasks);
     setStep('extract');
   };

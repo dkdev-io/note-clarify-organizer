@@ -3,9 +3,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { PlusIcon, ArrowRightIcon, FileTextIcon, SendIcon, BriefcaseIcon } from 'lucide-react';
+import { FileTextIcon, SendIcon, ArrowRightIcon, PlusIcon } from 'lucide-react';
 
 interface NoteInputProps {
   onParseTasks: (text: string, projectName: string | null) => void;
@@ -13,14 +11,13 @@ interface NoteInputProps {
 
 const NoteInput: React.FC<NoteInputProps> = ({ onParseTasks }) => {
   const [noteText, setNoteText] = useState('');
-  const [projectName, setProjectName] = useState<string>('');
   const [isTransitioning, setIsTransitioning] = useState(false);
 
   const handleSubmit = () => {
     if (noteText.trim()) {
       setIsTransitioning(true);
       setTimeout(() => {
-        onParseTasks(noteText, projectName.trim() || null);
+        onParseTasks(noteText, null); // Pass null as we'll extract the project name from text
         setIsTransitioning(false);
       }, 400);
     }
@@ -34,15 +31,6 @@ const NoteInput: React.FC<NoteInputProps> = ({ onParseTasks }) => {
 
   const loadSample = (index: number) => {
     setNoteText(sampleNotes[index]);
-    
-    // Set sample project names based on the sample content
-    const sampleProjectNames = [
-      "Team Meetings",
-      "Project Alpha",
-      "Weekly Stand-up"
-    ];
-    
-    setProjectName(sampleProjectNames[index]);
   };
 
   return (
@@ -54,27 +42,10 @@ const NoteInput: React.FC<NoteInputProps> = ({ onParseTasks }) => {
             Meeting Notes
           </CardTitle>
           <p className="text-muted-foreground text-sm mt-1">
-            Paste your meeting notes or any text to extract tasks
+            Paste your meeting notes or any text to extract tasks and project name
           </p>
         </CardHeader>
         <CardContent>
-          <div className="mb-4">
-            <Label htmlFor="projectName" className="flex items-center mb-1.5 text-sm">
-              <BriefcaseIcon className="h-4 w-4 mr-1" />
-              Project Name
-            </Label>
-            <Input
-              id="projectName"
-              placeholder="Enter project name"
-              className="p-2 text-base bg-white border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary transition-all"
-              value={projectName}
-              onChange={(e) => setProjectName(e.target.value)}
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              This project name will be applied to all extracted tasks
-            </p>
-          </div>
-          
           <Textarea
             placeholder="Paste your meeting notes, to-do lists, or any text here..."
             className="min-h-[240px] p-4 text-base leading-relaxed resize-none bg-white border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary transition-all"

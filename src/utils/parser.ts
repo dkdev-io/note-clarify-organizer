@@ -292,6 +292,8 @@ const extractProjectName = (text: string): string | null => {
     /re:[:\s]+([^,.;]+)/i,
     /#([a-zA-Z0-9_-]+)/,  // Hashtag style project names
     /meeting(?:\s+for|\s+about|\s+on|\s*:)?\s+([^,.;:]+)(?:\s*:)?/i, // Meeting for/about Project X
+    /^([^:]+):(?:\s*)/m, // Lines with a title followed by colon (common in meeting notes)
+    /^([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,3})(?:\s+-|\s+Notes|\s+Meeting|\s+Summary|\s+Recap|\s+Discussion)/i, // Title-like starting lines
   ];
   
   // Try each explicit pattern
@@ -353,7 +355,8 @@ const extractProjectName = (text: string): string | null => {
     }
   }
   
-  return null;
+  // If we couldn't extract a project name from the text, use a default
+  return "Tasks";
 };
 
 // Function to convert conversational text to task-oriented language
@@ -746,12 +749,11 @@ export const parseTextIntoTasks = (text: string, defaultProjectName: string | nu
     }
   }
   
-  // Ensure all tasks have the project name set
-  if (overallProjectName) {
-    for (const task of tasks) {
-      if (!task.project) {
-        task.project = overallProjectName;
-      }
+  // Ensure all tasks have the project name set - always use a project name
+  const finalProjectName = overallProjectName || "Tasks"; // Fallback to "Tasks" if no project name found
+  for (const task of tasks) {
+    if (!task.project) {
+      task.project = finalProjectName;
     }
   }
   
