@@ -1,3 +1,4 @@
+
 /**
  * Utility functions for parsing text notes into structured tasks
  */
@@ -316,22 +317,25 @@ const extractProjectName = (text: string): string | null => {
   
   // Check for context clues in the first line
   const contextCluePatterns = [
-    // Patterns like "Here's our plan for the xyz client marketing campaign"
-    // This pattern looks for "for the" followed by a phrase that could be a project name
-    /^(?:.*?)\s+for\s+(?:the\s+)?([A-Za-z0-9\s\-_]+?(?:\s+client|\s+project|\s+campaign|\s+initiative|\s+redesign|\s+launch|\s+implementation))(?:\.|\s*$)/i,
+    // Updated pattern to handle possessive forms
+    // This pattern looks for "for the xyz client's marketing campaign" type structures
+    /^(?:.*?)\s+for\s+(?:the\s+)?([A-Za-z0-9\s\-_']+?(?:\s+client(?:'s)?|\s+project|\s+campaign|\s+initiative|\s+redesign|\s+launch|\s+implementation))(?:\.|\s*$)/i,
+    
+    // New pattern to specifically handle "xyz client's marketing campaign"
+    /^(?:.*?)\s+for\s+(?:the\s+)?([A-Za-z0-9]+(?:\s+[A-Za-z0-9]+){0,2}(?:'s)?(?:\s+[A-Za-z0-9]+){1,3})(?:\.|\s*$)/i,
     
     // Patterns for phrases like "Here's our plan for the website development"
-    /^(?:.*?)\s+for\s+(?:the\s+)?([A-Za-z0-9\s\-_]+?)(?:\.|\s*$)/i,  // "plan for the website development."
-    /^(?:.*?)\s+on\s+(?:the\s+)?([A-Za-z0-9\s\-_]+?)(?:\.|\s*$)/i,   // "working on the website development."
-    /^(?:.*?)\s+about\s+(?:the\s+)?([A-Za-z0-9\s\-_]+?)(?:\.|\s*$)/i, // "notes about the website development."
+    /^(?:.*?)\s+for\s+(?:the\s+)?([A-Za-z0-9\s\-_']+?)(?:\.|\s*$)/i,  // "plan for the website development."
+    /^(?:.*?)\s+on\s+(?:the\s+)?([A-Za-z0-9\s\-_']+?)(?:\.|\s*$)/i,   // "working on the website development."
+    /^(?:.*?)\s+about\s+(?:the\s+)?([A-Za-z0-9\s\-_']+?)(?:\.|\s*$)/i, // "notes about the website development."
     
     // More specific project patterns
-    /^(?:.*?)\s+for\s+(?:the\s+)?([A-Za-z0-9\s\-_]+?)\s+project\b/i,  // "plan for the marketing project"
-    /^(?:.*?)\s+(?:the\s+)?([A-Za-z0-9\s\-_]+?)\s+project\b/i,        // "the marketing project"
-    /^([A-Za-z0-9\s\-_]+?)\s+(?:project|plan|initiative)\b/i,         // "Marketing Project" or "Alpha plan"
+    /^(?:.*?)\s+for\s+(?:the\s+)?([A-Za-z0-9\s\-_']+?)\s+project\b/i,  // "plan for the marketing project"
+    /^(?:.*?)\s+(?:the\s+)?([A-Za-z0-9\s\-_']+?)\s+project\b/i,        // "the marketing project"
+    /^([A-Za-z0-9\s\-_']+?)\s+(?:project|plan|initiative)\b/i,         // "Marketing Project" or "Alpha plan"
     
     // Title-like patterns
-    /^([A-Za-z0-9\s\-_]+?)(?::\s|\s-\s|\s–\s)/i, // "Project Name: details" or "Website Development - Tasks"
+    /^([A-Za-z0-9\s\-_']+?)(?::\s|\s-\s|\s–\s)/i, // "Project Name: details" or "Website Development - Tasks"
   ];
   
   // Try each context clue pattern
