@@ -14,6 +14,7 @@ export interface Task {
   workspace_id: string | null;
   isRecurring: boolean;
   frequency: string | null;
+  project: string | null;
 }
 
 // Function to generate a unique ID
@@ -21,8 +22,31 @@ const generateId = (): string => {
   return Math.random().toString(36).substring(2, 11);
 };
 
-// Function to extract dates from text
+// Function to extract dates from text including hour-based specifications
 const extractDate = (text: string): string | null => {
+  // Hour-based deadline patterns
+  const hourBasedPatterns = [
+    // "within X hours", "in X hours", "X hour turnaround"
+    /\b(?:within|in)\s+(\d+)\s+hours?\b/i,
+    /\b(\d+)\s+hours?\s+(?:turnaround|deadline|timeframe)\b/i,
+    /\bturnaround\s+(?:time|of)?\s+(\d+)\s+hours?\b/i,
+    /\bdue\s+in\s+(\d+)\s+hours?\b/i,
+    /\bcomplete\s+(?:within|in)\s+(\d+)\s+hours?\b/i
+  ];
+  
+  // Check for hour-based deadlines first
+  for (const pattern of hourBasedPatterns) {
+    const match = text.match(pattern);
+    if (match && match[1]) {
+      const hours = parseInt(match[1], 10);
+      if (!isNaN(hours)) {
+        const now = new Date();
+        now.setHours(now.getHours() + hours);
+        return now.toISOString().split('T')[0];
+      }
+    }
+  }
+
   // Expanded date patterns recognition
   const datePatterns = [
     // Format: by/due/on/for month day, year
@@ -187,12 +211,55 @@ const isRecurringTask = (text: string): { isRecurring: boolean, frequency: strin
   return { isRecurring: false, frequency: null };
 };
 
+// Function to extract project name from text
+const extractProjectName = (text: string): string | null => {
+  const projectIndicators = [
+    /project\s*(?:name|title)?[:\s]+([^,.;]+)/i,
+    /for project[:\s]+([^,.;]+)/i,
+    /project[:\s]+([^,.;]+)/i,
+    /\[project[:\s]+([^\]]+)\]/i,
+    /re:[:\s]+([^,.;]+)/i,
+    /#([a-zA-Z0-9_-]+)/  // Hashtag style project names
+  ];
+  
+  // First look at the beginning of the text for a title/subject line
+  const lines = text.split(/\r?\n/);
+  if (lines.length > 0) {
+    const firstLine = lines[0].trim();
+    
+    // If first line has "Meeting:", "Project:", etc.
+    if (/^(?:meeting|project|sprint|planning|review)(?:\s+for|\s+on|\s*:)?\s+(.+)$/i.test(firstLine)) {
+      const match = firstLine.match(/^(?:meeting|project|sprint|planning|review)(?:\s+for|\s+on|\s*:)?\s+(.+)$/i);
+      if (match && match[1]) {
+        return match[1].trim();
+      }
+    }
+  }
+  
+  // Try each pattern
+  for (const pattern of projectIndicators) {
+    const match = text.match(pattern);
+    if (match && match[1]) {
+      return match[1].trim();
+    }
+  }
+  
+  return null;
+};
+
 // Main function to parse text into potential tasks
 export const parseTextIntoTasks = (text: string): Task[] => {
   if (!text.trim()) return [];
   
+  // Try to extract a project name from the overall text
+  const overallProjectName = extractProjectName(text);
+  
   // Split text into lines
-  const lines = text.split(/\r?\n/).filter(line => line.trim().length > 0);
+  const lines = text.split(/\r?\n/).filter(line => {
+    // Filter out common greeting/closing lines and very short lines
+    const greetingClosingRegex = /^(?:hi\s+(?:all|everyone|team)|hello\s+(?:all|everyone|team)|thanks|thank\s+you|regards|sincerely|cheers|best|great\s+meeting)/i;
+    return line.trim().length > 0 && !greetingClosingRegex.test(line.trim());
+  });
   
   // Identify potential tasks by looking for action items, bullet points, numbered lists, etc.
   const taskIndicators = [
@@ -223,6 +290,9 @@ export const parseTextIntoTasks = (text: string): Task[] => {
     const assignee = extractAssignee(taskText);
     const status = extractStatus(taskText);
     const recurring = isRecurringTask(taskText);
+    
+    // Try to extract a project name specific to this task
+    let projectName = extractProjectName(taskText) || overallProjectName;
     
     // Try to separate title from description if there's a colon or dash
     let title = taskText;
@@ -272,7 +342,8 @@ export const parseTextIntoTasks = (text: string): Task[] => {
       assignee,
       workspace_id: null,
       isRecurring: recurring.isRecurring,
-      frequency: recurring.frequency
+      frequency: recurring.frequency,
+      project: projectName
     });
   }
   

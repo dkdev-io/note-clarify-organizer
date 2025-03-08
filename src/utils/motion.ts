@@ -1,3 +1,4 @@
+
 /**
  * Utility functions for interacting with the Motion API
  */
@@ -13,9 +14,17 @@ interface MotionTask {
   status: string;
   assignee_id?: string;
   workspace_id: string;
+  project_id?: string;
   recurring?: {
     frequency: string;
   };
+}
+
+interface MotionProject {
+  id: string;
+  name: string;
+  description?: string;
+  workspace_id: string;
 }
 
 interface MotionApiError {
@@ -42,6 +51,45 @@ const formatDateForMotion = (dateString: string | null): string | undefined => {
     console.error("Error formatting date:", e);
     return undefined;
   }
+};
+
+// Function to find or create a project in Motion
+export const findOrCreateProject = async (
+  projectName: string, 
+  workspaceId: string
+): Promise<{ id: string; isNew: boolean; error?: MotionApiError }> => {
+  console.log(`Searching for project: ${projectName} in workspace: ${workspaceId}`);
+  
+  // Simulate API call to search for existing project
+  await new Promise(resolve => setTimeout(resolve, 600));
+  
+  // Mock implementation - in a real app, this would search Motion for the project
+  const mockProjects: MotionProject[] = [
+    { id: 'project-1', name: 'Website Redesign', workspace_id: 'workspace-1' },
+    { id: 'project-2', name: 'Marketing Campaign', workspace_id: 'workspace-2' },
+    { id: 'project-3', name: 'Product Launch', workspace_id: 'workspace-3' }
+  ];
+  
+  // Check if project already exists (case-insensitive partial match)
+  const existingProject = mockProjects.find(p => 
+    p.name.toLowerCase().includes(projectName.toLowerCase()) && 
+    p.workspace_id === workspaceId
+  );
+  
+  if (existingProject) {
+    return { id: existingProject.id, isNew: false };
+  }
+  
+  // Project doesn't exist, create a new one
+  console.log(`Creating new project: ${projectName}`);
+  
+  // Simulate API call to create project
+  await new Promise(resolve => setTimeout(resolve, 800));
+  
+  // Generate a mock project ID
+  const newProjectId = `project-${Math.random().toString(36).substring(2, 8)}`;
+  
+  return { id: newProjectId, isNew: true };
 };
 
 // Mock function for Motion API integration
@@ -72,12 +120,26 @@ export const addTaskToMotion = async (task: Task): Promise<{ success: boolean; e
       };
     }
     
+    // If the task has a project name but no project ID, find or create the project
+    let projectId = undefined;
+    if (task.project) {
+      const projectResult = await findOrCreateProject(task.project, task.workspace_id);
+      if (projectResult.error) {
+        return {
+          success: false,
+          error: projectResult.error
+        };
+      }
+      projectId = projectResult.id;
+    }
+    
     // Convert our task format to Motion's format
     const motionTask: MotionTask = {
       name: task.title,
       description: task.description,
       status: convertStatusToMotion(task.status),
-      workspace_id: task.workspace_id
+      workspace_id: task.workspace_id,
+      project_id: projectId
     };
     
     if (task.dueDate) {
@@ -194,3 +256,86 @@ export const fetchWorkspaces = async (): Promise<MotionWorkspace[]> => {
     { id: 'workspace-3', name: 'Client Work' }
   ];
 };
+
+// Search for projects in Motion
+export const searchProjects = async (
+  query: string, 
+  workspaceId?: string
+): Promise<MotionProject[]> => {
+  console.log(`Searching for projects with query: ${query}${workspaceId ? ` in workspace: ${workspaceId}` : ''}`);
+  
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 700));
+  
+  // Mock projects
+  const allProjects: MotionProject[] = [
+    { id: 'project-1', name: 'Website Redesign', workspace_id: 'workspace-1' },
+    { id: 'project-2', name: 'Marketing Campaign', workspace_id: 'workspace-2' },
+    { id: 'project-3', name: 'Product Launch', workspace_id: 'workspace-3' },
+    { id: 'project-4', name: 'Q1 Planning', workspace_id: 'workspace-1' },
+    { id: 'project-5', name: 'Mobile App Development', workspace_id: 'workspace-2' },
+    { id: 'project-6', name: 'Annual Report', workspace_id: 'workspace-3' }
+  ];
+  
+  // Filter by workspace if provided
+  let filteredProjects = workspaceId 
+    ? allProjects.filter(p => p.workspace_id === workspaceId)
+    : allProjects;
+  
+  // Filter by query if provided
+  if (query) {
+    const lowerQuery = query.toLowerCase();
+    filteredProjects = filteredProjects.filter(p => 
+      p.name.toLowerCase().includes(lowerQuery)
+    );
+  }
+  
+  return filteredProjects;
+};
+
+// Create a new project in Motion
+export const createProject = async (
+  name: string,
+  workspaceId: string,
+  description?: string
+): Promise<{ success: boolean; project?: MotionProject; error?: MotionApiError }> => {
+  console.log(`Creating project: ${name} in workspace: ${workspaceId}`);
+  
+  // Validate required fields
+  if (!name) {
+    return {
+      success: false,
+      error: {
+        message: 'Project name is required',
+        code: 'MISSING_FIELD'
+      }
+    };
+  }
+  
+  if (!workspaceId) {
+    return {
+      success: false,
+      error: {
+        message: 'Workspace ID is required',
+        code: 'MISSING_FIELD'
+      }
+    };
+  }
+  
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 800));
+  
+  // Create a mock project
+  const newProject: MotionProject = {
+    id: `project-${Math.random().toString(36).substring(2, 8)}`,
+    name,
+    description,
+    workspace_id: workspaceId
+  };
+  
+  return {
+    success: true,
+    project: newProject
+  };
+};
+

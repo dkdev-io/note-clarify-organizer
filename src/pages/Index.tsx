@@ -18,12 +18,18 @@ const Index = () => {
   const [extractedTasks, setExtractedTasks] = useState<Task[]>([]);
   const [selectedTasks, setSelectedTasks] = useState<Task[]>([]);
   const [reviewedTasks, setReviewedTasks] = useState<Task[]>([]);
+  const [projectName, setProjectName] = useState<string | null>(null);
   const { toast } = useToast();
 
   // Handle moving from note input to task extraction
   const handleParseText = (text: string) => {
     setNoteText(text);
     const tasks = parseTextIntoTasks(text);
+    
+    // Check if any task has a project name
+    const foundProject = tasks.find(task => task.project)?.project || null;
+    setProjectName(foundProject);
+    
     setExtractedTasks(tasks);
     setStep('extract');
   };
@@ -35,8 +41,18 @@ const Index = () => {
   };
 
   // Handle moving from review to preview
-  const handleContinueToPreview = (tasks: Task[]) => {
-    setReviewedTasks(tasks);
+  const handleContinueToPreview = (tasks: Task[], updatedProjectName?: string) => {
+    if (updatedProjectName) {
+      setProjectName(updatedProjectName);
+      // Update all tasks with the project name
+      const updatedTasks = tasks.map(task => ({
+        ...task,
+        project: updatedProjectName
+      }));
+      setReviewedTasks(updatedTasks);
+    } else {
+      setReviewedTasks(tasks);
+    }
     setStep('preview');
   };
 
@@ -45,7 +61,7 @@ const Index = () => {
     setStep('complete');
     toast({
       title: "Success!",
-      description: `${reviewedTasks.length} tasks have been added to Motion.`,
+      description: `${reviewedTasks.length} tasks have been added to Motion${projectName ? ` under project '${projectName}'` : ''}.`,
     });
   };
 
@@ -55,6 +71,7 @@ const Index = () => {
     setExtractedTasks([]);
     setSelectedTasks([]);
     setReviewedTasks([]);
+    setProjectName(null);
     setStep('input');
   };
 
@@ -127,14 +144,22 @@ const Index = () => {
       </div>
       <h2 className="text-2xl font-medium text-gray-900 mb-2">All Done!</h2>
       <p className="text-muted-foreground mb-6">
-        Your tasks have been successfully added to Motion.
+        Your tasks have been successfully added to Motion
+        {projectName && <span className="font-medium"> under project '{projectName}'</span>}.
       </p>
-      <div className="flex justify-center">
+      <div className="flex justify-center gap-3">
         <Badge 
           className="px-3 py-1 bg-blue-50 text-blue-700 border-blue-200"
         >
           {reviewedTasks.length} Tasks Added
         </Badge>
+        {projectName && (
+          <Badge 
+            className="px-3 py-1 bg-purple-50 text-purple-700 border-purple-200"
+          >
+            Project: {projectName}
+          </Badge>
+        )}
       </div>
       <button 
         onClick={handleStartOver}
@@ -166,6 +191,7 @@ const Index = () => {
             <TaskExtractor 
               rawText={noteText}
               extractedTasks={extractedTasks}
+              projectName={projectName}
               onBack={() => setStep('input')}
               onContinue={handleContinueToReview}
             />
@@ -174,6 +200,7 @@ const Index = () => {
           {step === 'review' && (
             <TaskReview 
               tasks={selectedTasks}
+              projectName={projectName}
               onBack={() => setStep('extract')}
               onContinue={handleContinueToPreview}
             />
@@ -182,6 +209,7 @@ const Index = () => {
           {step === 'preview' && (
             <TaskPreview 
               tasks={reviewedTasks}
+              projectName={projectName}
               onBack={() => setStep('review')}
               onComplete={handleComplete}
             />
