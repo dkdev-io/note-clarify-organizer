@@ -75,6 +75,13 @@ const TaskExtractor: React.FC<TaskExtractorProps> = ({
           </div>
           <CardDescription>
             Select the items you want to convert into tasks
+            {projectName && (
+              <div className="mt-2">
+                <Badge className="bg-purple-50 text-purple-700 border-purple-200">
+                  Project: {projectName}
+                </Badge>
+              </div>
+            )}
           </CardDescription>
         </CardHeader>
         
@@ -152,6 +159,11 @@ const TaskExtractor: React.FC<TaskExtractorProps> = ({
                           {task.assignee && (
                             <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 text-[10px]">
                               Assignee: {task.assignee}
+                            </Badge>
+                          )}
+                          {task.project && (
+                            <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-200 text-[10px]">
+                              Project: {task.project}
                             </Badge>
                           )}
                         </div>
