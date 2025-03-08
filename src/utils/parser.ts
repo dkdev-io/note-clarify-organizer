@@ -292,15 +292,22 @@ const extractProjectName = (text: string): string | null => {
   console.log("Extracting project name from:", firstLine);
   
   // Check for context clues in the first line (highest priority)
-  // This pattern catches phrases like "Here's our plan for the website development"
   const contextCluePatterns = [
-    /^(?:.*?)\s+for\s+(?:the\s+)?(.+?)(?:\.|$)/i,  // "plan for the website development"
-    /^(?:.*?)\s+for\s+(?:the\s+)?(.+?)\s+project\b/i,  // "plan for the marketing project"
-    /^(?:.*?)\s+(?:the\s+)?(.+?)\s+project\b/i,       // "the marketing project"
-    /^(.+?)\s+(?:project|plan|initiative)\b/i,        // "Marketing Project" or "Alpha plan"
+    // Patterns for phrases like "Here's our plan for the website development"
+    /^(?:.*?)\s+for\s+(?:the\s+)?([A-Za-z0-9\s-]+?)(?:\.|\s*$)/i,  // "plan for the website development."
+    /^(?:.*?)\s+on\s+(?:the\s+)?([A-Za-z0-9\s-]+?)(?:\.|\s*$)/i,   // "working on the website development."
+    /^(?:.*?)\s+about\s+(?:the\s+)?([A-Za-z0-9\s-]+?)(?:\.|\s*$)/i, // "notes about the website development."
+    
+    // More specific project patterns
+    /^(?:.*?)\s+for\s+(?:the\s+)?([A-Za-z0-9\s-]+?)\s+project\b/i,  // "plan for the marketing project"
+    /^(?:.*?)\s+(?:the\s+)?([A-Za-z0-9\s-]+?)\s+project\b/i,        // "the marketing project"
+    /^([A-Za-z0-9\s-]+?)\s+(?:project|plan|initiative)\b/i,         // "Marketing Project" or "Alpha plan"
+    
+    // Title-like patterns
+    /^([A-Za-z0-9\s-]+?)(?::\s|\s-\s|\s–\s)/i, // "Project Name: details" or "Website Development - Tasks"
   ];
   
-  // Try each project title pattern
+  // Try each context clue pattern
   for (const pattern of contextCluePatterns) {
     const titleMatch = firstLine.match(pattern);
     if (titleMatch && titleMatch[1]) {
@@ -308,7 +315,7 @@ const extractProjectName = (text: string): string | null => {
       // Filter out short or common words like "the", "a", etc.
       if (candidateProject.length > 2 && 
           !/^(the|a|an|this|our|it|that|these|those|them|his|her|their|its)$/i.test(candidateProject) &&
-          !/^(plan|meeting|discussion|agenda|notes|minutes|summary)$/i.test(candidateProject)) {
+          !/^(plan|meeting|discussion|agenda|notes|minutes|summary|team|update|overview|here|our|status|report)$/i.test(candidateProject)) {
         console.log("Extracted project name from context clue pattern:", candidateProject);
         return candidateProject;
       }
@@ -361,8 +368,14 @@ const extractProjectName = (text: string): string | null => {
         // Clean up the potential project name
         let cleanFirstLine = firstLine;
         
-        // Remove common prefixes
+        // Remove common prefixes and suffixes
         cleanFirstLine = cleanFirstLine.replace(/^(?:re:|subject:|topic:|about:)\s*/i, '');
+        cleanFirstLine = cleanFirstLine.replace(/\s*(?:update|status|report|notes|meeting)$/i, '');
+        
+        // Filter out sentences that end with periods unless they're short (likely a title)
+        if (cleanFirstLine.endsWith('.') && cleanFirstLine.length > 30) {
+          cleanFirstLine = cleanFirstLine.substring(0, cleanFirstLine.lastIndexOf(' '));
+        }
         
         // Make sure it's substantial and not just a generic word
         if (cleanFirstLine.length > 3 && 
