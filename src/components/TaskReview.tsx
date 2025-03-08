@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -79,7 +78,6 @@ const TaskReview: React.FC<TaskReviewProps> = ({
   }, [reviewedTasks]);
 
   useEffect(() => {
-    // Update the edited project name when the prop changes
     setEditedProjectName(projectName);
   }, [projectName]);
 
@@ -159,7 +157,6 @@ const TaskReview: React.FC<TaskReviewProps> = ({
         </CardHeader>
         
         <CardContent className="pb-0">
-          {/* Project name input */}
           <div className="mb-6">
             <Label htmlFor="projectName" className="flex items-center mb-2">
               <BriefcaseIcon className="h-4 w-4 mr-1" />
@@ -469,10 +466,6 @@ const TaskReview: React.FC<TaskReviewProps> = ({
                           </div>
                         </div>
                         
-                        {task.description && (
-                          <p className="text-sm text-muted-foreground mt-2">{task.description}</p>
-                        )}
-                        
                         <div className="flex flex-wrap gap-2 mt-3">
                           {task.project && (
                             <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-200 text-xs">
@@ -528,6 +521,12 @@ const TaskReview: React.FC<TaskReviewProps> = ({
                           {task.isRecurring && (
                             <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-200 text-xs">
                               Recurring: {task.frequency ? task.frequency.charAt(0).toUpperCase() + task.frequency.slice(1) : 'Not set'}
+                            </Badge>
+                          )}
+                          
+                          {task.description && (
+                            <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200 text-xs">
+                              Has description
                             </Badge>
                           )}
                         </div>
