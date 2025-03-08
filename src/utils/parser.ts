@@ -1,4 +1,3 @@
-
 /**
  * Utility functions for parsing text notes into structured tasks
  */
@@ -314,15 +313,23 @@ const extractProjectName = (text: string): string | null => {
       return projectName;
     }
   }
+
+  // *** New specialized pattern for the "client's marketing campaign" format ***
+  const clientCampaignPattern = /\b(?:for|about)\s+(?:the\s+)?([A-Za-z0-9]+(?:\s+[A-Za-z0-9]+){0,2}(?:'s)?\s+[A-Za-z0-9]+(?:\s+[A-Za-z0-9]+){0,2})/i;
+  const clientMatch = firstLine.match(clientCampaignPattern);
+  if (clientMatch && clientMatch[1]) {
+    const extractedName = clientMatch[1].trim();
+    console.log("Extracted client campaign name:", extractedName);
+    return extractedName;
+  }
   
   // Check for context clues in the first line
   const contextCluePatterns = [
-    // Updated pattern to handle possessive forms
-    // This pattern looks for "for the xyz client's marketing campaign" type structures
-    /^(?:.*?)\s+for\s+(?:the\s+)?([A-Za-z0-9\s\-_']+?(?:\s+client(?:'s)?|\s+project|\s+campaign|\s+initiative|\s+redesign|\s+launch|\s+implementation))(?:\.|\s*$)/i,
+    // Pattern for "for the xyz client's marketing campaign"
+    /\b(?:for|about)\s+(?:the\s+)?([A-Za-z0-9]+(?:\s+[A-Za-z0-9]+){0,2}(?:'s)?\s+[A-Za-z0-9]+(?:\s+[A-Za-z0-9]+){0,2})/i,
     
-    // New pattern to specifically handle "xyz client's marketing campaign"
-    /^(?:.*?)\s+for\s+(?:the\s+)?([A-Za-z0-9]+(?:\s+[A-Za-z0-9]+){0,2}(?:'s)?(?:\s+[A-Za-z0-9]+){1,3})(?:\.|\s*$)/i,
+    // Updated pattern to handle possessive forms and longer names
+    /^(?:.*?)\s+for\s+(?:the\s+)?([A-Za-z0-9\s\-_']+?(?:\s+client(?:'s)?|\s+project|\s+campaign|\s+initiative|\s+redesign|\s+launch|\s+implementation))(?:\.|\s*$)/i,
     
     // Patterns for phrases like "Here's our plan for the website development"
     /^(?:.*?)\s+for\s+(?:the\s+)?([A-Za-z0-9\s\-_']+?)(?:\.|\s*$)/i,  // "plan for the website development."
@@ -642,7 +649,7 @@ const isIntroductionText = (text: string): boolean => {
     /^(?:date|time|location|venue|participants|attendees|present):/i,
     /^(?:overview|introduction|background|context|summary|recap|review)/i,
     /^(?:here\'s|attached|please\s+find|sending|sharing)/i,  // Common email/message starters
-    /^(?:our|the)\s+(?:plan|notes|agenda|schedule|timeline|roadmap)/i,  // Common document starters
+    /^(?:our|the)\s+(?:plan|notes|agenda|schedule|timeline|roadmap)\s+(?:for|on|about|regarding)/i,  // Common document starters
   ];
   
   if (introPatterns.some(pattern => pattern.test(text))) {
