@@ -225,6 +225,9 @@ const extractAssignee = (text: string): string | null => {
     // "assigned to X", "assignee: X", etc.
     /(?:assigned to|assignee|responsible|owner):\s*([A-Za-z\s]+?)(?:,|\.|$)/i,
     
+    // Handle names before conjunctions like "and" or "with" - take only the first name
+    /\b([A-Z][a-z]+)(?:\s+[A-Z][a-z]+)?\s+(?:and|with|&)\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?\s+(?:needs|should|will|to|can|must|has to|is going to|has|is supposed to)\b/i,
+    
     // "X needs to", "X should", "X will", etc. - look for person's name followed by action
     /\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+(?:needs|should|will|to|can|must|has to|is going to|needs to|has|is supposed to)\b/i,
     
@@ -241,7 +244,11 @@ const extractAssignee = (text: string): string | null => {
   for (const pattern of assigneePatterns) {
     const match = text.match(pattern);
     if (match && match[1]) {
-      return match[1].trim();
+      // Ensure we're not extracting conjunctions as part of the name
+      const nameCandidate = match[1].trim();
+      if (!/^(and|with|&)$/i.test(nameCandidate)) {
+        return nameCandidate;
+      }
     }
   }
   

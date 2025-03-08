@@ -26,8 +26,8 @@ const NoteInput: React.FC<NoteInputProps> = ({ onParseTasks }) => {
 
   const sampleNotes = [
     "XYZ Client Marketing Campaign - March 12:\n- Sarah needs to prepare the Q2 sales report by May 1st.\n- Update the client presentation with new metrics - high priority.\n- Schedule follow-up meeting with the marketing team next week.\n- John to review the product roadmap document before Friday.",
-    "Project Alpha Planning:\n1. Research competitors by end of month\n2. Create wireframes for the new dashboard - assigned to Mike\n3. Urgent: Fix the login bug reported by users\n4. Schedule user interviews for next sprint",
-    "Creative Agency Rebranding:\n• Jennifer must take the logo and add the tagline by March 11. Once finished, she'll send it to Danny for review.\n• Meet with stakeholders about budget concerns on Tuesday\n• Redesign the website homepage by end of week - assigned to Mark"
+    "Project Alpha Planning:\n1. Research competitors by end of month\n2. Mike must create wireframes for the new dashboard\n3. Urgent: Fix the login bug reported by users\n4. Schedule user interviews for next sprint",
+    "Creative Agency Rebranding:\n• Jennifer must take the logo and add the tagline by March 11.\n• Meet with stakeholders about budget concerns on Tuesday\n• Mark to redesign the website homepage by end of week"
   ];
 
   const loadSample = (index: number) => {
