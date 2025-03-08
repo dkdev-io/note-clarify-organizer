@@ -1,9 +1,9 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { FileTextIcon, SendIcon, ArrowRightIcon, PlusIcon, SaveIcon } from 'lucide-react';
-import { useToast } from "@/components/ui/use-toast";
+import { FileTextIcon, SendIcon, ArrowRightIcon, PlusIcon } from 'lucide-react';
 
 interface NoteInputProps {
   onParseTasks: (text: string, projectName: string | null) => void;
@@ -12,7 +12,6 @@ interface NoteInputProps {
 const NoteInput: React.FC<NoteInputProps> = ({ onParseTasks }) => {
   const [noteText, setNoteText] = useState('');
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const { toast } = useToast();
 
   const handleSubmit = () => {
     if (noteText.trim()) {
@@ -22,27 +21,6 @@ const NoteInput: React.FC<NoteInputProps> = ({ onParseTasks }) => {
         onParseTasks(noteText, null);
         setIsTransitioning(false);
       }, 400);
-    }
-  };
-
-  const handleSaveToKeep = () => {
-    if (noteText.trim()) {
-      // Create the Google Keep URL with the note content
-      const keepUrl = `https://keep.google.com/u/0/#create/${encodeURIComponent(noteText)}`;
-      
-      // Open Google Keep in a new tab
-      window.open(keepUrl, '_blank');
-      
-      toast({
-        title: "Note ready for Keep",
-        description: "Google Keep has been opened with your note content.",
-      });
-    } else {
-      toast({
-        title: "Empty note",
-        description: "Please enter some text before saving to Keep.",
-        variant: "destructive",
-      });
     }
   };
 
@@ -92,16 +70,7 @@ const NoteInput: React.FC<NoteInputProps> = ({ onParseTasks }) => {
             ))}
           </div>
         </CardContent>
-        <CardFooter className="flex justify-between pt-2 pb-4 px-6">
-          <Button 
-            variant="outline"
-            onClick={handleSaveToKeep}
-            disabled={!noteText.trim() || isTransitioning}
-            className="transition-all duration-300"
-          >
-            <SaveIcon className="h-4 w-4 mr-2" />
-            Save to Keep
-          </Button>
+        <CardFooter className="flex justify-end pt-2 pb-4 px-6">
           <Button 
             onClick={handleSubmit}
             disabled={!noteText.trim() || isTransitioning}
