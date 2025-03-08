@@ -291,7 +291,7 @@ const extractProjectName = (text: string): string | null => {
     /\[project[:\s]+([^\]]+)\]/i,
     /re:[:\s]+([^,.;]+)/i,
     /#([a-zA-Z0-9_-]+)/,  // Hashtag style project names
-    /meeting(?:\s+for|\s+about|\s+on|\s*:)?\s+([^,.;:]+)(?:\s*:)?/i, // Meeting for/about Project X
+    /meeting(?:\s+for|\s+about|\s+on|\s*:)?\s+([^,.;:]+)(?:\s*:)?/i // Meeting for/about Project X
   ];
   
   // Try each explicit pattern
@@ -745,51 +745,65 @@ export const parseTextIntoTasks = (text: string): Task[] => {
     }
   }
   
-  return tasks;
+  // Validate tasks against our schema before returning
+  const validatedResults = validateTasksSchema(tasks);
+  
+  if (!validatedResults.success) {
+    console.log('Task validation errors:', validatedResults.invalidTasks);
+  }
+  
+  return validatedResults.validTasks as Task[];
 };
 
 // Function to refine a task based on user feedback
 export const refineTask = (task: Task, updates: Partial<Task>): Task => {
-  return {
+  const updatedTask = {
     ...task,
     ...updates
   };
+  
+  // Validate the updated task
+  const validationResult = validateTaskSchema(updatedTask);
+  
+  if (!validationResult.success) {
+    console.warn('Task validation errors after refinement:', validationResult.error);
+    return task; // Return original if validation fails
+  }
+  
+  return updatedTask as Task;
 };
 
 // Function to check if a task has all required fields
 export const validateTask = (task: Task): { valid: boolean; missingFields: string[] } => {
-  const missingFields: string[] = [];
+  const validationResult = validateTaskSchema(task);
   
-  if (!task.title || task.title.trim() === '') {
-    missingFields.push('title');
+  if (validationResult.success) {
+    return { valid: true, missingFields: [] };
   }
   
-  if (!task.workspace_id) {
-    missingFields.push('workspace_id');
-  }
-  
-  if (task.isRecurring && !task.frequency) {
-    missingFields.push('frequency');
-  }
-  
+  const missingFields = validationResult.error?.map(e => e.path) || [];
   return {
-    valid: missingFields.length === 0,
+    valid: false,
     missingFields
   };
 };
 
 // Function to validate multiple tasks
 export const validateTasks = (tasks: Task[]): { allValid: boolean; tasksWithMissingFields: { task: Task; missingFields: string[] }[] } => {
-  const tasksWithMissingFields = tasks.map(task => {
-    const validation = validateTask(task);
-    return {
-      task,
-      missingFields: validation.missingFields
-    };
-  }).filter(result => result.missingFields.length > 0);
+  const validationResults = validateTasksSchema(tasks);
+  
+  if (validationResults.success) {
+    return { allValid: true, tasksWithMissingFields: [] };
+  }
+  
+  const tasksWithMissingFields = validationResults.invalidTasks.map(invalid => {
+    const task = tasks[invalid.index];
+    const missingFields = invalid.errors?.map(e => e.path) || [];
+    return { task, missingFields };
+  });
   
   return {
-    allValid: tasksWithMissingFields.length === 0,
+    allValid: false,
     tasksWithMissingFields
   };
 };
