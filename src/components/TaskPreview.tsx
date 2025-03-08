@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -209,13 +210,16 @@ const TaskPreview: React.FC<TaskPreviewProps> = ({
                     className="p-3 border border-gray-100 rounded-md bg-white shadow-subtle"
                   >
                     <h4 className="font-medium text-gray-900">{task.title}</h4>
-                    {task.description && (
-                      <p className="text-sm text-muted-foreground mt-1">{task.description}</p>
-                    )}
                     <div className="flex flex-wrap gap-2 mt-2">
                       <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-xs">
                         Workspace: {getWorkspaceName(task.workspace_id)}
                       </Badge>
+                      
+                      {task.description && (
+                        <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 text-xs">
+                          Has Description
+                        </Badge>
+                      )}
                       
                       {task.dueDate && (
                         <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-xs">
