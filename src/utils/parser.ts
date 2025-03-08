@@ -1,3 +1,4 @@
+
 /**
  * Utility functions for parsing text notes into structured tasks
  */
@@ -636,11 +637,12 @@ const cleanupTaskTitle = (title: string, assignee: string | null, dueDate: strin
 };
 
 // Main function to parse text into potential tasks
-export const parseTextIntoTasks = (text: string): Task[] => {
+export const parseTextIntoTasks = (text: string, defaultProjectName: string | null = null): Task[] => {
   if (!text.trim()) return [];
   
-  // Extract a project name first from the overall text
-  const overallProjectName = extractProjectName(text);
+  // Extract a project name first from the overall text or use the provided default
+  const extractedProjectName = extractProjectName(text);
+  const overallProjectName = defaultProjectName || extractedProjectName;
   
   // Split text into lines
   const lines = text.split(/\r?\n/).filter(filterMeetingChatter);
