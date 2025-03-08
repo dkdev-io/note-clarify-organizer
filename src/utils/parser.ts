@@ -289,15 +289,25 @@ const extractProjectName = (text: string): string | null => {
   const lines = text.split(/\r?\n/);
   const firstLine = lines.length > 0 ? lines[0].trim() : '';
   
-  // First, check for "Project X" pattern in the first line (highest priority)
+  console.log("Extracting project name from:", firstLine);
+  
+  // Check for "Project X" pattern in the first line (highest priority)
   // This specific pattern is given priority to catch "Marketing Project" cases
-  const projectTitlePattern = /^(.+?)\s+(?:project|plan|initiative)\b/i;
-  const titleMatch = firstLine.match(projectTitlePattern);
-  if (titleMatch && titleMatch[1]) {
-    const candidateProject = titleMatch[1].trim();
-    if (candidateProject.length > 2 && !/^(the|a|an|this|our)$/i.test(candidateProject)) {
-      console.log("Extracted project name from title pattern:", candidateProject);
-      return candidateProject;
+  const projectTitlePatterns = [
+    /^(?:.*?)\s+for\s+(?:the\s+)?(.+?)\s+project\b/i,  // "plan for the marketing project"
+    /^(?:.*?)\s+(?:the\s+)?(.+?)\s+project\b/i,       // "the marketing project"
+    /^(.+?)\s+(?:project|plan|initiative)\b/i,        // "Marketing Project" or "Alpha plan"
+  ];
+  
+  // Try each project title pattern
+  for (const pattern of projectTitlePatterns) {
+    const titleMatch = firstLine.match(pattern);
+    if (titleMatch && titleMatch[1]) {
+      const candidateProject = titleMatch[1].trim();
+      if (candidateProject.length > 2 && !/^(the|a|an|this|our)$/i.test(candidateProject)) {
+        console.log("Extracted project name from title pattern:", candidateProject);
+        return candidateProject;
+      }
     }
   }
   
