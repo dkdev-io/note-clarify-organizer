@@ -291,21 +291,25 @@ const extractProjectName = (text: string): string | null => {
   
   console.log("Extracting project name from:", firstLine);
   
-  // Check for "Project X" pattern in the first line (highest priority)
-  // This specific pattern is given priority to catch "Marketing Project" cases
-  const projectTitlePatterns = [
+  // Check for context clues in the first line (highest priority)
+  // This pattern catches phrases like "Here's our plan for the website development"
+  const contextCluePatterns = [
+    /^(?:.*?)\s+for\s+(?:the\s+)?(.+?)(?:\.|$)/i,  // "plan for the website development"
     /^(?:.*?)\s+for\s+(?:the\s+)?(.+?)\s+project\b/i,  // "plan for the marketing project"
     /^(?:.*?)\s+(?:the\s+)?(.+?)\s+project\b/i,       // "the marketing project"
     /^(.+?)\s+(?:project|plan|initiative)\b/i,        // "Marketing Project" or "Alpha plan"
   ];
   
   // Try each project title pattern
-  for (const pattern of projectTitlePatterns) {
+  for (const pattern of contextCluePatterns) {
     const titleMatch = firstLine.match(pattern);
     if (titleMatch && titleMatch[1]) {
       const candidateProject = titleMatch[1].trim();
-      if (candidateProject.length > 2 && !/^(the|a|an|this|our)$/i.test(candidateProject)) {
-        console.log("Extracted project name from title pattern:", candidateProject);
+      // Filter out short or common words like "the", "a", etc.
+      if (candidateProject.length > 2 && 
+          !/^(the|a|an|this|our|it|that|these|those|them|his|her|their|its)$/i.test(candidateProject) &&
+          !/^(plan|meeting|discussion|agenda|notes|minutes|summary)$/i.test(candidateProject)) {
+        console.log("Extracted project name from context clue pattern:", candidateProject);
         return candidateProject;
       }
     }
