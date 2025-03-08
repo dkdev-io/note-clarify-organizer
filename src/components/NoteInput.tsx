@@ -25,9 +25,9 @@ const NoteInput: React.FC<NoteInputProps> = ({ onParseTasks }) => {
   };
 
   const sampleNotes = [
-    "Team Meeting Notes - April 5:\n- Sarah needs to prepare the Q2 sales report by May 1st.\n- Update the client presentation with new metrics - high priority.\n- Schedule follow-up meeting with the marketing team next week.\n- John to review the product roadmap document before Friday.",
+    "XYZ Client Marketing Campaign - March 12:\n- Sarah needs to prepare the Q2 sales report by May 1st.\n- Update the client presentation with new metrics - high priority.\n- Schedule follow-up meeting with the marketing team next week.\n- John to review the product roadmap document before Friday.",
     "Project Alpha Planning:\n1. Research competitors by end of month\n2. Create wireframes for the new dashboard - assigned to Mike\n3. Urgent: Fix the login bug reported by users\n4. Schedule user interviews for next sprint",
-    "Weekly Stand-up:\n• Implement new search functionality within 24 hours\n• Create documentation for API - low priority\n• Meet with stakeholders about budget concerns on Tuesday\n• Danny must finish the website before March 20th. He'll need to send the MVP of the site by March 18th to Edward and James for approval"
+    "Creative Agency Rebranding:\n• Jennifer must take the logo and add the tagline by March 11. Once finished, she'll send it to Danny for review.\n• Meet with stakeholders about budget concerns on Tuesday\n• Redesign the website homepage by end of week - assigned to Mark"
   ];
 
   const loadSample = (index: number) => {

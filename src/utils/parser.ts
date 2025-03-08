@@ -315,12 +315,15 @@ const extractProjectName = (text: string): string | null => {
   }
 
   // First priority - specific pattern for "client's marketing campaign" format
-  const clientCampaignPattern = /(?:for|about)\s+(?:the\s+)?([A-Za-z0-9]+(?:\s+[A-Za-z0-9]+){0,2}(?:'s)?\s+[A-Za-z0-9]+(?:\s+[A-Za-z0-9]+){0,2})/i;
+  const clientCampaignPattern = /(?:for|about)\s+(?:the\s+)?([A-Za-z0-9]+(?:\s+[A-Za-z0-9]+){0,3})/i;
   const clientMatch = firstLine.match(clientCampaignPattern);
   if (clientMatch && clientMatch[1]) {
     const extractedName = clientMatch[1].trim();
-    console.log("Extracted client campaign name:", extractedName);
-    return extractedName;
+    // Ensure we don't just capture "for the" or similar phrases
+    if (extractedName.length > 5 && !extractedName.match(/^(the|our|this|for|about)$/i)) {
+      console.log("Extracted client campaign name:", extractedName);
+      return extractedName;
+    }
   }
   
   // Check for context clues in the first line
@@ -451,6 +454,15 @@ const filterMeetingChatter = (line: string): boolean => {
 // Improved function to split text into sub-tasks if needed
 const splitIntoSubtasks = (text: string): string[] => {
   const tasks: string[] = [];
+  
+  // Fix for the Danny/Jennifer pattern that was causing issues
+  const jennyDannyPattern = /([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?).+?finished,\s+(?:she|he|they)(?:'ll|\s+will)?\s+send\s+(?:to|it\s+to)?\s+([A-Z][a-z]+)/i;
+  const jennyMatch = text.match(jennyDannyPattern);
+  
+  if (jennyMatch) {
+    // Handle this specific case separately to avoid the parsing issues
+    return [text]; // Keep it as one task for now to avoid the splitting issues
+  }
   
   // Try to match the specific Danny example pattern first (highest priority)
   const dannyPattern = /\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+must\s+finish\s+(.+?)(?:before|by)\s+([^.]+)\.+\s+(?:He|She|They|[A-Z][a-z]+)(?:'ll|\s+will|\s+needs?\s+to)?\s+(?:need\s+to\s+)?(?:send|submit|deliver|share)\s+(.+?)(?:to|for|with)\s+(.+?)(?:\.|\s+for)/i;
@@ -614,6 +626,9 @@ const cleanupTaskTitle = (title: string, assignee: string | null, dueDate: strin
     }
   }
   
+  // Fix for the "finished, she'll send to Danny" pattern that was causing issues
+  cleanTitle = cleanTitle.replace(/\.\s+(?:Once|When|After)\s+finished,\s+(?:she|he|they)(?:'ll|\s+will)?\s+send\s+(?:to|it\s+to)?\s+[A-Z][a-z]+/i, '');
+  
   // Convert to task-oriented language and make it more concise
   cleanTitle = convertToTaskLanguage(cleanTitle);
   
@@ -742,9 +757,6 @@ export const parseTextIntoTasks = (text: string, defaultProjectName: string | nu
       const status = extractStatus(subtaskText);
       const recurring = isRecurringTask(subtaskText);
       
-      // We use the global project name for all tasks
-      // This ensures all tasks from the same note share the same project
-      
       // Clean up the task title - remove names, dates, priority, etc.
       let processedTitle = cleanupTaskTitle(subtaskText, assignee, dueDate);
       
@@ -771,6 +783,9 @@ export const parseTextIntoTasks = (text: string, defaultProjectName: string | nu
         }
       }
       
+      // Only add metadata to description once to avoid duplication
+      const metadataDescription = [];
+      
       // Add deadline information to description if there's a due date
       if (dueDate) {
         const formattedDate = new Date(dueDate).toLocaleDateString('en-US', { 
@@ -780,20 +795,24 @@ export const parseTextIntoTasks = (text: string, defaultProjectName: string | nu
           year: 'numeric'
         });
         
-        // Add deadline information to description if not already present
-        if (!description.includes("Deadline") && !description.includes("Due date")) {
-          description = description ? `${description}\nDue date: ${formattedDate}` : `Due date: ${formattedDate}`;
-        }
+        metadataDescription.push(`Due date: ${formattedDate}`);
       }
       
-      // Add assignee information to description if there's an assignee
-      if (assignee && !description.includes("Assigned to")) {
-        description = description ? `${description}\nAssigned to: ${assignee}` : `Assigned to: ${assignee}`;
+      // Add assignee information to description
+      if (assignee) {
+        metadataDescription.push(`Assigned to: ${assignee}`);
       }
       
-      // Add project information to description if there's a project
-      if (projectName && !description.includes("Project:")) {
-        description = description ? `${description}\nProject: ${projectName}` : `Project: ${projectName}`;
+      // Add project information to description
+      if (projectName) {
+        metadataDescription.push(`Project: ${projectName}`);
+      }
+      
+      // Combine original description with metadata
+      if (description) {
+        description = `${description}\n\n${metadataDescription.join('\n')}`;
+      } else {
+        description = metadataDescription.join('\n');
       }
       
       // Add a task with the project name explicitly set
