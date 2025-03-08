@@ -333,6 +333,17 @@ const extractProjectName = (text: string): string | null => {
     }
   }
   
+  // Check for phrases like "Here's our plan for the xyz marketing campaign"
+  const planForPattern = /(?:here(?:'s|\sis|\sare)?\s+(?:our|the|some|my)?\s+(?:plan|notes|agenda|update|overview|summary|ideas|thoughts)\s+(?:for|on|about|regarding)\s+(?:the\s+)?)([\w\s]+)/i;
+  const planForMatch = firstLine.match(planForPattern);
+  if (planForMatch && planForMatch[1]) {
+    const extractedName = planForMatch[1].trim();
+    if (extractedName.length > 3 && !extractedName.match(/^(the|our|this|for|about)$/i)) {
+      console.log("Extracted project name from 'plan for' pattern:", extractedName);
+      return extractedName;
+    }
+  }
+  
   // Check for context clues in the first line
   const contextCluePatterns = [
     // Updated patterns for phrases like "Here's our plan for the website development"
