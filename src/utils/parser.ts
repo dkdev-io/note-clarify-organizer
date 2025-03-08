@@ -314,8 +314,8 @@ const extractProjectName = (text: string): string | null => {
     }
   }
 
-  // *** New specialized pattern for the "client's marketing campaign" format ***
-  const clientCampaignPattern = /\b(?:for|about)\s+(?:the\s+)?([A-Za-z0-9]+(?:\s+[A-Za-z0-9]+){0,2}(?:'s)?\s+[A-Za-z0-9]+(?:\s+[A-Za-z0-9]+){0,2})/i;
+  // First priority - specific pattern for "client's marketing campaign" format
+  const clientCampaignPattern = /\b(?:for|about)\s+(?:the\s+)?([A-Za-z0-9]+(?:\s+[A-Za-z0-9]+){0,2}(?:'s)?\s+[A-Za-z0-9]+(?:\s+[A-Za-z0-9]+){0,2})\b/i;
   const clientMatch = firstLine.match(clientCampaignPattern);
   if (clientMatch && clientMatch[1]) {
     const extractedName = clientMatch[1].trim();
@@ -325,13 +325,7 @@ const extractProjectName = (text: string): string | null => {
   
   // Check for context clues in the first line
   const contextCluePatterns = [
-    // Pattern for "for the xyz client's marketing campaign"
-    /\b(?:for|about)\s+(?:the\s+)?([A-Za-z0-9]+(?:\s+[A-Za-z0-9]+){0,2}(?:'s)?\s+[A-Za-z0-9]+(?:\s+[A-Za-z0-9]+){0,2})/i,
-    
-    // Updated pattern to handle possessive forms and longer names
-    /^(?:.*?)\s+for\s+(?:the\s+)?([A-Za-z0-9\s\-_']+?(?:\s+client(?:'s)?|\s+project|\s+campaign|\s+initiative|\s+redesign|\s+launch|\s+implementation))(?:\.|\s*$)/i,
-    
-    // Patterns for phrases like "Here's our plan for the website development"
+    // Updated patterns for phrases like "Here's our plan for the website development"
     /^(?:.*?)\s+for\s+(?:the\s+)?([A-Za-z0-9\s\-_']+?)(?:\.|\s*$)/i,  // "plan for the website development."
     /^(?:.*?)\s+on\s+(?:the\s+)?([A-Za-z0-9\s\-_']+?)(?:\.|\s*$)/i,   // "working on the website development."
     /^(?:.*?)\s+about\s+(?:the\s+)?([A-Za-z0-9\s\-_']+?)(?:\.|\s*$)/i, // "notes about the website development."
