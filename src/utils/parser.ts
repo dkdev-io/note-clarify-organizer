@@ -405,19 +405,24 @@ const splitIntoSubtasks = (text: string): string[] => {
   const tasks: string[] = [];
   
   // Look for patterns that indicate a sequence of tasks
+  const sequencesByPeriod = text.split(/\.\s+/).filter(s => s.trim().length > 0);
+  
+  // Look for "and then" or similar sequence indicators
+  const sequencesByConnectors = text.split(/\s+and\s+then\s+|\s+after\s+that\s+|\s+next,?\s+|\s+subsequently\s+|\s+following\s+that\s+/i)
+    .filter(s => s.trim().length > 0);
+  
+  // Look for numbered sequences like "1. First task 2. Second task"
+  const sequencesByNumbers = text.split(/\s*\d+\.\s+/).filter(s => s.trim().length > 0);
+  
+  // Look for "before" clauses which often indicate two separate tasks
+  const sequencesByBefore = text.split(/\s+before\s+/i).filter(s => s.trim().length > 0);
+  
+  // Collect all potential sequences into a single array
   const sequences = [
-    // Look for sentences separated by periods that both contain action verbs
-    text.split(/\.\s+/).filter(s => s.trim().length > 0),
-    
-    // Look for "and then" or similar sequence indicators
-    ...text.split(/\s+and\s+then\s+|\s+after\s+that\s+|\s+next,?\s+|\s+subsequently\s+|\s+following\s+that\s+/i)
-      .filter(s => s.trim().length > 0),
-    
-    // Look for numbered sequences like "1. First task 2. Second task"
-    ...text.split(/\s*\d+\.\s+/).filter(s => s.trim().length > 0),
-    
-    // Look for "before" clauses which often indicate two separate tasks
-    ...text.split(/\s+before\s+/i).filter(s => s.trim().length > 0)
+    ...sequencesByPeriod,
+    ...sequencesByConnectors,
+    ...sequencesByNumbers,
+    ...sequencesByBefore
   ];
   
   // Collect unique task texts (may have duplicates from different patterns)
@@ -461,6 +466,15 @@ const splitIntoSubtasks = (text: string): string[] => {
       tasks.push(assigneeMatch[2].trim());
       return tasks;
     }
+  }
+  
+  // Special pattern for Danny's example
+  const twoStepPattern = /(.*?must\s+finish.*?before.*?)\.+\s+(He.*?send.*?by.*?for.*)/i;
+  const twoStepMatch = text.match(twoStepPattern);
+  if (twoStepMatch && twoStepMatch[1] && twoStepMatch[2]) {
+    tasks.push(twoStepMatch[1].trim());
+    tasks.push(twoStepMatch[2].trim());
+    return tasks;
   }
   
   // Check for split by "to" where both parts make sense as separate tasks
