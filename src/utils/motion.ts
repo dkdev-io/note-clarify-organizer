@@ -1,4 +1,3 @@
-
 /**
  * Utility functions for interacting with the Motion API
  */
@@ -28,6 +27,22 @@ interface MotionWorkspace {
   id: string;
   name: string;
 }
+
+// Format a date in YYYY-MM-DD format for the Motion API
+const formatDateForMotion = (dateString: string | null): string | undefined => {
+  if (!dateString) return undefined;
+  
+  try {
+    // Ensure the date is in the correct format for the API (YYYY-MM-DD)
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return undefined;
+    
+    return date.toISOString().split('T')[0];
+  } catch (e) {
+    console.error("Error formatting date:", e);
+    return undefined;
+  }
+};
 
 // Mock function for Motion API integration
 // This would be replaced with actual API calls once the API key is provided
@@ -66,7 +81,7 @@ export const addTaskToMotion = async (task: Task): Promise<{ success: boolean; e
     };
     
     if (task.dueDate) {
-      motionTask.due_date = task.dueDate;
+      motionTask.due_date = formatDateForMotion(task.dueDate);
     }
     
     if (task.priority) {
