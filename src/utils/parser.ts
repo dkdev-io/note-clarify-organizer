@@ -298,7 +298,19 @@ const extractProjectName = (text: string): string | null => {
   
   console.log("Extracting project name from:", firstLine);
   
-  // Check for common project name patterns in the first line - highest priority
+  // First priority - specific pattern for "Here's our plan for the xyz marketing campaign" format
+  const planForPattern = /(?:here(?:'s|\sis|\sare)?\s+(?:our|the|some|my)?\s+(?:plan|notes|agenda|update|overview|summary|ideas|thoughts)\s+(?:for|on|about|regarding)\s+(?:the\s+)?)([\w\s]+)/i;
+  const planForMatch = firstLine.match(planForPattern);
+  if (planForMatch && planForMatch[1]) {
+    const extractedName = planForMatch[1].trim();
+    // Ensure we don't just capture "for the" or similar phrases
+    if (extractedName.length > 3 && !extractedName.match(/^(the|our|this|for|about)$/i)) {
+      console.log("Extracted project name from 'plan for' pattern:", extractedName);
+      return extractedName;
+    }
+  }
+  
+  // Check for common project name patterns in the first line
   const projectNamePatterns = [
     // Client/project name at beginning or end of the sentence
     /^([A-Z][a-z0-9]+(?:\s+[A-Z][a-z0-9]+){1,3})\s+(?:project|campaign|initiative|redesign|launch|implementation)/i,
@@ -311,7 +323,7 @@ const extractProjectName = (text: string): string | null => {
     /([A-Z][a-z0-9]+(?:\s+[A-Z][a-z0-9]+){0,2})\s+(?:client|account)(?:\s+([a-z0-9]+(?:\s+[a-z0-9]+){1,3})\s+(?:project|campaign|initiative|redesign|launch|implementation))?/i,
   ];
   
-  // Try specific project name patterns first
+  // Try specific project name patterns
   for (const pattern of projectNamePatterns) {
     const match = firstLine.match(pattern);
     if (match && match[1]) {
@@ -321,29 +333,6 @@ const extractProjectName = (text: string): string | null => {
     }
   }
 
-  // First priority - specific pattern for "client's marketing campaign" format
-  const clientCampaignPattern = /(?:for|about)\s+(?:the\s+)?([A-Za-z0-9]+(?:\s+[A-Za-z0-9]+){0,3})/i;
-  const clientMatch = firstLine.match(clientCampaignPattern);
-  if (clientMatch && clientMatch[1]) {
-    const extractedName = clientMatch[1].trim();
-    // Ensure we don't just capture "for the" or similar phrases
-    if (extractedName.length > 5 && !extractedName.match(/^(the|our|this|for|about)$/i)) {
-      console.log("Extracted client campaign name:", extractedName);
-      return extractedName;
-    }
-  }
-  
-  // Check for phrases like "Here's our plan for the xyz marketing campaign"
-  const planForPattern = /(?:here(?:'s|\sis|\sare)?\s+(?:our|the|some|my)?\s+(?:plan|notes|agenda|update|overview|summary|ideas|thoughts)\s+(?:for|on|about|regarding)\s+(?:the\s+)?)([\w\s]+)/i;
-  const planForMatch = firstLine.match(planForPattern);
-  if (planForMatch && planForMatch[1]) {
-    const extractedName = planForMatch[1].trim();
-    if (extractedName.length > 3 && !extractedName.match(/^(the|our|this|for|about)$/i)) {
-      console.log("Extracted project name from 'plan for' pattern:", extractedName);
-      return extractedName;
-    }
-  }
-  
   // Check for context clues in the first line
   const contextCluePatterns = [
     // Updated patterns for phrases like "Here's our plan for the website development"
