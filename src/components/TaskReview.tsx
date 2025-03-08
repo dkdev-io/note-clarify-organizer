@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -5,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Task, refineTask, validateTasks } from '@/utils/parser';
-import { ArrowLeftIcon, ArrowRightIcon, CalendarIcon, CheckCircle2Icon, EditIcon, TrashIcon, AlertCircleIcon } from 'lucide-react';
+import { ArrowLeftIcon, ArrowRightIcon, CalendarIcon, CheckCircle2Icon, EditIcon, TrashIcon, AlertCircleIcon, BriefcaseIcon } from 'lucide-react';
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -38,6 +39,7 @@ const TaskReview: React.FC<TaskReviewProps> = ({
     allValid: boolean;
     tasksWithMissingFields: { task: Task; missingFields: string[] }[]
   }>({ allValid: true, tasksWithMissingFields: [] });
+  const [editedProjectName, setEditedProjectName] = useState<string | null>(projectName);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -75,6 +77,11 @@ const TaskReview: React.FC<TaskReviewProps> = ({
     const validationResult = validateTasks(reviewedTasks);
     setValidation(validationResult);
   }, [reviewedTasks]);
+
+  useEffect(() => {
+    // Update the edited project name when the prop changes
+    setEditedProjectName(projectName);
+  }, [projectName]);
 
   const handleEditTask = (task: Task) => {
     setEditingTaskId(task.id);
@@ -121,7 +128,7 @@ const TaskReview: React.FC<TaskReviewProps> = ({
     
     setIsTransitioning(true);
     setTimeout(() => {
-      onContinue(reviewedTasks, projectName);
+      onContinue(reviewedTasks, editedProjectName || undefined);
     }, 400);
   };
 
@@ -152,6 +159,24 @@ const TaskReview: React.FC<TaskReviewProps> = ({
         </CardHeader>
         
         <CardContent className="pb-0">
+          {/* Project name input */}
+          <div className="mb-6">
+            <Label htmlFor="projectName" className="flex items-center mb-2">
+              <BriefcaseIcon className="h-4 w-4 mr-1" />
+              Project Name
+            </Label>
+            <Input 
+              id="projectName"
+              value={editedProjectName || ''}
+              onChange={(e) => setEditedProjectName(e.target.value || null)}
+              placeholder="Enter project name"
+              className="border-gray-200"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              This project name will be applied to all tasks
+            </p>
+          </div>
+          
           {!validation.allValid && validation.tasksWithMissingFields.length > 0 && (
             <Alert variant="destructive" className="mb-4">
               <AlertCircleIcon className="h-4 w-4" />
@@ -216,6 +241,20 @@ const TaskReview: React.FC<TaskReviewProps> = ({
                             onChange={(e) => setEditingTask({...editingTask, description: e.target.value})}
                             className="border-gray-200 resize-none min-h-[80px]"
                           />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label htmlFor="project">Project</Label>
+                          <Input 
+                            id="project"
+                            value={editingTask.project || ''}
+                            onChange={(e) => setEditingTask({...editingTask, project: e.target.value || null})}
+                            placeholder="Enter project name"
+                            className="border-gray-200"
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            Leave blank to use the global project name
+                          </p>
                         </div>
                         
                         <div className="space-y-2">
@@ -435,6 +474,12 @@ const TaskReview: React.FC<TaskReviewProps> = ({
                         )}
                         
                         <div className="flex flex-wrap gap-2 mt-3">
+                          {task.project && (
+                            <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-200 text-xs">
+                              Project: {task.project}
+                            </Badge>
+                          )}
+                          
                           <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-xs">
                             Workspace: {getWorkspaceName(task.workspace_id)}
                           </Badge>
