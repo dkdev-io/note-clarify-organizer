@@ -468,8 +468,8 @@ const splitIntoSubtasks = (text: string): string[] => {
     }
   }
   
-  // Special pattern for Danny's example
-  const twoStepPattern = /(.*?must\s+finish.*?before.*?)\.+\s+(He.*?send.*?by.*?for.*)/i;
+  // Special pattern for Danny's example - improved to match various formats
+  const twoStepPattern = /(.*?\b(?:must|needs? to|should|will|has to)\s+finish.*?(?:before|by).*?)\.+\s+((?:He|She|They|[A-Z][a-z]+)\b.*?(?:send|submit|deliver).*?(?:by|before|to).*?)/i;
   const twoStepMatch = text.match(twoStepPattern);
   if (twoStepMatch && twoStepMatch[1] && twoStepMatch[2]) {
     tasks.push(twoStepMatch[1].trim());
@@ -536,20 +536,20 @@ export const parseTextIntoTasks = (text: string): Task[] => {
     const subtasks = splitIntoSubtasks(taskText);
     
     for (const subtaskText of subtasks) {
-      // Convert conversational language to task-oriented language
-      let processedText = convertToTaskLanguage(subtaskText);
-      
-      // Extract task information
-      const dueDate = extractDate(processedText);
-      const priority = extractPriority(processedText);
-      const assignee = extractAssignee(processedText);
-      const status = extractStatus(processedText);
-      const recurring = isRecurringTask(processedText);
+      // Extract task information first to properly identify assignees, dates, etc.
+      const dueDate = extractDate(subtaskText);
+      const priority = extractPriority(subtaskText);
+      const assignee = extractAssignee(subtaskText);
+      const status = extractStatus(subtaskText);
+      const recurring = isRecurringTask(subtaskText);
       
       // Try to extract a project name specific to this task
-      let projectName = extractProjectName(processedText) || overallProjectName;
+      let projectName = extractProjectName(subtaskText) || overallProjectName;
       
-      // Remove the person's name and date from the text if it's already captured as assignee or dueDate
+      // Create a copy of the text to be processed for title
+      let processedText = subtaskText;
+      
+      // Remove the person's name from the title if it's already captured as assignee
       if (assignee) {
         const assigneePattern = new RegExp(`\\b${assignee}\\b\\s+(?:needs|should|will|must|has|is|can|to|needs to|has to|is going to|should|must)\\b.*?`, 'gi');
         processedText = processedText.replace(assigneePattern, '').trim();
@@ -557,17 +557,6 @@ export const parseTextIntoTasks = (text: string): Task[] => {
         // Also try removing just the name
         const nameOnlyPattern = new RegExp(`\\b${assignee}\\b`, 'gi');
         processedText = processedText.replace(nameOnlyPattern, '').trim();
-        
-        // Clean up the text if it starts with unnecessary words after name removal
-        processedText = processedText.replace(/^(?:will|should|to|needs|is going|has|must|can)\s+/i, '');
-        processedText = processedText.replace(/^(?:,|\.|\s)+/, ''); // Remove leading punctuation
-        
-        // The pattern matching might have removed too much, so make sure we still have something
-        if (processedText.length < 5) {
-          // If almost nothing remains, reconstruct without the name
-          processedText = subtaskText.replace(new RegExp(`\\b${assignee}\\b`, 'gi'), '').trim();
-          processedText = convertToTaskLanguage(processedText);
-        }
       }
       
       // Clean date mentions from title
@@ -586,6 +575,26 @@ export const parseTextIntoTasks = (text: string): Task[] => {
           processedText = processedText.replace(pattern, '').trim();
         }
       }
+      
+      // Clean priority indicators from title
+      if (priority) {
+        const priorityPatterns = [
+          /\b(?:high|medium|low)\s+priority\b/gi,
+          /\b(?:urgent|important|critical|p1|p2|p3)\b/gi
+        ];
+        
+        for (const pattern of priorityPatterns) {
+          processedText = processedText.replace(pattern, '').trim();
+        }
+      }
+      
+      // Now convert to task-oriented language to make it more concise
+      processedText = convertToTaskLanguage(processedText);
+      
+      // Clean up extra spaces, punctuation
+      processedText = processedText.replace(/\s{2,}/g, ' ').trim();
+      processedText = processedText.replace(/^[,.:;]+/, '').trim();
+      processedText = processedText.replace(/[,.:;]+$/, '').trim();
       
       // Capitalize first letter again after all processing
       if (processedText.length > 0) {
@@ -628,6 +637,11 @@ export const parseTextIntoTasks = (text: string): Task[] => {
         if (!description.includes("Deadline") && !description.includes("Due date")) {
           description = description ? `${description}\nDue date: ${formattedDate}` : `Due date: ${formattedDate}`;
         }
+      }
+      
+      // Add assignee information to description if there's an assignee
+      if (assignee && !description.includes("Assigned to")) {
+        description = description ? `${description}\nAssigned to: ${assignee}` : `Assigned to: ${assignee}`;
       }
       
       // Add a clean copy of the task that doesn't have any extra info that might have been moved to metadata
