@@ -615,26 +615,6 @@ const cleanupTaskTitle = (title: string, assignee: string | null, dueDate: strin
     cleanTitle = cleanTitle.charAt(0).toUpperCase() + cleanTitle.slice(1);
   }
   
-  // Add a verb at the beginning if one isn't present
-  const startsWithVerbRegex = /^(?:Create|Update|Review|Prepare|Schedule|Organize|Develop|Design|Implement|Test|Fix|Build|Draft|Edit|Add|Remove|Change|Modify|Analyze|Evaluate|Assess|Report|Present|Discuss|Meet|Call|Email|Post|Share|Upload|Download|Generate|Produce|Deliver|Submit|Approve|Verify|Check|Complete|Finish|Send|Write)\b/i;
-  
-  if (!startsWithVerbRegex.test(cleanTitle) && cleanTitle.length > 0) {
-    // Try to infer the right verb based on context
-    if (/report|analysis|presentation|document|slide|deck/i.test(cleanTitle)) {
-      cleanTitle = "Create " + cleanTitle;
-    } else if (/meeting|call|discussion|conversation/i.test(cleanTitle)) {
-      cleanTitle = "Schedule " + cleanTitle;
-    } else if (/review|feedback|comments/i.test(cleanTitle)) {
-      cleanTitle = "Provide " + cleanTitle;
-    } else if (/data|metrics|numbers|statistics/i.test(cleanTitle)) {
-      cleanTitle = "Analyze " + cleanTitle;
-    } else if (/email|message/i.test(cleanTitle)) {
-      cleanTitle = "Send " + cleanTitle;
-    } else {
-      cleanTitle = "Complete " + cleanTitle;
-    }
-  }
-  
   return cleanTitle;
 };
 
@@ -805,3 +785,4 @@ export const validateTasks = (tasks: Task[]): { allValid: boolean; tasksWithMiss
     tasksWithMissingFields
   };
 };
+
