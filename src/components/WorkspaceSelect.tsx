@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getWorkspacesForDropdown, getWorkspacesWithFallback } from '@/utils/motion';
+import { getWorkspacesForDropdown } from '@/utils/motion';
 import { useToast } from "@/components/ui/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -35,7 +35,6 @@ const WorkspaceSelect: React.FC<WorkspaceSelectProps> = ({
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [useMockData, setUseMockData] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -65,28 +64,8 @@ const WorkspaceSelect: React.FC<WorkspaceSelectProps> = ({
         return;
       }
       
-      let workspaceOptions: {label: string, value: string}[] = [];
-      
-      // Try to fetch from real API first
-      if (!useMockData) {
-        workspaceOptions = await getWorkspacesForDropdown();
-      }
-      
-      // If no workspaces returned or using mock data flag is set, use mock data
-      if (workspaceOptions.length === 0 || useMockData) {
-        console.log('Using mock workspaces data');
-        const mockWorkspaces = await getWorkspacesWithFallback();
-        workspaceOptions = mockWorkspaces.map(w => ({ label: w.name, value: w.id }));
-        
-        if (!useMockData) {
-          setUseMockData(true);
-          toast({
-            title: "Using demo mode",
-            description: "Could not connect to Motion API. Using demonstration data instead.",
-            variant: "default",
-          });
-        }
-      }
+      // Fetch workspaces from real API
+      const workspaceOptions = await getWorkspacesForDropdown();
       
       console.log('Loaded workspaces:', workspaceOptions);
       
@@ -113,24 +92,9 @@ const WorkspaceSelect: React.FC<WorkspaceSelectProps> = ({
         description: "Could not load workspaces from Motion. Please check your API key and try again.",
         variant: "destructive",
       });
-      
-      // Try to load mock data as fallback
-      if (!useMockData) {
-        setUseMockData(true);
-        loadWorkspaces();
-      }
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const toggleMockData = () => {
-    setUseMockData(prev => !prev);
-    toast({
-      title: useMockData ? "Switching to API mode" : "Switching to demo mode",
-      description: useMockData ? "Will try to connect to Motion API" : "Will use demonstration data instead of API",
-    });
-    loadWorkspaces();
   };
 
   const handleCreateWorkspace = async () => {
@@ -178,14 +142,6 @@ const WorkspaceSelect: React.FC<WorkspaceSelectProps> = ({
         <div className="space-y-2">
           <div className="flex justify-between items-center">
             <Label htmlFor="workspace">Select Workspace</Label>
-            {useMockData && (
-              <Badge 
-                variant="outline" 
-                className="text-xs bg-amber-50 text-amber-700 border-amber-200 px-2"
-              >
-                Demo Mode
-              </Badge>
-            )}
           </div>
           <div className="flex gap-2">
             <div className="flex-1">
@@ -233,18 +189,6 @@ const WorkspaceSelect: React.FC<WorkspaceSelectProps> = ({
                 title="Create New Workspace"
               >
                 <PlusCircleIcon className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={useMockData ? "default" : "outline"}
-                size="icon"
-                onClick={toggleMockData}
-                title={useMockData ? "Switch to API Mode" : "Switch to Demo Mode"}
-              >
-                {useMockData ? (
-                  <DatabaseIcon className="h-4 w-4" />
-                ) : (
-                  <CloudIcon className="h-4 w-4" />
-                )}
               </Button>
             </div>
           </div>
@@ -312,7 +256,3 @@ const WorkspaceSelect: React.FC<WorkspaceSelectProps> = ({
 };
 
 export default WorkspaceSelect;
-
-// Import Badge and icons for demo mode
-import { Badge } from "@/components/ui/badge";
-import { DatabaseIcon, CloudIcon } from 'lucide-react';

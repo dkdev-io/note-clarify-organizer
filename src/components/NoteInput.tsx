@@ -9,11 +9,13 @@ interface ApiProps {
   isConnected: boolean;
   apiKey: string | null;
   workspaces: any[];
+  selectedWorkspaceId?: string;
+  selectedProject?: string;
 }
 
 interface NoteInputProps {
   onParseTasks: (text: string, projectName: string | null) => void;
-  apiProps?: ApiProps;
+  apiProps: ApiProps;
 }
 
 const NoteInput: React.FC<NoteInputProps> = ({ onParseTasks, apiProps }) => {
@@ -24,8 +26,8 @@ const NoteInput: React.FC<NoteInputProps> = ({ onParseTasks, apiProps }) => {
     if (noteText.trim()) {
       setIsTransitioning(true);
       setTimeout(() => {
-        // Pass null for project name to extract from text
-        onParseTasks(noteText, null);
+        // Pass null for project name to extract from text or use selectedProject from apiProps
+        onParseTasks(noteText, apiProps.selectedProject || null);
         setIsTransitioning(false);
       }, 400);
     }
