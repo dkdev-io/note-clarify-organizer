@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardDescription, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -47,7 +46,6 @@ const TaskPreview: React.FC<TaskPreviewProps> = ({
     
     // Find the project ID by name
     if (apiProps.workspaces && apiProps.selectedWorkspaceId && apiProps.selectedProject) {
-      // For now, return undefined as we need to implement logic to find the project ID
       console.log("Looking for project ID for:", apiProps.selectedProject);
       
       const selectedWorkspace = apiProps.workspaces.find(
@@ -147,6 +145,26 @@ const TaskPreview: React.FC<TaskPreviewProps> = ({
     }, 400);
   };
 
+  // Function to format error messages more readably
+  const formatErrorMessage = (error: any): string => {
+    if (typeof error === 'string') return error;
+    
+    if (error && typeof error === 'object') {
+      // Check if it's a validation error with message property
+      if (error.message) return error.message;
+      
+      // If it has an errors array, flatten it
+      if (error.errors && Array.isArray(error.errors)) {
+        return error.errors.map((e: any) => e.message || JSON.stringify(e)).join(', ');
+      }
+      
+      // Otherwise stringify the object
+      return JSON.stringify(error);
+    }
+    
+    return 'Unknown error';
+  };
+
   return (
     <div className={`w-full max-w-2xl mx-auto transition-all duration-500 ${isTransitioning ? 'opacity-0 translate-x-10' : 'opacity-100 translate-x-0'}`}>
       <Card className="bg-white bg-opacity-80 backdrop-blur-sm border border-gray-100 shadow-card overflow-hidden">
@@ -192,11 +210,7 @@ const TaskPreview: React.FC<TaskPreviewProps> = ({
                 <ul className="list-disc list-inside mt-2 text-sm">
                   {errors.map((error, index) => (
                     <li key={index}>
-                      {error.task}: {typeof error.error === 'object' && error.error.message 
-                        ? error.error.message 
-                        : typeof error.error === 'string' 
-                          ? error.error 
-                          : 'Unknown error'}
+                      {error.task}: {formatErrorMessage(error.error)}
                     </li>
                   ))}
                 </ul>

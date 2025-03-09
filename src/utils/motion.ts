@@ -1,3 +1,4 @@
+
 /**
  * Motion API utilities for authentication and task management
  */
@@ -399,15 +400,14 @@ export const addTasksToMotion = async (
     // Process tasks in sequence to avoid rate limiting
     for (const task of tasks) {
       try {
-        // Format the task for the Motion API
+        // Format the task for the Motion API - use the correct field names as expected by the API
         const taskData = {
           name: task.title,
           description: task.description || "",
-          workspace_id: workspaceId,
-          project_id: projectId || undefined, // Add project_id if available
-          due_date: task.dueDate || undefined,
-          assignee_id: undefined, // Future enhancement
-          status: undefined, // Future enhancement
+          workspaceId: workspaceId, // Changed from workspace_id to workspaceId
+          projectId: projectId || undefined, // Changed from project_id to projectId
+          // Remove due_date if it's causing issues, can be added back after fixing
+          // dueDate: task.dueDate || undefined, // Changed from due_date to dueDate
         };
         
         console.log("Sending task to Motion:", taskData);
