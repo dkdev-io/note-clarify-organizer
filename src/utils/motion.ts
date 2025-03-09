@@ -421,9 +421,9 @@ export const addTasksToMotion = async (tasks: Task[], apiKey?: string): Promise<
         
         console.log(`Adding task: ${task.title} to Motion`);
         
-        // Prepare task data for Motion API
+        // Prepare task data for Motion API - using 'name' instead of 'title'
         const taskData: any = {
-          title: task.title,
+          name: task.title, // IMPORTANT: Motion API expects 'name', not 'title'
           workspaceId: task.workspace_id || null,
         };
         
@@ -474,9 +474,27 @@ export const addTasksToMotion = async (tasks: Task[], apiKey?: string): Promise<
           console.error(`Failed to add task ${task.id} with status ${response.status}:`, errorText);
           
           failedCount++;
+          
+          // Try to parse the error message if it's JSON
+          let errorMessages: string[] = [];
+          try {
+            const errorJson = JSON.parse(errorText);
+            if (errorJson.message) {
+              if (Array.isArray(errorJson.message)) {
+                errorMessages = errorJson.message;
+              } else {
+                errorMessages = [errorJson.message];
+              }
+            } else {
+              errorMessages = [`API Error (${response.status})`];
+            }
+          } catch (e) {
+            errorMessages = [`API Error (${response.status}): ${errorText}`];
+          }
+          
           taskErrors.push({
             taskId: task.id,
-            errors: [`API Error (${response.status}): ${errorText}`]
+            errors: errorMessages
           });
         }
         

@@ -41,6 +41,7 @@ const TaskPreview: React.FC<TaskPreviewProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
+  const [taskErrors, setTaskErrors] = useState<{ taskId: string; errors: string[] }[]>([]);
   const { toast } = useToast();
 
   const validateKey = async () => {
@@ -95,6 +96,8 @@ const TaskPreview: React.FC<TaskPreviewProps> = ({
     
     setIsSubmitting(true);
     setSubmissionError(null);
+    setTaskErrors([]);
+    
     try {
       console.log("Starting task submission to Motion...");
       const result = await addTasksToMotion(tasks, apiKey);
@@ -120,7 +123,7 @@ const TaskPreview: React.FC<TaskPreviewProps> = ({
         } else {
           toast({
             title: "Failed",
-            description: `Failed to add tasks to Motion. Check console for details.`,
+            description: `Failed to add tasks to Motion. Check details below.`,
             variant: "destructive",
           });
           
@@ -128,17 +131,19 @@ const TaskPreview: React.FC<TaskPreviewProps> = ({
         }
         
         if (result.taskErrors && result.taskErrors.length > 0) {
-          result.taskErrors.forEach(taskError => {
-            const task = tasks.find(t => t.id === taskError.taskId);
-            if (task) {
-              console.error(`Error with task "${task.title}":`, taskError.errors);
-              toast({
-                title: `Error with task: ${task.title}`,
-                description: taskError.errors.join(', '),
-                variant: "destructive",
-              });
-            }
-          });
+          setTaskErrors(result.taskErrors);
+          
+          // Show the first error in a toast
+          const firstError = result.taskErrors[0];
+          const task = tasks.find(t => t.id === firstError.taskId);
+          
+          if (task) {
+            toast({
+              title: `Error with task: ${task.title}`,
+              description: firstError.errors.join(', '),
+              variant: "destructive",
+            });
+          }
         }
       }
     } catch (error) {
@@ -246,6 +251,25 @@ const TaskPreview: React.FC<TaskPreviewProps> = ({
                 <AlertCircleIcon className="h-4 w-4 mr-2" />
                 <AlertDescription>{submissionError}</AlertDescription>
               </Alert>
+            )}
+            
+            {taskErrors.length > 0 && (
+              <div className="space-y-3">
+                <h3 className="font-medium text-red-600">Task Errors</h3>
+                <div className="space-y-2 max-h-[150px] overflow-y-auto pr-1">
+                  {taskErrors.map((error, index) => {
+                    const task = tasks.find(t => t.id === error.taskId);
+                    return (
+                      <Alert key={index} variant="destructive" className="py-2">
+                        <div className="flex flex-col space-y-1">
+                          <span className="font-medium">{task ? task.title : 'Unknown task'}</span>
+                          <span className="text-xs">{error.errors.join(', ')}</span>
+                        </div>
+                      </Alert>
+                    );
+                  })}
+                </div>
+              </div>
             )}
             
             <div className="space-y-4">
