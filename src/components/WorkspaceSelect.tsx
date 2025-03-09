@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { getWorkspacesForDropdown, createProject } from '@/utils/motion';
+import { useToast } from "@/components/ui/use-toast";
 
 interface WorkspaceSelectProps {
   apiKey: string | null;
@@ -32,6 +33,8 @@ const WorkspaceSelect: React.FC<WorkspaceSelectProps> = ({
   const [showNewWorkspaceForm, setShowNewWorkspaceForm] = useState(false);
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (apiKey) {
@@ -41,12 +44,18 @@ const WorkspaceSelect: React.FC<WorkspaceSelectProps> = ({
 
   const loadWorkspaces = async () => {
     setIsLoading(true);
+    setError(null);
     try {
       // Store the API key in localStorage for other functions to use
       window.localStorage.setItem('motion_api_key', apiKey || '');
       
       const workspaceOptions = await getWorkspacesForDropdown();
       console.log('Loaded workspaces:', workspaceOptions);
+      
+      if (workspaceOptions.length === 0) {
+        setError("No workspaces found in your Motion account or there was an issue fetching them.");
+      }
+      
       setWorkspaces(workspaceOptions);
       
       // If we have workspaces and none is selected, select the first one
@@ -55,12 +64,17 @@ const WorkspaceSelect: React.FC<WorkspaceSelectProps> = ({
       }
     } catch (error) {
       console.error('Failed to load workspaces:', error);
+      setError("Failed to load workspaces. Please check your API key and try again.");
+      toast({
+        title: "Error loading workspaces",
+        description: "Could not load workspaces from Motion. Please check your API key and try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
-  // In a real app, this would be implemented to create workspaces in Motion
   const handleCreateWorkspace = async () => {
     if (!newWorkspaceName.trim()) return;
     
@@ -79,8 +93,18 @@ const WorkspaceSelect: React.FC<WorkspaceSelectProps> = ({
       onWorkspaceSelect(newWorkspaceId);
       setShowNewWorkspaceForm(false);
       setNewWorkspaceName('');
+      
+      toast({
+        title: "Workspace created",
+        description: `Workspace "${newWorkspaceName}" has been created successfully.`,
+      });
     } catch (error) {
       console.error('Failed to create workspace:', error);
+      toast({
+        title: "Error creating workspace",
+        description: "Failed to create workspace. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsCreating(false);
     }
@@ -129,6 +153,35 @@ const WorkspaceSelect: React.FC<WorkspaceSelectProps> = ({
               title="Create New Workspace"
             >
               <PlusCircleIcon className="h-4 w-4" />
+            </Button>
+          </div>
+          
+          {error && (
+            <p className="text-sm text-red-500 mt-1">{error}</p>
+          )}
+          
+          {workspaces.length === 0 && !isLoading && !error && (
+            <p className="text-sm text-amber-600 mt-1">
+              No workspaces found. You can create a new one or check your API key.
+            </p>
+          )}
+          
+          <div className="flex justify-end mt-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={loadWorkspaces}
+              disabled={isLoading}
+              className="text-xs"
+            >
+              {isLoading ? (
+                <>
+                  <LoaderIcon className="mr-1 h-3 w-3 animate-spin" />
+                  Refreshing...
+                </>
+              ) : (
+                "Refresh Workspaces"
+              )}
             </Button>
           </div>
         </div>

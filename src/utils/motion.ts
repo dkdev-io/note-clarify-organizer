@@ -200,6 +200,9 @@ export const validateMotionApiKey = async (apiKey: string): Promise<boolean> => 
   console.log('Validating Motion API key...');
   
   try {
+    // Store the API key in localStorage for other functions to use
+    window.localStorage.setItem('motion_api_key', apiKey);
+    
     // Try to fetch workspaces to validate the API key
     const response = await fetch('https://api.usemotion.com/v1/workspaces', {
       method: 'GET',
@@ -208,6 +211,11 @@ export const validateMotionApiKey = async (apiKey: string): Promise<boolean> => 
         'x-motion-api-key': apiKey,
       },
     });
+    
+    console.log('Motion API validation response:', response.status);
+    if (!response.ok) {
+      console.error('Motion API validation failed:', await response.text());
+    }
     
     return response.ok;
   } catch (error) {
@@ -273,13 +281,21 @@ export const fetchWorkspaces = async (): Promise<MotionWorkspace[]> => {
   console.log('Fetching workspaces from Motion API...');
   
   try {
+    const apiKey = window.localStorage.getItem('motion_api_key');
+    if (!apiKey) {
+      console.error('No API key found in localStorage');
+      return [];
+    }
+
     const response = await fetch('https://api.usemotion.com/v1/workspaces', {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'x-motion-api-key': window.localStorage.getItem('motion_api_key') || '',
+        'x-motion-api-key': apiKey,
       },
     });
+    
+    console.log('Fetch workspaces response status:', response.status);
     
     if (!response.ok) {
       console.error('Failed to fetch workspaces:', response.statusText);
@@ -287,6 +303,7 @@ export const fetchWorkspaces = async (): Promise<MotionWorkspace[]> => {
     }
     
     const data = await response.json();
+    console.log('Fetched workspaces:', data);
     return data.workspaces || [];
   } catch (error) {
     console.error('Error fetching workspaces:', error);
@@ -306,13 +323,21 @@ export const searchProjects = async (
   }
   
   try {
+    const apiKey = window.localStorage.getItem('motion_api_key');
+    if (!apiKey) {
+      console.error('No API key found in localStorage');
+      return [];
+    }
+
     const response = await fetch(`https://api.usemotion.com/v1/workspaces/${workspaceId}/projects`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'x-motion-api-key': window.localStorage.getItem('motion_api_key') || '',
+        'x-motion-api-key': apiKey,
       },
     });
+    
+    console.log('Fetch projects response status:', response.status);
     
     if (!response.ok) {
       console.error('Failed to search projects:', response.statusText);
@@ -320,6 +345,7 @@ export const searchProjects = async (
     }
     
     const data = await response.json();
+    console.log('Fetched projects:', data);
     let projects = data.projects || [];
     
     // Filter by query if provided
@@ -367,11 +393,23 @@ export const createProject = async (
   }
   
   try {
+    const apiKey = window.localStorage.getItem('motion_api_key');
+    if (!apiKey) {
+      console.error('No API key found in localStorage');
+      return {
+        success: false,
+        error: {
+          message: 'API key not found',
+          code: 'MISSING_API_KEY'
+        }
+      };
+    }
+
     const response = await fetch(`https://api.usemotion.com/v1/workspaces/${workspaceId}/projects`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-motion-api-key': window.localStorage.getItem('motion_api_key') || '',
+        'x-motion-api-key': apiKey,
       },
       body: JSON.stringify({
         name,
@@ -412,6 +450,7 @@ export const createProject = async (
 export const getWorkspacesForDropdown = async (): Promise<{label: string, value: string}[]> => {
   try {
     const workspaces = await fetchWorkspaces();
+    console.log('Workspaces for dropdown:', workspaces);
     return workspaces.map(workspace => ({
       label: workspace.name,
       value: workspace.id
@@ -429,6 +468,7 @@ export const getProjectsForDropdown = async (
 ): Promise<{label: string, value: string}[]> => {
   try {
     const projects = await searchProjects(query, workspaceId);
+    console.log('Projects for dropdown:', projects);
     return projects.map(project => ({
       label: project.name,
       value: project.id
