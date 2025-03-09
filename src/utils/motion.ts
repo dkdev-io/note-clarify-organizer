@@ -204,12 +204,16 @@ export const validateMotionApiKey = async (apiKey: string): Promise<boolean> => 
   }
   
   try {
+    // Clean the API key - remove any whitespace, quotes or other characters that might have been copied
+    const cleanedKey = apiKey.trim().replace(/['"]/g, '');
+    
     // Store the API key in localStorage for other functions to use
-    window.localStorage.setItem('motion_api_key', apiKey);
+    window.localStorage.setItem('motion_api_key', cleanedKey);
     
     // Log the API key (masked for security)
-    const maskedKey = apiKey.substring(0, 5) + '...' + apiKey.substring(apiKey.length - 5);
+    const maskedKey = cleanedKey.substring(0, 5) + '...' + cleanedKey.substring(cleanedKey.length - 5);
     console.log('Using API key (masked):', maskedKey);
+    console.log('API key length:', cleanedKey.length);
     
     // Try to fetch workspaces to validate the API key
     const response = await fetch('https://api.usemotion.com/v1/workspaces', {
@@ -217,7 +221,7 @@ export const validateMotionApiKey = async (apiKey: string): Promise<boolean> => 
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-        'x-motion-api-key': apiKey,
+        'x-motion-api-key': cleanedKey,
       },
     });
     
@@ -338,6 +342,7 @@ export const fetchWorkspaces = async (): Promise<MotionWorkspace[]> => {
     // Log the API key (masked for security)
     const maskedKey = apiKey.substring(0, 5) + '...' + apiKey.substring(apiKey.length - 5);
     console.log('Using API key for fetching workspaces (masked):', maskedKey);
+    console.log('API key length:', apiKey.length);
 
     const response = await fetch('https://api.usemotion.com/v1/workspaces', {
       method: 'GET',
@@ -552,5 +557,30 @@ export const getProjectsForDropdown = async (
   } catch (error) {
     console.error('Error fetching projects for dropdown:', error);
     return [];
+  }
+};
+
+// Function to generate mock data for development when API fails
+export const getMockWorkspaces = (): MotionWorkspace[] => {
+  return [
+    { id: 'workspace-1', name: 'Personal Workspace' },
+    { id: 'workspace-2', name: 'Team Projects' },
+    { id: 'workspace-3', name: 'Client Work' }
+  ];
+};
+
+// Use mock data if real API fails
+export const getWorkspacesWithFallback = async (): Promise<MotionWorkspace[]> => {
+  try {
+    const workspaces = await fetchWorkspaces();
+    if (workspaces && workspaces.length > 0) {
+      return workspaces;
+    }
+    
+    console.log('No workspaces returned from API, using mock data');
+    return getMockWorkspaces();
+  } catch (error) {
+    console.error('Error getting workspaces, falling back to mock data:', error);
+    return getMockWorkspaces();
   }
 };

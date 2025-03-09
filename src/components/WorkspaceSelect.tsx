@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getWorkspacesForDropdown } from '@/utils/motion';
+import { getWorkspacesForDropdown, getWorkspacesWithFallback } from '@/utils/motion';
 import { useToast } from "@/components/ui/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -35,6 +35,7 @@ const WorkspaceSelect: React.FC<WorkspaceSelectProps> = ({
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [useMockData, setUseMockData] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -49,7 +50,14 @@ const WorkspaceSelect: React.FC<WorkspaceSelectProps> = ({
     try {
       // Store the API key in localStorage for other functions to use
       if (apiKey) {
-        window.localStorage.setItem('motion_api_key', apiKey.trim());
+        // Clean the API key - remove any whitespace, quotes or other characters
+        const cleanedKey = apiKey.trim().replace(/['"]/g, '');
+        window.localStorage.setItem('motion_api_key', cleanedKey);
+        
+        // Log the API key details (masked for security)
+        const maskedKey = cleanedKey.substring(0, 5) + '...' + cleanedKey.substring(cleanedKey.length - 5);
+        console.log('Using API key for workspaces (masked):', maskedKey);
+        console.log('API key length:', cleanedKey.length);
       } else {
         console.error('No API key provided to WorkspaceSelect');
         setError("No API key provided. Please enter a valid Motion API key.");
@@ -57,20 +65,36 @@ const WorkspaceSelect: React.FC<WorkspaceSelectProps> = ({
         return;
       }
       
-      // Log the API key (masked for security)
-      if (apiKey) {
-        const maskedKey = apiKey.substring(0, 5) + '...' + apiKey.substring(apiKey.length - 5);
-        console.log('Using API key for workspaces (masked):', maskedKey);
+      let workspaceOptions: {label: string, value: string}[] = [];
+      
+      // Try to fetch from real API first
+      if (!useMockData) {
+        workspaceOptions = await getWorkspacesForDropdown();
       }
       
-      const workspaceOptions = await getWorkspacesForDropdown();
+      // If no workspaces returned or using mock data flag is set, use mock data
+      if (workspaceOptions.length === 0 || useMockData) {
+        console.log('Using mock workspaces data');
+        const mockWorkspaces = await getWorkspacesWithFallback();
+        workspaceOptions = mockWorkspaces.map(w => ({ label: w.name, value: w.id }));
+        
+        if (!useMockData) {
+          setUseMockData(true);
+          toast({
+            title: "Using demo mode",
+            description: "Could not connect to Motion API. Using demonstration data instead.",
+            variant: "default",
+          });
+        }
+      }
+      
       console.log('Loaded workspaces:', workspaceOptions);
       
       if (workspaceOptions.length === 0) {
-        setError("No workspaces found in your Motion account or there was an issue with the API key. Please check your API key and try again.");
+        setError("No workspaces found. Please check your API key or try again later.");
         toast({
           title: "No workspaces found",
-          description: "Couldn't find any workspaces with the provided API key. Make sure your key has the correct permissions.",
+          description: "Couldn't find any workspaces. Make sure your key has the correct permissions.",
           variant: "destructive",
         });
       }
@@ -89,9 +113,24 @@ const WorkspaceSelect: React.FC<WorkspaceSelectProps> = ({
         description: "Could not load workspaces from Motion. Please check your API key and try again.",
         variant: "destructive",
       });
+      
+      // Try to load mock data as fallback
+      if (!useMockData) {
+        setUseMockData(true);
+        loadWorkspaces();
+      }
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const toggleMockData = () => {
+    setUseMockData(prev => !prev);
+    toast({
+      title: useMockData ? "Switching to API mode" : "Switching to demo mode",
+      description: useMockData ? "Will try to connect to Motion API" : "Will use demonstration data instead of API",
+    });
+    loadWorkspaces();
   };
 
   const handleCreateWorkspace = async () => {
@@ -137,7 +176,17 @@ const WorkspaceSelect: React.FC<WorkspaceSelectProps> = ({
     <div className="space-y-4">
       {!showNewWorkspaceForm ? (
         <div className="space-y-2">
-          <Label htmlFor="workspace">Select Workspace</Label>
+          <div className="flex justify-between items-center">
+            <Label htmlFor="workspace">Select Workspace</Label>
+            {useMockData && (
+              <Badge 
+                variant="outline" 
+                className="text-xs bg-amber-50 text-amber-700 border-amber-200 px-2"
+              >
+                Demo Mode
+              </Badge>
+            )}
+          </div>
           <div className="flex gap-2">
             <div className="flex-1">
               <Select
@@ -184,6 +233,18 @@ const WorkspaceSelect: React.FC<WorkspaceSelectProps> = ({
                 title="Create New Workspace"
               >
                 <PlusCircleIcon className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={useMockData ? "default" : "outline"}
+                size="icon"
+                onClick={toggleMockData}
+                title={useMockData ? "Switch to API Mode" : "Switch to Demo Mode"}
+              >
+                {useMockData ? (
+                  <DatabaseIcon className="h-4 w-4" />
+                ) : (
+                  <CloudIcon className="h-4 w-4" />
+                )}
               </Button>
             </div>
           </div>
@@ -251,3 +312,7 @@ const WorkspaceSelect: React.FC<WorkspaceSelectProps> = ({
 };
 
 export default WorkspaceSelect;
+
+// Import Badge and icons for demo mode
+import { Badge } from "@/components/ui/badge";
+import { DatabaseIcon, CloudIcon } from 'lucide-react';
