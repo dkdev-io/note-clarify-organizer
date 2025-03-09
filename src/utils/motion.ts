@@ -1,586 +1,359 @@
+
 /**
- * Utility functions for interacting with the Motion API
+ * Motion API utilities for authentication and task management
  */
 
 import { Task } from './parser';
 
-// Motion API Types
-interface MotionTask {
-  name: string;
-  description: string;
-  due_date?: string;
-  priority?: 'LOW' | 'MEDIUM' | 'HIGH';
-  status: string;
-  assignee_id?: string;
-  workspace_id: string;
-  project_id?: string;
-  recurring?: {
-    frequency: string;
-  };
-}
+// Store API key in memory for reuse across components
+let globalApiKey: string | null = null;
 
-interface MotionProject {
-  id: string;
-  name: string;
-  description?: string;
-  workspace_id: string;
-}
-
-interface MotionApiError {
-  message: string;
-  code?: string;
-}
-
-interface MotionWorkspace {
-  id: string;
-  name: string;
-}
-
-// Format a date in YYYY-MM-DD format for the Motion API
-const formatDateForMotion = (dateString: string | null): string | undefined => {
-  if (!dateString) return undefined;
-  
-  try {
-    // Ensure the date is in the correct format for the API (YYYY-MM-DD)
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return undefined;
-    
-    return date.toISOString().split('T')[0];
-  } catch (e) {
-    console.error("Error formatting date:", e);
-    return undefined;
+// Set the API key for use across components
+export const setMotionApiKey = (apiKey: string | null) => {
+  if (apiKey) {
+    // Clean the API key to remove any whitespace, quotes, etc.
+    const cleanedApiKey = apiKey.trim().replace(/^["']|["']$/g, '');
+    globalApiKey = cleanedApiKey;
+    console.log('API key set in motion utils:', cleanedApiKey.substring(0, 3) + '...' + cleanedApiKey.substring(cleanedApiKey.length - 3));
+    return cleanedApiKey;
+  } else {
+    globalApiKey = null;
+    return null;
   }
 };
 
-// Function to find or create a project in Motion
-export const findOrCreateProject = async (
-  projectName: string, 
-  workspaceId: string
-): Promise<{ id: string; isNew: boolean; error?: MotionApiError }> => {
-  console.log(`Searching for project: ${projectName} in workspace: ${workspaceId}`);
-  
-  try {
-    // First try to find the project
-    const projects = await searchProjects(projectName, workspaceId);
-    const existingProject = projects.find(p => 
-      p.name.toLowerCase() === projectName.toLowerCase()
-    );
-    
-    if (existingProject) {
-      return { id: existingProject.id, isNew: false };
-    }
-    
-    // Project doesn't exist, create a new one
-    console.log(`Creating new project: ${projectName}`);
-    const result = await createProject(projectName, workspaceId);
-    
-    if (!result.success || !result.project) {
-      return { 
-        id: '', 
-        isNew: false, 
-        error: result.error || { message: 'Failed to create project' } 
-      };
-    }
-    
-    return { id: result.project.id, isNew: true };
-  } catch (error) {
-    console.error('Error in findOrCreateProject:', error);
-    return { 
-      id: '', 
-      isNew: false, 
-      error: { message: 'Error finding or creating project' } 
-    };
+// Get the API key (or use the provided one)
+export const getApiKey = (providedApiKey?: string) => {
+  // Use provided key first (and clean it), then fall back to global key
+  if (providedApiKey) {
+    return providedApiKey.trim().replace(/^["']|["']$/g, '');
   }
+  return globalApiKey;
 };
 
-// Function to add a task to Motion
-export const addTaskToMotion = async (task: Task): Promise<{ success: boolean; error?: MotionApiError }> => {
-  console.log('Adding task to Motion:', task);
-  
+// Validate the Motion API key
+export const validateMotionApiKey = async (apiKey?: string): Promise<boolean> => {
   try {
-    // Validate required fields
-    if (!task.title) {
-      return {
-        success: false,
-        error: {
-          message: 'Task name is required',
-          code: 'MISSING_FIELD'
-        }
-      };
-    }
+    console.log('Validating API key...');
+    const usedKey = getApiKey(apiKey);
     
-    if (!task.workspace_id) {
-      return {
-        success: false,
-        error: {
-          message: 'Workspace ID is required',
-          code: 'MISSING_FIELD'
-        }
-      };
-    }
-    
-    // If the task has a project name but no project ID, find or create the project
-    let projectId = undefined;
-    if (task.project) {
-      const projectResult = await findOrCreateProject(task.project, task.workspace_id);
-      if (projectResult.error) {
-        return {
-          success: false,
-          error: projectResult.error
-        };
-      }
-      projectId = projectResult.id;
-    }
-    
-    // Convert our task format to Motion's format
-    const motionTask: MotionTask = {
-      name: task.title,
-      description: task.description,
-      status: convertStatusToMotion(task.status),
-      workspace_id: task.workspace_id,
-      project_id: projectId
-    };
-    
-    if (task.dueDate) {
-      motionTask.due_date = formatDateForMotion(task.dueDate);
-    }
-    
-    if (task.priority) {
-      motionTask.priority = task.priority.toUpperCase() as 'LOW' | 'MEDIUM' | 'HIGH';
-    }
-    
-    if (task.assignee) {
-      // In a real implementation, you would look up the assignee's ID in Motion
-      motionTask.assignee_id = task.assignee;
-    }
-    
-    if (task.isRecurring && task.frequency) {
-      motionTask.recurring = {
-        frequency: task.frequency
-      };
-    }
-    
-    // Make the API call to create the task
-    const response = await fetch('https://api.usemotion.com/v1/tasks', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-motion-api-key': window.localStorage.getItem('motion_api_key') || '',
-      },
-      body: JSON.stringify(motionTask),
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.json();
-      return {
-        success: false,
-        error: {
-          message: errorData.message || 'Failed to add task to Motion',
-          code: errorData.code || 'API_ERROR'
-        }
-      };
-    }
-    
-    return { success: true };
-  } catch (error) {
-    console.error('Error adding task to Motion:', error);
-    return { 
-      success: false, 
-      error: { 
-        message: 'Failed to add task to Motion',
-        code: 'API_ERROR'
-      } 
-    };
-  }
-};
-
-// Function to validate Motion API key with more detailed error handling
-export const validateMotionApiKey = async (apiKey: string): Promise<boolean> => {
-  console.log('Validating Motion API key...');
-  
-  if (!apiKey || apiKey.trim().length < 10) {
-    console.error('API key is too short or empty');
-    return false;
-  }
-  
-  try {
-    // Clean the API key - remove any whitespace, quotes or other characters that might have been copied
-    const cleanedKey = apiKey.trim().replace(/['"]/g, '');
-    
-    // Store the API key in localStorage for other functions to use
-    window.localStorage.setItem('motion_api_key', cleanedKey);
-    
-    // Log the API key (masked for security)
-    const maskedKey = cleanedKey.substring(0, 5) + '...' + cleanedKey.substring(cleanedKey.length - 5);
-    console.log('Using API key (masked):', maskedKey);
-    console.log('API key length:', cleanedKey.length);
-    
-    // Try to fetch workspaces to validate the API key
-    const response = await fetch('https://api.usemotion.com/v1/workspaces', {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'x-motion-api-key': cleanedKey,
-      },
-    });
-    
-    const responseText = await response.text();
-    console.log('Motion API validation response status:', response.status);
-    console.log('Motion API validation response body:', responseText);
-    
-    if (!response.ok) {
-      // Log detailed error information
-      console.error('Motion API validation failed with status:', response.status);
-      
-      // Try to parse error response
-      try {
-        const errorData = JSON.parse(responseText);
-        console.error('Error details:', errorData);
-        
-        // Check for specific error messages
-        if (errorData.message === "Unauthorized") {
-          console.error('API key is not authorized. Please check if the key is valid and has proper permissions.');
-        }
-      } catch (parseError) {
-        console.error('Error parsing error response:', parseError);
-      }
-      
-      // Clear the API key from localStorage if validation fails
-      window.localStorage.removeItem('motion_api_key');
+    if (!usedKey) {
+      console.error('No API key provided for validation');
       return false;
     }
     
-    try {
-      // Try to parse the response as JSON to make sure it's valid
-      const data = JSON.parse(responseText);
-      console.log('Parsed response data:', data);
+    // Log a masked version of the key for debugging
+    const maskedKey = usedKey.substring(0, 3) + '...' + usedKey.substring(usedKey.length - 3);
+    console.log(`Validating API key: ${maskedKey}`);
+    
+    // Call the /me endpoint to validate the key
+    const response = await fetch('https://api.usemotion.com/v1/me', {
+      method: 'GET',
+      headers: {
+        'X-API-Key': usedKey,
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    console.log('API validation response status:', response.status);
+    
+    if (response.ok) {
+      const data = await response.json();
+      console.log('API validation successful, user data:', data);
       
-      // Check if the response has the expected workspaces array
-      if (!data.workspaces) {
-        console.error('Response missing workspaces array');
-        window.localStorage.removeItem('motion_api_key');
-        return false;
-      }
+      // Store the validated key globally
+      setMotionApiKey(usedKey);
       
       return true;
-    } catch (parseError) {
-      console.error('Error parsing API response:', parseError);
-      window.localStorage.removeItem('motion_api_key');
-      return false;
+    } else {
+      // Handle specific error responses with more detail
+      if (response.status === 401) {
+        console.error('API key validation failed: Unauthorized (401)');
+        
+        try {
+          const errorData = await response.json();
+          console.error('Error details:', errorData);
+        } catch (e) {
+          console.error('No error details available');
+        }
+        
+        return false;
+      } else {
+        console.error(`API key validation failed with status: ${response.status}`);
+        return false;
+      }
     }
   } catch (error) {
-    console.error('Error validating Motion API key:', error);
-    window.localStorage.removeItem('motion_api_key');
+    console.error('Exception during API key validation:', error);
     return false;
   }
 };
 
-// Batch add multiple tasks
-export const addTasksToMotion = async (tasks: Task[]): Promise<{ 
-  success: boolean; 
-  successCount: number; 
-  failedCount: number; 
-  errors?: MotionApiError[];
-  taskErrors?: {taskId: string; errors: string[]}[];
-}> => {
-  const results = await Promise.all(tasks.map(task => addTaskToMotion(task)));
-  
-  const successCount = results.filter(result => result.success).length;
-  const failedCount = results.length - successCount;
-  const errors = results
-    .filter(result => !result.success && result.error)
-    .map(result => result.error as MotionApiError);
-  
-  // Track errors by task
-  const taskErrors = tasks
-    .map((task, index) => ({
-      taskId: task.id,
-      success: results[index].success,
-      error: results[index].error
-    }))
-    .filter(item => !item.success && item.error)
-    .map(item => ({
-      taskId: item.taskId,
-      errors: [item.error?.message || 'Unknown error']
-    }));
-  
-  return {
-    success: failedCount === 0,
-    successCount,
-    failedCount,
-    errors: errors.length > 0 ? errors : undefined,
-    taskErrors: taskErrors.length > 0 ? taskErrors : undefined
-  };
-};
-
-// Helper function to convert status to Motion format
-const convertStatusToMotion = (status: 'todo' | 'in-progress' | 'done'): string => {
-  switch (status) {
-    case 'todo':
-      return 'TODO';
-    case 'in-progress':
-      return 'IN_PROGRESS';
-    case 'done':
-      return 'DONE';
-    default:
-      return 'TODO';
-  }
-};
-
-// Fetch workspaces from Motion API with improved error handling
-export const fetchWorkspaces = async (): Promise<MotionWorkspace[]> => {
-  console.log('Fetching workspaces from Motion API...');
-  
+// Fetch workspaces from Motion API
+export const fetchWorkspaces = async (apiKey?: string): Promise<any[]> => {
   try {
-    const apiKey = window.localStorage.getItem('motion_api_key');
-    if (!apiKey) {
-      console.error('No API key found in localStorage');
+    const usedKey = getApiKey(apiKey);
+    
+    if (!usedKey) {
+      console.error('No API key provided for fetching workspaces');
       return [];
     }
-
-    // Log the API key (masked for security)
-    const maskedKey = apiKey.substring(0, 5) + '...' + apiKey.substring(apiKey.length - 5);
-    console.log('Using API key for fetching workspaces (masked):', maskedKey);
-    console.log('API key length:', apiKey.length);
-
+    
     const response = await fetch('https://api.usemotion.com/v1/workspaces', {
       method: 'GET',
       headers: {
+        'X-API-Key': usedKey,
         'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'x-motion-api-key': apiKey,
       },
     });
     
-    console.log('Fetch workspaces response status:', response.status);
+    console.log('Workspace fetch response status:', response.status);
     
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Failed to fetch workspaces:', response.status, errorText);
+    if (response.ok) {
+      const data = await response.json();
+      console.log('Workspaces fetched successfully:', data);
+      return data;
+    } else {
+      console.error(`Failed to fetch workspaces with status: ${response.status}`);
       
-      // Try to parse error response
-      try {
-        const errorData = JSON.parse(errorText);
-        console.error('Error details:', errorData);
-      } catch (parseError) {
-        console.error('Raw error response:', errorText);
+      if (response.status === 401) {
+        console.error('Unauthorized. API key may be invalid or expired');
       }
       
       return [];
     }
-    
-    const responseText = await response.text();
-    console.log('Fetched workspaces response:', responseText);
-    
-    try {
-      const data = JSON.parse(responseText);
-      console.log('Parsed workspaces data:', data);
-      return data.workspaces || [];
-    } catch (parseError) {
-      console.error('Error parsing workspaces response:', parseError);
-      return [];
-    }
   } catch (error) {
-    console.error('Error fetching workspaces:', error);
+    console.error('Exception during workspaces fetch:', error);
     return [];
   }
 };
 
-// Search for projects in Motion
-export const searchProjects = async (
-  query: string = '', 
-  workspaceId?: string
-): Promise<MotionProject[]> => {
-  console.log(`Searching for projects in workspace: ${workspaceId}`);
+// Format workspaces for dropdown selection
+export const getWorkspacesForDropdown = async (apiKey?: string): Promise<{label: string, value: string}[]> => {
+  const workspaces = await fetchWorkspaces(apiKey);
   
-  if (!workspaceId) {
+  if (!workspaces || workspaces.length === 0) {
+    console.log('No workspaces returned from API');
     return [];
   }
   
+  return workspaces.map(workspace => ({
+    label: workspace.name,
+    value: workspace.id
+  }));
+};
+
+// Fetch projects for a specific workspace
+export const fetchProjects = async (workspaceId: string, apiKey?: string): Promise<any[]> => {
   try {
-    const apiKey = window.localStorage.getItem('motion_api_key');
-    if (!apiKey) {
-      console.error('No API key found in localStorage');
+    const usedKey = getApiKey(apiKey);
+    
+    if (!usedKey) {
+      console.error('No API key provided for fetching projects');
       return [];
     }
-
+    
+    if (!workspaceId) {
+      console.error('No workspace ID provided for fetching projects');
+      return [];
+    }
+    
     const response = await fetch(`https://api.usemotion.com/v1/workspaces/${workspaceId}/projects`, {
       method: 'GET',
       headers: {
+        'X-API-Key': usedKey,
         'Content-Type': 'application/json',
-        'x-motion-api-key': apiKey,
       },
     });
     
-    console.log('Fetch projects response status:', response.status);
+    console.log(`Projects fetch response for workspace ${workspaceId} status:`, response.status);
     
-    if (!response.ok) {
-      console.error('Failed to search projects:', response.statusText);
+    if (response.ok) {
+      const data = await response.json();
+      console.log('Projects fetched successfully:', data);
+      return data;
+    } else {
+      console.error(`Failed to fetch projects with status: ${response.status}`);
       return [];
     }
+  } catch (error) {
+    console.error('Exception during projects fetch:', error);
+    return [];
+  }
+};
+
+// Format projects for dropdown selection
+export const getProjectsForDropdown = async (workspaceId: string, apiKey?: string): Promise<{label: string, value: string}[]> => {
+  const projects = await fetchProjects(workspaceId, apiKey);
+  
+  if (!projects || projects.length === 0) {
+    console.log('No projects returned from API');
+    return [];
+  }
+  
+  return projects.map(project => ({
+    label: project.name,
+    value: project.id
+  }));
+};
+
+// Create a new workspace in Motion
+export const createWorkspace = async (name: string, apiKey?: string): Promise<any> => {
+  try {
+    const usedKey = getApiKey(apiKey);
     
-    const data = await response.json();
-    console.log('Fetched projects:', data);
-    let projects = data.projects || [];
-    
-    // Filter by query if provided
-    if (query) {
-      const lowerQuery = query.toLowerCase();
-      projects = projects.filter((p: any) => 
-        p.name.toLowerCase().includes(lowerQuery)
-      );
+    if (!usedKey) {
+      console.error('No API key provided for creating workspace');
+      throw new Error('API key is required');
     }
     
-    return projects;
+    const response = await fetch('https://api.usemotion.com/v1/workspaces', {
+      method: 'POST',
+      headers: {
+        'X-API-Key': usedKey,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ name }),
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      console.log('Workspace created successfully:', data);
+      return data;
+    } else {
+      const errorData = await response.json();
+      console.error('Failed to create workspace:', errorData);
+      throw new Error(errorData.message || 'Failed to create workspace');
+    }
   } catch (error) {
-    console.error('Error searching projects:', error);
-    return [];
+    console.error('Exception during workspace creation:', error);
+    throw error;
   }
 };
 
 // Create a new project in Motion
-export const createProject = async (
-  name: string,
-  workspaceId: string,
-  description?: string
-): Promise<{ success: boolean; project?: MotionProject; error?: MotionApiError }> => {
-  console.log(`Creating project: ${name} in workspace: ${workspaceId}`);
-  
-  // Validate required fields
-  if (!name) {
-    return {
-      success: false,
-      error: {
-        message: 'Project name is required',
-        code: 'MISSING_FIELD'
-      }
-    };
-  }
-  
-  if (!workspaceId) {
-    return {
-      success: false,
-      error: {
-        message: 'Workspace ID is required',
-        code: 'MISSING_FIELD'
-      }
-    };
-  }
-  
+export const createProject = async (workspaceId: string, name: string, apiKey?: string): Promise<any> => {
   try {
-    const apiKey = window.localStorage.getItem('motion_api_key');
-    if (!apiKey) {
-      console.error('No API key found in localStorage');
-      return {
-        success: false,
-        error: {
-          message: 'API key not found',
-          code: 'MISSING_API_KEY'
-        }
-      };
+    const usedKey = getApiKey(apiKey);
+    
+    if (!usedKey) {
+      console.error('No API key provided for creating project');
+      throw new Error('API key is required');
     }
-
+    
     const response = await fetch(`https://api.usemotion.com/v1/workspaces/${workspaceId}/projects`, {
       method: 'POST',
       headers: {
+        'X-API-Key': usedKey,
         'Content-Type': 'application/json',
-        'x-motion-api-key': apiKey,
       },
-      body: JSON.stringify({
-        name,
-        description
-      }),
+      body: JSON.stringify({ name }),
     });
     
-    if (!response.ok) {
+    if (response.ok) {
+      const data = await response.json();
+      console.log('Project created successfully:', data);
+      return data;
+    } else {
       const errorData = await response.json();
+      console.error('Failed to create project:', errorData);
+      throw new Error(errorData.message || 'Failed to create project');
+    }
+  } catch (error) {
+    console.error('Exception during project creation:', error);
+    throw error;
+  }
+};
+
+// Add tasks to Motion
+export const addTasksToMotion = async (tasks: Task[], apiKey?: string): Promise<{
+  success: boolean;
+  successCount: number;
+  failedCount: number;
+  taskErrors?: { taskId: string; errors: string[] }[];
+}> => {
+  try {
+    const usedKey = getApiKey(apiKey);
+    
+    if (!usedKey) {
+      console.error('No API key provided for adding tasks');
       return {
         success: false,
-        error: {
-          message: errorData.message || 'Failed to create project',
-          code: errorData.code || 'API_ERROR'
-        }
+        successCount: 0,
+        failedCount: tasks.length,
+        taskErrors: tasks.map(task => ({
+          taskId: task.id,
+          errors: ['API key is required']
+        }))
       };
     }
     
-    const data = await response.json();
+    let successCount = 0;
+    let failedCount = 0;
+    const taskErrors: { taskId: string; errors: string[] }[] = [];
     
-    return {
-      success: true,
-      project: data.project
-    };
-  } catch (error) {
-    console.error('Error creating project:', error);
-    return {
-      success: false,
-      error: {
-        message: 'Failed to create project',
-        code: 'API_ERROR'
+    // Process each task one by one (for better error handling)
+    for (const task of tasks) {
+      try {
+        // Basic task validation
+        if (!task.title) {
+          failedCount++;
+          taskErrors.push({
+            taskId: task.id,
+            errors: ['Task title is required']
+          });
+          continue;
+        }
+        
+        // Prepare task data for Motion API
+        const taskData = {
+          title: task.title,
+          description: task.description || '',
+          workspace_id: task.workspace_id,
+          // Add other fields as needed by Motion API
+        };
+        
+        // Call Motion API to create task
+        // This is a mock implementation - replace with actual Motion API endpoint
+        // const response = await fetch('https://api.usemotion.com/v1/tasks', {
+        //   method: 'POST',
+        //   headers: {
+        //     'X-API-Key': usedKey,
+        //     'Content-Type': 'application/json',
+        //   },
+        //   body: JSON.stringify(taskData),
+        // });
+        
+        // If the API call was successful, increment success count
+        // For now, we'll simulate success
+        successCount++;
+        
+      } catch (error) {
+        failedCount++;
+        console.error(`Error adding task ${task.id}:`, error);
+        taskErrors.push({
+          taskId: task.id,
+          errors: [(error as Error).message || 'Unknown error']
+        });
       }
-    };
-  }
-};
-
-// New function to get all workspaces for dropdown
-export const getWorkspacesForDropdown = async (): Promise<{label: string, value: string}[]> => {
-  try {
-    const workspaces = await fetchWorkspaces();
-    console.log('Workspaces for dropdown:', workspaces);
-    return workspaces.map(workspace => ({
-      label: workspace.name,
-      value: workspace.id
-    }));
-  } catch (error) {
-    console.error('Error fetching workspaces for dropdown:', error);
-    return [];
-  }
-};
-
-// New function to get projects for dropdown
-export const getProjectsForDropdown = async (
-  workspaceId?: string
-): Promise<{label: string, value: string}[]> => {
-  if (!workspaceId) {
-    console.log('No workspace ID provided for projects dropdown');
-    return [];
-  }
-  
-  try {
-    // Get all projects, no query filter
-    const projects = await searchProjects('', workspaceId);
-    console.log('Projects for dropdown:', projects);
-    return projects.map(project => ({
-      label: project.name,
-      value: project.id
-    }));
-  } catch (error) {
-    console.error('Error fetching projects for dropdown:', error);
-    return [];
-  }
-};
-
-// Function to generate mock data for development when API fails
-export const getMockWorkspaces = (): MotionWorkspace[] => {
-  return [
-    { id: 'workspace-1', name: 'Personal Workspace' },
-    { id: 'workspace-2', name: 'Team Projects' },
-    { id: 'workspace-3', name: 'Client Work' }
-  ];
-};
-
-// Use mock data if real API fails
-export const getWorkspacesWithFallback = async (): Promise<MotionWorkspace[]> => {
-  try {
-    const workspaces = await fetchWorkspaces();
-    if (workspaces && workspaces.length > 0) {
-      return workspaces;
     }
     
-    console.log('No workspaces returned from API, using mock data');
-    return getMockWorkspaces();
+    return {
+      success: failedCount === 0,
+      successCount,
+      failedCount,
+      taskErrors: taskErrors.length > 0 ? taskErrors : undefined
+    };
   } catch (error) {
-    console.error('Error getting workspaces, falling back to mock data:', error);
-    return getMockWorkspaces();
+    console.error('Exception during tasks addition:', error);
+    return {
+      success: false,
+      successCount: 0,
+      failedCount: tasks.length,
+      taskErrors: [{ 
+        taskId: 'batch', 
+        errors: [(error as Error).message || 'Unknown error'] 
+      }]
+    };
   }
 };

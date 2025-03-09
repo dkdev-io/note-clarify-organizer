@@ -1,12 +1,12 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AlertCircle, CheckIcon, LoaderIcon, InfoIcon, LinkIcon } from 'lucide-react';
+import { AlertCircle, CheckIcon, LoaderIcon, InfoIcon, LinkIcon, RefreshCwIcon } from 'lucide-react';
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { validateMotionApiKey, fetchWorkspaces } from '@/utils/motion';
+import { validateMotionApiKey, fetchWorkspaces, setMotionApiKey } from '@/utils/motion';
 import { useToast } from "@/components/ui/use-toast";
 import WorkspaceSelect from './WorkspaceSelect';
 import ProjectSelect from './ProjectSelect';
@@ -27,27 +27,39 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
   const [workspaces, setWorkspaces] = useState<any[]>([]);
   const { toast } = useToast();
 
+  // Add useEffect to monitor the API key input
+  useEffect(() => {
+    // Reset validation state when the API key changes
+    if (apiKey) {
+      setIsKeyValid(null);
+      setErrorMessage(null);
+    }
+  }, [apiKey]);
+
   const validateKey = async () => {
     if (!apiKey.trim()) {
       setErrorMessage("Please enter your Motion API key");
       return;
     }
     
-    // Trim the API key to remove any accidental whitespace
-    const trimmedKey = apiKey.trim();
+    // Trim the API key to remove any accidental whitespace and quotes
+    const trimmedKey = apiKey.trim().replace(/^["']|["']$/g, '');
     
     setIsValidating(true);
     setErrorMessage(null);
     
     try {
       console.log('Starting API key validation...');
+      // Set the API key globally first
+      setMotionApiKey(trimmedKey);
+      
       const isValid = await validateMotionApiKey(trimmedKey);
       setIsKeyValid(isValid);
       
       if (isValid) {
         // If valid, fetch workspaces
         console.log('API key is valid, fetching workspaces...');
-        const fetchedWorkspaces = await fetchWorkspaces();
+        const fetchedWorkspaces = await fetchWorkspaces(trimmedKey);
         console.log('Fetched workspaces:', fetchedWorkspaces);
         setWorkspaces(fetchedWorkspaces);
         
@@ -69,7 +81,7 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
         );
         toast({
           title: "Connection Error",
-          description: "Invalid Motion API key",
+          description: "Invalid Motion API key - check for whitespace or quotes",
           variant: "destructive",
         });
       }
@@ -109,6 +121,16 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
     window.open('https://docs.usemotion.com/docs/api/authentication', '_blank');
   };
 
+  const handleClearApiKey = () => {
+    setApiKey('');
+    setIsKeyValid(null);
+    setErrorMessage(null);
+    setSelectedWorkspaceId(null);
+    setSelectedProject(null);
+    setSelectedProjectId(null);
+    setWorkspaces([]);
+  };
+
   return (
     <div className="w-full max-w-2xl mx-auto">
       <Card className="bg-white bg-opacity-80 backdrop-blur-sm border border-gray-100 shadow-card">
@@ -124,19 +146,31 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
           <div className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="apiKey">Motion API Key</Label>
-              <Input
-                id="apiKey"
-                type="password"
-                placeholder="Enter your Motion API key"
-                value={apiKey}
-                onChange={(e) => {
-                  setApiKey(e.target.value);
-                  setIsKeyValid(null);
-                  setErrorMessage(null);
-                }}
-                className={`${isKeyValid === true ? 'border-green-500 focus:border-green-500 focus:ring-green-500/20' : 
-                  isKeyValid === false ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : ''}`}
-              />
+              <div className="flex gap-2">
+                <Input
+                  id="apiKey"
+                  type="password"
+                  placeholder="Enter your Motion API key"
+                  value={apiKey}
+                  onChange={(e) => {
+                    setApiKey(e.target.value);
+                    setIsKeyValid(null);
+                    setErrorMessage(null);
+                  }}
+                  className={`flex-1 ${isKeyValid === true ? 'border-green-500 focus:border-green-500 focus:ring-green-500/20' : 
+                    isKeyValid === false ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : ''}`}
+                />
+                {apiKey && (
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    onClick={handleClearApiKey}
+                    title="Clear API Key"
+                  >
+                    <RefreshCwIcon className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
               {errorMessage && (
                 <Alert variant="destructive" className="mt-2">
                   <AlertCircle className="h-4 w-4" />
