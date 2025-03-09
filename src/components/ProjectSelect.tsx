@@ -5,7 +5,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { LoaderIcon, PlusCircleIcon } from 'lucide-react';
+import { LoaderIcon, PlusCircleIcon, RefreshCw } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -50,7 +50,8 @@ const ProjectSelect: React.FC<ProjectSelectProps> = ({
     
     setIsLoading(true);
     try {
-      const projectOptions = await getProjectsForDropdown('', workspaceId);
+      // Fix: Remove the first argument as it's not required anymore
+      const projectOptions = await getProjectsForDropdown(workspaceId);
       console.log('Loaded projects:', projectOptions);
       setProjects(projectOptions);
       
@@ -60,6 +61,11 @@ const ProjectSelect: React.FC<ProjectSelectProps> = ({
       }
     } catch (error) {
       console.error('Failed to load projects:', error);
+      toast({
+        title: "Failed to load projects",
+        description: error instanceof Error ? error.message : 'An unexpected error occurred',
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(false);
     }
@@ -149,6 +155,15 @@ const ProjectSelect: React.FC<ProjectSelectProps> = ({
               </Select>
             </div>
             <div className="flex gap-1">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={loadProjects}
+                disabled={isLoading}
+                title="Refresh Projects"
+              >
+                <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+              </Button>
               <Button
                 variant="outline"
                 size="icon"
