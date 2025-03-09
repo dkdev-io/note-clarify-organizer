@@ -5,11 +5,18 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { FileTextIcon, SendIcon, ArrowRightIcon, PlusIcon } from 'lucide-react';
 
-interface NoteInputProps {
-  onParseTasks: (text: string, projectName: string | null) => void;
+interface ApiProps {
+  isConnected: boolean;
+  apiKey: string | null;
+  workspaces: any[];
 }
 
-const NoteInput: React.FC<NoteInputProps> = ({ onParseTasks }) => {
+interface NoteInputProps {
+  onParseTasks: (text: string, projectName: string | null) => void;
+  apiProps?: ApiProps;
+}
+
+const NoteInput: React.FC<NoteInputProps> = ({ onParseTasks, apiProps }) => {
   const [noteText, setNoteText] = useState('');
   const [isTransitioning, setIsTransitioning] = useState(false);
 

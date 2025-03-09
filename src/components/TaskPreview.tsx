@@ -11,22 +11,32 @@ import { addTasksToMotion, validateMotionApiKey } from '@/utils/motion';
 import { useToast } from "@/components/ui/use-toast";
 import { format } from "date-fns";
 
+interface ApiProps {
+  isConnected: boolean;
+  apiKey: string | null;
+  workspaces: any[];
+}
+
 interface TaskPreviewProps {
   tasks: Task[];
   projectName: string | null;
   onBack: () => void;
   onComplete: () => void;
+  apiProps?: ApiProps;
 }
 
 const TaskPreview: React.FC<TaskPreviewProps> = ({ 
   tasks, 
   projectName,
   onBack, 
-  onComplete 
+  onComplete,
+  apiProps
 }) => {
-  const [apiKey, setApiKey] = useState('');
+  // Initialize apiKey with the value from apiProps if connected
+  const [apiKey, setApiKey] = useState(apiProps?.isConnected ? apiProps.apiKey || '' : '');
   const [isValidatingKey, setIsValidatingKey] = useState(false);
-  const [isKeyValid, setIsKeyValid] = useState<boolean | null>(null);
+  // Auto-validate the key if we're connected
+  const [isKeyValid, setIsKeyValid] = useState<boolean | null>(apiProps?.isConnected ? true : null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const { toast } = useToast();
@@ -135,6 +145,15 @@ const TaskPreview: React.FC<TaskPreviewProps> = ({
   const getWorkspaceName = (workspaceId: string | null) => {
     if (!workspaceId) return "None";
     
+    // Try to get workspace name from apiProps if available
+    if (apiProps?.workspaces && apiProps.workspaces.length > 0) {
+      const workspace = apiProps.workspaces.find(w => w.id === workspaceId);
+      if (workspace) {
+        return workspace.name;
+      }
+    }
+    
+    // Fallback to static mapping
     const workspaceMap: Record<string, string> = {
       'workspace-1': 'Personal',
       'workspace-2': 'Team Projects',
@@ -159,47 +178,49 @@ const TaskPreview: React.FC<TaskPreviewProps> = ({
         
         <CardContent>
           <div className="space-y-6">
-            <div className="bg-secondary p-4 rounded-md">
-              <h3 className="font-medium text-sm text-secondary-foreground mb-3">API Configuration</h3>
-              <div className="space-y-3">
-                <div className="space-y-2">
-                  <Label htmlFor="apiKey">Motion API Key</Label>
-                  <div className="flex space-x-2">
-                    <Input
-                      id="apiKey"
-                      type="password"
-                      placeholder="Enter your Motion API key"
-                      value={apiKey}
-                      onChange={(e) => {
-                        setApiKey(e.target.value);
-                        setIsKeyValid(null);
-                      }}
-                      className={`flex-1 ${isKeyValid === true ? 'border-green-500 focus:border-green-500 focus:ring-green-500/20' : 
-                        isKeyValid === false ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : ''}`}
-                    />
-                    <Button 
-                      onClick={validateKey}
-                      disabled={!apiKey.trim() || isValidatingKey}
-                      variant="outline"
-                    >
-                      {isValidatingKey ? (
-                        <>
-                          <LoaderIcon className="mr-2 h-4 w-4 animate-spin" />
-                          Validating
-                        </>
-                      ) : isKeyValid === true ? (
-                        <>
-                          <CheckIcon className="mr-2 h-4 w-4 text-green-500" />
-                          Validated
-                        </>
-                      ) : (
-                        "Validate"
-                      )}
-                    </Button>
+            {!apiProps?.isConnected && (
+              <div className="bg-secondary p-4 rounded-md">
+                <h3 className="font-medium text-sm text-secondary-foreground mb-3">API Configuration</h3>
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="apiKey">Motion API Key</Label>
+                    <div className="flex space-x-2">
+                      <Input
+                        id="apiKey"
+                        type="password"
+                        placeholder="Enter your Motion API key"
+                        value={apiKey}
+                        onChange={(e) => {
+                          setApiKey(e.target.value);
+                          setIsKeyValid(null);
+                        }}
+                        className={`flex-1 ${isKeyValid === true ? 'border-green-500 focus:border-green-500 focus:ring-green-500/20' : 
+                          isKeyValid === false ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : ''}`}
+                      />
+                      <Button 
+                        onClick={validateKey}
+                        disabled={!apiKey.trim() || isValidatingKey}
+                        variant="outline"
+                      >
+                        {isValidatingKey ? (
+                          <>
+                            <LoaderIcon className="mr-2 h-4 w-4 animate-spin" />
+                            Validating
+                          </>
+                        ) : isKeyValid === true ? (
+                          <>
+                            <CheckIcon className="mr-2 h-4 w-4 text-green-500" />
+                            Validated
+                          </>
+                        ) : (
+                          "Validate"
+                        )}
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            )}
             
             <div className="space-y-4">
               <h3 className="font-medium">Tasks to Add ({tasks.length})</h3>
