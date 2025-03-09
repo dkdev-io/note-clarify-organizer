@@ -1,3 +1,4 @@
+
 /**
  * Motion API utilities for authentication and task management
  */
@@ -185,14 +186,15 @@ export const fetchProjects = async (workspaceId: string, apiKey?: string): Promi
       return [];
     }
     
-    const response = await fetch(`https://api.usemotion.com/v1/workspaces/${workspaceId}/projects`, {
+    // Modified endpoint to match Motion API structure - using lists instead of projects
+    const response = await fetch(`https://api.usemotion.com/v1/lists?workspaceId=${workspaceId}`, {
       method: 'GET',
       headers: {
         'X-API-Key': usedKey,
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
-      credentials: 'include',
+      mode: 'cors',
     });
     
     console.log(`Projects fetch response for workspace ${workspaceId} status:`, response.status);
@@ -200,14 +202,24 @@ export const fetchProjects = async (workspaceId: string, apiKey?: string): Promi
     if (response.ok) {
       const data = await response.json();
       console.log('Projects fetched successfully:', data);
-      return data;
+      
+      // Check if the response has a lists property
+      if (data && data.lists && Array.isArray(data.lists)) {
+        console.log('Found lists array in response:', data.lists.length);
+        return data.lists;
+      } else if (Array.isArray(data)) {
+        return data;
+      } else {
+        console.error('Unexpected response format, no lists array found:', data);
+        return [];
+      }
     } else {
       if (response.status === 401) {
         console.error('Unauthorized when fetching projects. API key may be invalid or missing permissions');
         throw new Error("Authentication failed: Your API key doesn't have permission to access projects. Check your API key permissions in Motion settings.");
       } else {
         console.error(`Failed to fetch projects with status: ${response.status}`);
-        throw new Error(`Failed to fetch projects with status: ${response.status}`);
+        throw new Error(`Failed to fetch projects with status: ${response.status}. The Motion API may have changed. Please check documentation for updates.`);
       }
     }
   } catch (error) {
@@ -253,7 +265,7 @@ export const createWorkspace = async (name: string, apiKey?: string): Promise<an
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
-      credentials: 'include',
+      mode: 'cors',
       body: JSON.stringify({ name }),
     });
     
@@ -286,15 +298,19 @@ export const createProject = async (workspaceId: string, name: string, apiKey?: 
       throw new Error('API key is required');
     }
     
-    const response = await fetch(`https://api.usemotion.com/v1/workspaces/${workspaceId}/projects`, {
+    // Modified to use lists endpoint instead of projects
+    const response = await fetch(`https://api.usemotion.com/v1/lists`, {
       method: 'POST',
       headers: {
         'X-API-Key': usedKey,
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
-      credentials: 'include',
-      body: JSON.stringify({ name }),
+      mode: 'cors',
+      body: JSON.stringify({ 
+        name,
+        workspaceId 
+      }),
     });
     
     if (response.ok) {

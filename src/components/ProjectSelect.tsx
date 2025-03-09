@@ -85,6 +85,7 @@ const ProjectSelect: React.FC<ProjectSelectProps> = ({
     if (!newProjectName.trim() || !workspaceId) return;
     
     setIsCreating(true);
+    setError(null);
     try {
       const result = await createProject(workspaceId, newProjectName, apiKey || undefined);
       
@@ -114,6 +115,8 @@ const ProjectSelect: React.FC<ProjectSelectProps> = ({
       if (error instanceof Error) {
         errorMessage = error.message;
       }
+      
+      setError(errorMessage);
       
       toast({
         title: "Failed to Create Project",
