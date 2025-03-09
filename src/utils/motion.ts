@@ -186,8 +186,9 @@ export const fetchProjects = async (workspaceId: string, apiKey?: string): Promi
       return [];
     }
     
-    // Modified endpoint to match Motion API structure - using lists instead of projects
-    const response = await fetch(`https://api.usemotion.com/v1/lists?workspaceId=${workspaceId}`, {
+    // Use the correct endpoint for Motion API's project lists
+    // The endpoint appears to be /v1/workspaces/{id}/lists according to the error
+    const response = await fetch(`https://api.usemotion.com/v1/workspaces/${workspaceId}/lists`, {
       method: 'GET',
       headers: {
         'X-API-Key': usedKey,
@@ -219,7 +220,9 @@ export const fetchProjects = async (workspaceId: string, apiKey?: string): Promi
         throw new Error("Authentication failed: Your API key doesn't have permission to access projects. Check your API key permissions in Motion settings.");
       } else {
         console.error(`Failed to fetch projects with status: ${response.status}`);
-        throw new Error(`Failed to fetch projects with status: ${response.status}. The Motion API may have changed. Please check documentation for updates.`);
+        const errorData = await response.text();
+        console.error('Error response:', errorData);
+        throw new Error(`Failed to fetch projects with status: ${response.status}. API response: ${errorData}`);
       }
     }
   } catch (error) {
@@ -298,8 +301,8 @@ export const createProject = async (workspaceId: string, name: string, apiKey?: 
       throw new Error('API key is required');
     }
     
-    // Modified to use lists endpoint instead of projects
-    const response = await fetch(`https://api.usemotion.com/v1/lists`, {
+    // Use the correct endpoint for creating lists within a workspace
+    const response = await fetch(`https://api.usemotion.com/v1/workspaces/${workspaceId}/lists`, {
       method: 'POST',
       headers: {
         'X-API-Key': usedKey,
@@ -307,10 +310,7 @@ export const createProject = async (workspaceId: string, name: string, apiKey?: 
         'Accept': 'application/json',
       },
       mode: 'cors',
-      body: JSON.stringify({ 
-        name,
-        workspaceId 
-      }),
+      body: JSON.stringify({ name }),
     });
     
     if (response.ok) {
