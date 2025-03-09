@@ -1,4 +1,3 @@
-
 /**
  * Utility functions for parsing text notes into structured tasks
  */
@@ -230,7 +229,7 @@ const extractAssignee = (text: string): string | null => {
     /\b([A-Z][a-z]+)(?:\s+[A-Z][a-z]+)?\s+(?:and|with|&)\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?\s+(?:needs|should|will|to|can|must|has to|is going to|has|is supposed to)\b/i,
     
     // "X needs to", "X should", "X will", etc. - look for person's name followed by action
-    /\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+(?:needs|should|will|to|can|must|has to|is going to|needs to|has|is supposed to)\b/i,
+    /\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+(?:needs|should|will|to|can|must|has to|is going to)\b/i,
     
     // "X is responsible for", "X is going to", etc.
     /\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+is\s+(?:responsible|going|supposed|expected)\b/i,
@@ -793,43 +792,11 @@ export const parseTextIntoTasks = (text: string, defaultProjectName: string | nu
         }
       }
       
-      // Only add metadata to description once to avoid duplication
-      const metadataDescription = [];
-      
-      // Add deadline information to description if there's a due date
-      if (dueDate) {
-        const formattedDate = new Date(dueDate).toLocaleDateString('en-US', { 
-          weekday: 'short', 
-          month: 'short', 
-          day: 'numeric',
-          year: 'numeric'
-        });
-        
-        metadataDescription.push(`Due date: ${formattedDate}`);
-      }
-      
-      // Add assignee information to description
-      if (assignee) {
-        metadataDescription.push(`Assigned to: ${assignee}`);
-      }
-      
-      // Add project information to description
-      if (projectName) {
-        metadataDescription.push(`Project: ${projectName}`);
-      }
-      
-      // Combine original description with metadata
-      if (description) {
-        description = `${description}\n\n${metadataDescription.join('\n')}`;
-      } else {
-        description = metadataDescription.join('\n');
-      }
-      
-      // Add a task with the project name explicitly set
+      // Add a task with the project name explicitly set, but with a clean description that doesn't duplicate metadata
       tasks.push({
         id: generateId(),
         title: title.trim(),
-        description: description.trim(),
+        description: description.trim(), // Just the actual description without metadata
         dueDate,
         priority,
         status,
@@ -890,3 +857,4 @@ export const validateTasks = (tasks: Task[]): { allValid: boolean; tasksWithMiss
     tasksWithMissingFields
   };
 };
+
