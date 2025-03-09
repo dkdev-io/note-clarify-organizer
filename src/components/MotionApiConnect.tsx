@@ -4,7 +4,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AlertCircle, CheckIcon, LoaderIcon } from 'lucide-react';
+import { AlertCircle, CheckIcon, LoaderIcon, InfoIcon } from 'lucide-react';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { validateMotionApiKey, fetchWorkspaces } from '@/utils/motion';
 import { useToast } from "@/components/ui/use-toast";
@@ -50,7 +50,10 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
           description: "Your Motion API key is valid and workspaces have been loaded.",
         });
       } else {
-        setErrorMessage("Invalid Motion API key. Please check and try again.");
+        setErrorMessage(
+          "Invalid Motion API key. Please check the key and try again. " +
+          "Make sure you are using an API key created in your Motion account settings."
+        );
         toast({
           title: "Connection Error",
           description: "Invalid Motion API key",
@@ -58,6 +61,7 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
         });
       }
     } catch (error) {
+      console.error("Error during validation:", error);
       setErrorMessage("Failed to validate API key. Please try again.");
       toast({
         title: "Connection Error",
@@ -120,6 +124,14 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
                   <AlertDescription>{errorMessage}</AlertDescription>
                 </Alert>
               )}
+              
+              <Alert variant="default" className="mt-2 bg-blue-50 text-blue-800 border-blue-200">
+                <InfoIcon className="h-4 w-4 text-blue-500" />
+                <AlertDescription className="text-xs">
+                  Motion API keys can be found in your Motion account under Settings → API Keys. 
+                  Make sure to create a new API key with read/write access.
+                </AlertDescription>
+              </Alert>
               
               <div className="flex justify-end mt-2">
                 <Button

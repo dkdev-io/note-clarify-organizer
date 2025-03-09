@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { LoaderIcon, PlusCircleIcon } from 'lucide-react';
+import { LoaderIcon, PlusCircleIcon, AlertTriangleIcon } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import { getWorkspacesForDropdown, createProject } from '@/utils/motion';
 import { useToast } from "@/components/ui/use-toast";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface WorkspaceSelectProps {
   apiKey: string | null;
@@ -47,13 +48,26 @@ const WorkspaceSelect: React.FC<WorkspaceSelectProps> = ({
     setError(null);
     try {
       // Store the API key in localStorage for other functions to use
-      window.localStorage.setItem('motion_api_key', apiKey || '');
+      if (apiKey) {
+        window.localStorage.setItem('motion_api_key', apiKey);
+      } else {
+        console.error('No API key provided to WorkspaceSelect');
+        setError("No API key provided. Please enter a valid Motion API key.");
+        setIsLoading(false);
+        return;
+      }
+      
+      // Log the API key (masked for security)
+      if (apiKey) {
+        const maskedKey = apiKey.substring(0, 5) + '...' + apiKey.substring(apiKey.length - 5);
+        console.log('Using API key (masked):', maskedKey);
+      }
       
       const workspaceOptions = await getWorkspacesForDropdown();
       console.log('Loaded workspaces:', workspaceOptions);
       
       if (workspaceOptions.length === 0) {
-        setError("No workspaces found in your Motion account or there was an issue fetching them.");
+        setError("No workspaces found in your Motion account or there was an issue with the API key. Please check your API key and try again.");
       }
       
       setWorkspaces(workspaceOptions);
@@ -157,7 +171,10 @@ const WorkspaceSelect: React.FC<WorkspaceSelectProps> = ({
           </div>
           
           {error && (
-            <p className="text-sm text-red-500 mt-1">{error}</p>
+            <Alert variant="destructive" className="mt-2">
+              <AlertTriangleIcon className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           )}
           
           {workspaces.length === 0 && !isLoading && !error && (

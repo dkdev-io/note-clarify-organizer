@@ -208,18 +208,50 @@ export const validateMotionApiKey = async (apiKey: string): Promise<boolean> => 
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
         'x-motion-api-key': apiKey,
       },
     });
     
-    console.log('Motion API validation response:', response.status);
+    const responseText = await response.text();
+    console.log('Motion API validation response status:', response.status);
+    console.log('Motion API validation response:', responseText);
+    
     if (!response.ok) {
-      console.error('Motion API validation failed:', await response.text());
+      console.error('Motion API validation failed with status:', response.status);
+      console.error('Response body:', responseText);
+      
+      // Check if the API key format is valid (simple check)
+      if (!apiKey || apiKey.length < 10) {
+        console.error('API key appears to be invalid or too short');
+      }
+      
+      // Clear the API key from localStorage if validation fails
+      window.localStorage.removeItem('motion_api_key');
+      return false;
     }
     
-    return response.ok;
+    try {
+      // Try to parse the response as JSON to make sure it's valid
+      const data = JSON.parse(responseText);
+      console.log('Parsed response data:', data);
+      
+      // Check if the response has the expected workspaces array
+      if (!data.workspaces) {
+        console.error('Response missing workspaces array');
+        window.localStorage.removeItem('motion_api_key');
+        return false;
+      }
+      
+      return true;
+    } catch (parseError) {
+      console.error('Error parsing API response:', parseError);
+      window.localStorage.removeItem('motion_api_key');
+      return false;
+    }
   } catch (error) {
     console.error('Error validating Motion API key:', error);
+    window.localStorage.removeItem('motion_api_key');
     return false;
   }
 };
@@ -291,6 +323,7 @@ export const fetchWorkspaces = async (): Promise<MotionWorkspace[]> => {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
         'x-motion-api-key': apiKey,
       },
     });
@@ -298,13 +331,22 @@ export const fetchWorkspaces = async (): Promise<MotionWorkspace[]> => {
     console.log('Fetch workspaces response status:', response.status);
     
     if (!response.ok) {
-      console.error('Failed to fetch workspaces:', response.statusText);
+      const errorText = await response.text();
+      console.error('Failed to fetch workspaces:', response.status, errorText);
       return [];
     }
     
-    const data = await response.json();
-    console.log('Fetched workspaces:', data);
-    return data.workspaces || [];
+    const responseText = await response.text();
+    console.log('Fetched workspaces response:', responseText);
+    
+    try {
+      const data = JSON.parse(responseText);
+      console.log('Parsed workspaces data:', data);
+      return data.workspaces || [];
+    } catch (parseError) {
+      console.error('Error parsing workspaces response:', parseError);
+      return [];
+    }
   } catch (error) {
     console.error('Error fetching workspaces:', error);
     return [];
@@ -463,11 +505,16 @@ export const getWorkspacesForDropdown = async (): Promise<{label: string, value:
 
 // New function to get projects for dropdown
 export const getProjectsForDropdown = async (
-  query: string = '',
   workspaceId?: string
 ): Promise<{label: string, value: string}[]> => {
+  if (!workspaceId) {
+    console.log('No workspace ID provided for projects dropdown');
+    return [];
+  }
+  
   try {
-    const projects = await searchProjects(query, workspaceId);
+    // Get all projects, no query filter
+    const projects = await searchProjects('', workspaceId);
     console.log('Projects for dropdown:', projects);
     return projects.map(project => ({
       label: project.name,
