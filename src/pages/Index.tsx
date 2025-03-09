@@ -12,6 +12,13 @@ import { useToast } from "@/components/ui/use-toast";
 // Define application steps
 type Step = 'connect' | 'input' | 'extract' | 'review' | 'preview' | 'complete';
 
+// Define interface for API props that will be passed to components
+interface ApiProps {
+  isConnected: boolean;
+  apiKey: string | null;
+  workspaces: any[];
+}
+
 const Index = () => {
   const [step, setStep] = useState<Step>('connect');
   const [noteText, setNoteText] = useState('');
@@ -25,7 +32,7 @@ const Index = () => {
   const [motionApiKey, setMotionApiKey] = useState<string | null>(null);
   const [workspaces, setWorkspaces] = useState<any[]>([]);
   const [isConnected, setIsConnected] = useState(false);
-
+  
   // Handle API connection
   const handleApiConnect = (apiKey: string, fetchedWorkspaces: any[]) => {
     setMotionApiKey(apiKey);
@@ -224,8 +231,8 @@ const Index = () => {
     </div>
   );
 
-  // Pass API connected status and workspaces to other components
-  const apiProps = {
+  // Create API props object to pass to components
+  const apiProps: ApiProps = {
     isConnected,
     apiKey: motionApiKey,
     workspaces

@@ -1,137 +1,67 @@
-
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import React, { useState } from 'react';
+import { Card, CardContent, CardFooter, CardHeader, CardDescription, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Task } from '@/utils/parser';
+import { ArrowRightIcon, ArrowLeftIcon, ClipboardCheckIcon, PencilIcon, TrashIcon } from 'lucide-react';
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Task, refineTask, validateTasks } from '@/utils/parser';
-import { ArrowLeftIcon, ArrowRightIcon, CalendarIcon, CheckCircle2Icon, EditIcon, TrashIcon, AlertCircleIcon, BriefcaseIcon } from 'lucide-react';
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
-import { fetchWorkspaces } from '@/utils/motion';
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { useToast } from "@/components/ui/use-toast";
+import { cn } from "@/lib/utils";
 
-interface TaskReviewProps {
+// Add interface for the API props
+interface ApiProps {
+  isConnected: boolean;
+  apiKey: string | null;
+  workspaces: any[];
+}
+
+export interface TaskReviewProps {
   tasks: Task[];
   projectName: string | null;
   onBack: () => void;
   onContinue: (tasks: Task[], updatedProjectName?: string) => void;
+  apiProps?: ApiProps;
 }
 
 const TaskReview: React.FC<TaskReviewProps> = ({ 
   tasks, 
-  projectName,
+  projectName, 
   onBack, 
-  onContinue 
+  onContinue,
+  apiProps
 }) => {
-  const [reviewedTasks, setReviewedTasks] = useState<Task[]>(tasks);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
-  const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [isTransitioning, setIsTransitioning] = useState(false);
-  const [workspaces, setWorkspaces] = useState<{id: string; name: string}[]>([]);
-  const [isLoadingWorkspaces, setIsLoadingWorkspaces] = useState(false);
-  const [validation, setValidation] = useState<{
-    allValid: boolean;
-    tasksWithMissingFields: { task: Task; missingFields: string[] }[]
-  }>({ allValid: true, tasksWithMissingFields: [] });
+  const [editedTasks, setEditedTasks] = useState<Task[]>(tasks);
   const [editedProjectName, setEditedProjectName] = useState<string | null>(projectName);
-  const [workspacePromptDismissed, setWorkspacePromptDismissed] = useState(false);
-  const { toast } = useToast();
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
-  useEffect(() => {
-    const getWorkspaces = async () => {
-      setIsLoadingWorkspaces(true);
-      try {
-        const fetchedWorkspaces = await fetchWorkspaces();
-        setWorkspaces(fetchedWorkspaces);
-        
-        if (fetchedWorkspaces.length > 0) {
-          const firstWorkspaceId = fetchedWorkspaces[0].id;
-          setReviewedTasks(prevTasks => 
-            prevTasks.map(task => ({
-              ...task,
-              workspace_id: task.workspace_id || firstWorkspaceId
-            }))
-          );
-        }
-      } catch (error) {
-        console.error('Error fetching workspaces:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load workspaces",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoadingWorkspaces(false);
-      }
-    };
-    
-    getWorkspaces();
-  }, [toast]);
-
-  useEffect(() => {
-    const validationResult = validateTasks(reviewedTasks);
-    setValidation(validationResult);
-  }, [reviewedTasks]);
-
-  useEffect(() => {
-    setEditedProjectName(projectName);
-  }, [projectName]);
-
-  // Check if any task is missing a workspace
-  const hasMissingWorkspaces = reviewedTasks.some(task => !task.workspace_id);
-
-  const handleEditTask = (task: Task) => {
-    setEditingTaskId(task.id);
-    setEditingTask({ ...task });
+  const handleEditTask = (taskId: string) => {
+    setEditingTaskId(taskId);
   };
 
-  const handleCancelEdit = () => {
+  const handleSaveTask = () => {
     setEditingTaskId(null);
-    setEditingTask(null);
   };
 
-  const handleSaveEdit = () => {
-    if (editingTask) {
-      setReviewedTasks(reviewedTasks.map(task => 
-        task.id === editingTask.id ? editingTask : task
-      ));
-      setEditingTaskId(null);
-      setEditingTask(null);
-    }
+  const handleUpdateTask = (taskId: string, field: keyof Task, value: any) => {
+    setEditedTasks(editedTasks.map(task => 
+      task.id === taskId ? { ...task, [field]: value } : task
+    ));
   };
 
   const handleDeleteTask = (taskId: string) => {
-    setReviewedTasks(reviewedTasks.filter(task => task.id !== taskId));
+    setEditedTasks(editedTasks.filter(task => task.id !== taskId));
   };
 
   const handleContinue = () => {
-    const validationResult = validateTasks(reviewedTasks);
-    if (!validationResult.allValid) {
-      setValidation(validationResult);
-      
-      toast({
-        title: "Missing information",
-        description: "Some tasks are missing required fields. Please complete them before continuing.",
-        variant: "destructive",
-      });
-      
-      if (validationResult.tasksWithMissingFields.length > 0) {
-        const firstInvalidTask = validationResult.tasksWithMissingFields[0].task;
-        handleEditTask(firstInvalidTask);
-      }
-      
-      return;
-    }
-    
     setIsTransitioning(true);
     setTimeout(() => {
-      onContinue(reviewedTasks, editedProjectName || undefined);
+      onContinue(editedTasks, editedProjectName !== projectName ? editedProjectName : undefined);
     }, 400);
   };
 
@@ -142,418 +72,172 @@ const TaskReview: React.FC<TaskReviewProps> = ({
     }, 400);
   };
 
-  const getWorkspaceName = (id: string | null) => {
-    if (!id) return "Not assigned";
-    const workspace = workspaces.find(w => w.id === id);
-    return workspace ? workspace.name : "Unknown workspace";
-  };
-
-  // Update all tasks to use the same workspace
-  const handleBulkWorkspaceUpdate = (workspaceId: string) => {
-    setReviewedTasks(prevTasks => 
-      prevTasks.map(task => ({
-        ...task,
-        workspace_id: workspaceId
-      }))
-    );
-    setWorkspacePromptDismissed(true);
-    
-    toast({
-      title: "Workspace updated",
-      description: `All tasks assigned to "${getWorkspaceName(workspaceId)}"`,
-    });
-  };
-
   return (
     <div className={`w-full max-w-2xl mx-auto transition-all duration-500 ${isTransitioning ? 'opacity-0 translate-x-10' : 'opacity-100 translate-x-0'}`}>
-      <Card className="bg-white bg-opacity-80 backdrop-blur-sm border border-gray-100 shadow-card">
+      <Card className="bg-white bg-opacity-80 backdrop-blur-sm border border-gray-100 shadow-card overflow-hidden">
         <CardHeader>
-          <CardTitle className="text-2xl font-medium text-gray-900 flex items-center">
-            <CheckCircle2Icon className="inline-block mr-2 h-6 w-6 text-primary" />
-            Review Tasks
-          </CardTitle>
-          <p className="text-muted-foreground text-sm">
-            Review and edit your tasks before sending them to Motion
-          </p>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-2xl font-medium text-gray-900">
+              <ClipboardCheckIcon className="inline-block mr-2 h-6 w-6 text-primary" />
+              Review Tasks
+            </CardTitle>
+            <Badge variant="outline" className="font-normal">
+              {editedTasks.length} Tasks
+            </Badge>
+          </div>
+          <CardDescription>
+            Review and edit your tasks before adding them to Motion
+          </CardDescription>
+          <div className="mt-4 flex items-center gap-3">
+            <Label htmlFor="project-name" className="text-sm font-medium">Project Name:</Label>
+            <Input 
+              id="project-name"
+              value={editedProjectName || ''}
+              onChange={(e) => setEditedProjectName(e.target.value || null)}
+              className="h-8 max-w-[250px]"
+              placeholder="No project (optional)"
+            />
+          </div>
         </CardHeader>
         
         <CardContent className="pb-0">
-          <div className="mb-6">
-            <Label htmlFor="projectName" className="flex items-center mb-2">
-              <BriefcaseIcon className="h-4 w-4 mr-1" />
-              Project Name
-            </Label>
-            <Input 
-              id="projectName"
-              value={editedProjectName || ''}
-              onChange={(e) => setEditedProjectName(e.target.value || null)}
-              placeholder="Enter project name"
-              className="border-gray-200"
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              This project name will be applied to all tasks
-            </p>
-          </div>
-          
-          {/* Workspace selection for all tasks */}
-          <div className="mb-6">
-            <Label htmlFor="globalWorkspace" className="flex items-center mb-2 font-medium">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect width="18" height="18" x="3" y="3" rx="2" />
-                <path d="M7 7h.01M7 17h.01M17 7h.01M17 17h.01M7 12h10" />
-              </svg>
-              Motion Workspace
-              <span className="text-red-500 ml-1">*</span>
-            </Label>
-            
-            <Select 
-              onValueChange={handleBulkWorkspaceUpdate}
-              defaultValue={reviewedTasks[0]?.workspace_id || ''}
-            >
-              <SelectTrigger id="globalWorkspace" className="border-gray-200">
-                <SelectValue placeholder="Select a workspace" />
-              </SelectTrigger>
-              <SelectContent>
-                {workspaces.map(workspace => (
-                  <SelectItem key={workspace.id} value={workspace.id}>
-                    {workspace.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-muted-foreground mt-1">
-              All tasks will be added to this Motion workspace
-            </p>
-          </div>
-          
-          {!validation.allValid && validation.tasksWithMissingFields.length > 0 && (
-            <Alert variant="destructive" className="mb-4">
-              <AlertCircleIcon className="h-4 w-4" />
-              <AlertTitle>Missing information</AlertTitle>
-              <AlertDescription>
-                {validation.tasksWithMissingFields.length} task(s) are missing required fields.
-                Please complete all required information to continue.
-              </AlertDescription>
-            </Alert>
-          )}
-          
-          {/* Workspace selection prompt */}
-          {hasMissingWorkspaces && !workspacePromptDismissed && (
-            <Alert className="mb-4 border-blue-200 bg-blue-50">
-              <div className="flex items-start">
-                <AlertCircleIcon className="h-5 w-5 mr-2 text-blue-600" />
-                <div>
-                  <AlertTitle className="text-blue-700">Workspace Required</AlertTitle>
-                  <AlertDescription className="text-blue-600">
-                    Please select a Motion workspace for your tasks above. This is required for the Motion API integration.
-                  </AlertDescription>
-                </div>
+          <div className="divide-y divide-gray-100">
+            {editedTasks.length === 0 ? (
+              <div className="py-10 text-center">
+                <p className="text-muted-foreground">No tasks to review. Go back to add some tasks.</p>
+                <Button variant="outline" onClick={handleBack} className="mt-4">
+                  <ArrowLeftIcon className="mr-2 h-4 w-4" />
+                  Back
+                </Button>
               </div>
-            </Alert>
-          )}
-          
-          {reviewedTasks.length === 0 ? (
-            <div className="py-10 text-center">
-              <p className="text-muted-foreground">No tasks selected.</p>
-              <Button variant="outline" onClick={handleBack} className="mt-4">
-                <ArrowLeftIcon className="mr-2 h-4 w-4" />
-                Back to Extraction
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-6 py-1">
-              {reviewedTasks.map((task) => {
-                const taskValidation = validation.tasksWithMissingFields.find(t => t.task.id === task.id);
-                const hasErrors = !!taskValidation;
-                
-                return (
-                  <Card 
-                    key={task.id} 
-                    className={`shadow-subtle overflow-hidden ${
-                      editingTaskId === task.id 
-                        ? 'border-primary ring-1 ring-primary/20' 
-                        : hasErrors 
-                          ? 'border-red-300 ring-1 ring-red-200' 
-                          : 'border-gray-100'
-                    }`}
-                  >
-                    {editingTaskId === task.id && editingTask ? (
-                      <div className="p-4 space-y-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="title" className="flex items-center">
-                            Task Name
-                            <span className="text-red-500 ml-1">*</span>
-                          </Label>
-                          <Input 
-                            id="title"
-                            value={editingTask.title}
-                            onChange={(e) => setEditingTask({...editingTask, title: e.target.value})}
-                            className={`border-gray-200 ${
-                              taskValidation?.missingFields.includes('title') ? 'border-red-300 focus:border-red-500' : ''
-                            }`}
-                          />
-                          {taskValidation?.missingFields.includes('title') && (
-                            <p className="text-xs text-red-500 mt-1">Task name is required</p>
-                          )}
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <Label htmlFor="description">Description</Label>
-                          <Textarea 
-                            id="description"
-                            value={editingTask.description}
-                            onChange={(e) => setEditingTask({...editingTask, description: e.target.value})}
-                            className="border-gray-200 resize-none min-h-[80px]"
-                          />
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <Label htmlFor="project">Project</Label>
-                          <Input 
-                            id="project"
-                            value={editingTask.project || ''}
-                            onChange={(e) => setEditingTask({...editingTask, project: e.target.value || null})}
-                            placeholder="Enter project name"
-                            className="border-gray-200"
-                          />
-                          <p className="text-xs text-muted-foreground">
-                            Leave blank to use the global project name
-                          </p>
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <Label htmlFor="workspace" className="flex items-center">
-                            Workspace
-                            <span className="text-red-500 ml-1">*</span>
+            ) : (
+              editedTasks.map((task) => (
+                <div key={task.id} className="py-4 first:pt-0">
+                  {editingTaskId === task.id ? (
+                    <div className="space-y-4 bg-accent/30 p-3 rounded-md -mx-3">
+                      <div>
+                        <Label htmlFor={`title-${task.id}`} className="text-sm font-medium mb-1 block">
+                          Task Title
+                        </Label>
+                        <Input 
+                          id={`title-${task.id}`}
+                          value={task.title}
+                          onChange={(e) => handleUpdateTask(task.id, 'title', e.target.value)}
+                          className="w-full"
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor={`description-${task.id}`} className="text-sm font-medium mb-1 block">
+                          Description (Optional)
+                        </Label>
+                        <Textarea 
+                          id={`description-${task.id}`}
+                          value={task.description || ''}
+                          onChange={(e) => handleUpdateTask(task.id, 'description', e.target.value)}
+                          className="w-full resize-none"
+                          rows={2}
+                        />
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor={`priority-${task.id}`} className="text-sm font-medium mb-1 block">
+                            Priority
                           </Label>
                           <Select 
-                            value={editingTask.workspace_id || ''} 
-                            onValueChange={(value) => setEditingTask({
-                              ...editingTask, 
-                              workspace_id: value
-                            })}
+                            value={task.priority || 'normal'}
+                            onValueChange={(value) => handleUpdateTask(task.id, 'priority', value)}
                           >
-                            <SelectTrigger 
-                              id="workspace" 
-                              className={`border-gray-200 ${
-                                taskValidation?.missingFields.includes('workspace_id') ? 'border-red-300 focus:border-red-500' : ''
-                              }`}
-                            >
-                              <SelectValue placeholder="Select workspace" />
+                            <SelectTrigger id={`priority-${task.id}`} className="w-full">
+                              <SelectValue placeholder="Select priority" />
                             </SelectTrigger>
                             <SelectContent>
-                              {workspaces.map(workspace => (
-                                <SelectItem key={workspace.id} value={workspace.id}>
-                                  {workspace.name}
-                                </SelectItem>
-                              ))}
+                              <SelectItem value="high">High</SelectItem>
+                              <SelectItem value="medium">Medium</SelectItem>
+                              <SelectItem value="low">Low</SelectItem>
+                              <SelectItem value="normal">Normal</SelectItem>
                             </SelectContent>
                           </Select>
-                          {taskValidation?.missingFields.includes('workspace_id') && (
-                            <p className="text-xs text-red-500 mt-1">Workspace is required</p>
-                          )}
                         </div>
                         
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="dueDate">Due Date</Label>
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  className="w-full justify-start text-left font-normal border-gray-200"
-                                >
-                                  <CalendarIcon className="mr-2 h-4 w-4" />
-                                  {editingTask.dueDate ? (
-                                    format(new Date(editingTask.dueDate), "PPP")
-                                  ) : (
-                                    <span className="text-muted-foreground">Select date</span>
-                                  )}
-                                </Button>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-auto p-0">
-                                <Calendar
-                                  mode="single"
-                                  selected={editingTask.dueDate ? new Date(editingTask.dueDate) : undefined}
-                                  onSelect={(date) => setEditingTask({
-                                    ...editingTask, 
-                                    dueDate: date ? format(date, "yyyy-MM-dd") : null
-                                  })}
-                                />
-                              </PopoverContent>
-                            </Popover>
-                          </div>
-                          
-                          <div className="space-y-2">
-                            <Label htmlFor="priority">Priority</Label>
-                            <Select 
-                              value={editingTask.priority || ''} 
-                              onValueChange={(value) => setEditingTask({
-                                ...editingTask, 
-                                priority: value as 'low' | 'medium' | 'high' | null
-                              })}
-                            >
-                              <SelectTrigger id="priority" className="border-gray-200">
-                                <SelectValue placeholder="Select priority" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="">No Priority</SelectItem>
-                                <SelectItem value="low">Low</SelectItem>
-                                <SelectItem value="medium">Medium</SelectItem>
-                                <SelectItem value="high">High</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-                        
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="assignee">Assignee</Label>
-                            <Input 
-                              id="assignee"
-                              value={editingTask.assignee || ''}
-                              onChange={(e) => setEditingTask({...editingTask, assignee: e.target.value || null})}
-                              placeholder="Enter assignee name"
-                              className="border-gray-200"
-                            />
-                          </div>
-                          
-                          <div className="space-y-2">
-                            <Label htmlFor="status">Status</Label>
-                            <Select 
-                              value={editingTask.status} 
-                              onValueChange={(value) => setEditingTask({
-                                ...editingTask, 
-                                status: value as 'todo' | 'in-progress' | 'done'
-                              })}
-                            >
-                              <SelectTrigger id="status" className="border-gray-200">
-                                <SelectValue placeholder="Select status" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="todo">To Do</SelectItem>
-                                <SelectItem value="in-progress">In Progress</SelectItem>
-                                <SelectItem value="done">Done</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <div className="flex items-center space-x-2">
-                            <input 
-                              type="checkbox" 
-                              id="isRecurring" 
-                              checked={editingTask.isRecurring}
-                              onChange={(e) => setEditingTask({...editingTask, isRecurring: e.target.checked})}
-                              className="h-4 w-4 rounded border-gray-300 text-primary"
-                            />
-                            <Label htmlFor="isRecurring" className="cursor-pointer">This is a recurring task</Label>
-                          </div>
-                          
-                          {editingTask.isRecurring && (
-                            <div className="mt-2">
-                              <Label htmlFor="frequency" className="flex items-center">
-                                Frequency
-                                <span className="text-red-500 ml-1">*</span>
-                              </Label>
-                              <Select 
-                                value={editingTask.frequency || ''} 
-                                onValueChange={(value) => setEditingTask({
-                                  ...editingTask, 
-                                  frequency: value
-                                })}
-                              >
-                                <SelectTrigger 
-                                  id="frequency" 
-                                  className={`border-gray-200 mt-1 ${
-                                    taskValidation?.missingFields.includes('frequency') ? 'border-red-300 focus:border-red-500' : ''
-                                  }`}
-                                >
-                                  <SelectValue placeholder="Select frequency" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="daily">Daily</SelectItem>
-                                  <SelectItem value="weekly">Weekly</SelectItem>
-                                  <SelectItem value="biweekly">Biweekly</SelectItem>
-                                  <SelectItem value="monthly">Monthly</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              {taskValidation?.missingFields.includes('frequency') && (
-                                <p className="text-xs text-red-500 mt-1">Frequency is required for recurring tasks</p>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                        
-                        <div className="flex justify-end gap-2 pt-2">
-                          <Button 
-                            variant="outline" 
-                            onClick={handleCancelEdit}
-                            size="sm"
-                          >
-                            Cancel
-                          </Button>
-                          <Button 
-                            onClick={handleSaveEdit}
-                            size="sm"
-                          >
-                            Save Changes
-                          </Button>
+                        <div>
+                          <Label htmlFor={`assignee-${task.id}`} className="text-sm font-medium mb-1 block">
+                            Assignee (Optional)
+                          </Label>
+                          <Input 
+                            id={`assignee-${task.id}`}
+                            value={task.assignee || ''}
+                            onChange={(e) => handleUpdateTask(task.id, 'assignee', e.target.value)}
+                            className="w-full"
+                            placeholder="Assignee name"
+                          />
                         </div>
                       </div>
-                    ) : (
-                      <div className="p-4">
-                        <div className="flex justify-between items-start">
-                          <h3 className="font-medium text-gray-900">
-                            {task.title}
-                            {hasErrors && (
-                              <Badge variant="destructive" className="ml-2 px-1.5 py-0 text-xs">
-                                Missing info
-                              </Badge>
-                            )}
-                          </h3>
-                          <div className="flex gap-1 ml-2">
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="h-8 w-8 text-gray-500 hover:text-primary"
-                              onClick={() => handleEditTask(task)}
-                            >
-                              <EditIcon className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="h-8 w-8 text-gray-500 hover:text-destructive"
-                              onClick={() => handleDeleteTask(task.id)}
-                            >
-                              <TrashIcon className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                        
-                        <div className="flex flex-wrap gap-2 mt-3">
-                          {task.project && (
-                            <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-200 text-xs">
-                              Project: {task.project}
-                            </Badge>
-                          )}
-                          
-                          <Badge variant={task.workspace_id ? "outline" : "destructive"} className={task.workspace_id ? "bg-blue-50 text-blue-700 border-blue-200 text-xs" : "text-xs"}>
-                            {task.workspace_id ? `Workspace: ${getWorkspaceName(task.workspace_id)}` : "Workspace required"}
-                          </Badge>
+                      
+                      <div>
+                        <Label className="text-sm font-medium mb-1 block">
+                          Due Date (Optional)
+                        </Label>
+                        <div className="flex items-center gap-2">
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="outline"
+                                className={cn(
+                                  "justify-start text-left font-normal w-full",
+                                  !task.dueDate && "text-muted-foreground"
+                                )}
+                              >
+                                {task.dueDate ? format(new Date(task.dueDate), "PPP") : "Select date"}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0">
+                              <Calendar
+                                mode="single"
+                                selected={task.dueDate ? new Date(task.dueDate) : undefined}
+                                onSelect={(date) => handleUpdateTask(task.id, 'dueDate', date?.toISOString() || null)}
+                                initialFocus
+                              />
+                            </PopoverContent>
+                          </Popover>
                           
                           {task.dueDate && (
-                            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-xs">
-                              Due: {format(new Date(task.dueDate), "MMM d, yyyy")}
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleUpdateTask(task.id, 'dueDate', null)}
+                              className="h-8 px-2"
+                            >
+                              <TrashIcon className="h-4 w-4 text-muted-foreground" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="flex justify-end pt-2">
+                        <Button onClick={handleSaveTask}>
+                          Save Changes
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-start justify-between group">
+                      <div>
+                        <h3 className="font-medium text-gray-900">{task.title}</h3>
+                        {task.description && (
+                          <p className="text-sm text-muted-foreground mt-1">{task.description}</p>
+                        )}
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {task.dueDate && (
+                            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-[10px]">
+                              Due: {new Date(task.dueDate).toLocaleDateString()}
                             </Badge>
                           )}
-                          
                           {task.priority && (
                             <Badge 
                               variant="outline" 
-                              className={`text-xs ${
+                              className={`text-[10px] ${
                                 task.priority === 'high' 
                                   ? 'bg-red-50 text-red-700 border-red-200' 
                                   : task.priority === 'medium' 
@@ -564,46 +248,37 @@ const TaskReview: React.FC<TaskReviewProps> = ({
                               {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)} Priority
                             </Badge>
                           )}
-                          
                           {task.assignee && (
-                            <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 text-xs">
+                            <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 text-[10px]">
                               Assignee: {task.assignee}
-                            </Badge>
-                          )}
-                          
-                          <Badge 
-                            variant="outline" 
-                            className={`text-xs ${
-                              task.status === 'done' 
-                                ? 'bg-green-50 text-green-700 border-green-200'
-                                : task.status === 'in-progress'
-                                  ? 'bg-yellow-50 text-yellow-700 border-yellow-200'
-                                  : 'bg-gray-50 text-gray-700 border-gray-200'
-                            }`}
-                          >
-                            {task.status === 'todo' ? 'To Do' : 
-                             task.status === 'in-progress' ? 'In Progress' : 'Done'}
-                          </Badge>
-                          
-                          {task.isRecurring && (
-                            <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-200 text-xs">
-                              Recurring: {task.frequency ? task.frequency.charAt(0).toUpperCase() + task.frequency.slice(1) : 'Not set'}
-                            </Badge>
-                          )}
-                          
-                          {task.description && (
-                            <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200 text-xs">
-                              Has description
                             </Badge>
                           )}
                         </div>
                       </div>
-                    )}
-                  </Card>
-                );
-              })}
-            </div>
-          )}
+                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => handleEditTask(task.id)}
+                          className="h-8 w-8 p-0"
+                        >
+                          <PencilIcon className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => handleDeleteTask(task.id)}
+                          className="h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-50"
+                        >
+                          <TrashIcon className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
         </CardContent>
         
         <CardFooter className="flex justify-between py-4 mt-4">
@@ -617,10 +292,10 @@ const TaskReview: React.FC<TaskReviewProps> = ({
           </Button>
           <Button 
             onClick={handleContinue}
-            disabled={reviewedTasks.length === 0 || isTransitioning || hasMissingWorkspaces}
+            disabled={editedTasks.length === 0 || isTransitioning || editingTaskId !== null}
             className="transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"
           >
-            Preview Tasks
+            Continue to Preview
             <ArrowRightIcon className="ml-2 h-4 w-4" />
           </Button>
         </CardFooter>

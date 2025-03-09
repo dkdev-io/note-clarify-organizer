@@ -7,12 +7,19 @@ import { CheckCircleIcon, ArrowRightIcon, ArrowLeftIcon, ListTodoIcon, LoaderIco
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 
+interface ApiProps {
+  isConnected: boolean;
+  apiKey: string | null;
+  workspaces: any[];
+}
+
 interface TaskExtractorProps {
   rawText: string;
   extractedTasks: Task[];
   projectName: string | null;
   onBack: () => void;
   onContinue: (tasks: Task[]) => void;
+  apiProps?: ApiProps;
 }
 
 const TaskExtractor: React.FC<TaskExtractorProps> = ({ 
@@ -20,7 +27,8 @@ const TaskExtractor: React.FC<TaskExtractorProps> = ({
   extractedTasks,
   projectName,
   onBack, 
-  onContinue 
+  onContinue,
+  apiProps
 }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedTasks, setSelectedTasks] = useState<Task[]>([]);
