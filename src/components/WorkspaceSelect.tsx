@@ -83,11 +83,7 @@ const WorkspaceSelect: React.FC<WorkspaceSelectProps> = ({
   };
 
   if (!apiKey) {
-    return (
-      <div className="text-center py-4 text-muted-foreground">
-        Please connect to Motion API first to view workspaces.
-      </div>
-    );
+    return null;
   }
 
   return (
@@ -102,7 +98,14 @@ const WorkspaceSelect: React.FC<WorkspaceSelectProps> = ({
               disabled={isLoading}
             >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select a workspace" />
+                {isLoading ? (
+                  <div className="flex items-center">
+                    <LoaderIcon className="mr-2 h-3 w-3 animate-spin" />
+                    <span>Loading workspaces...</span>
+                  </div>
+                ) : (
+                  <SelectValue placeholder="Select a workspace" />
+                )}
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>

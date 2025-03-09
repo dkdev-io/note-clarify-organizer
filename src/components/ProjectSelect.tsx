@@ -53,6 +53,11 @@ const ProjectSelect: React.FC<ProjectSelectProps> = ({
     try {
       const projectOptions = await getProjectsForDropdown(query, workspaceId);
       setProjects(projectOptions);
+      
+      // If we have projects and none is selected, select the first one
+      if (projectOptions.length > 0 && !selectedProject) {
+        onProjectSelect(projectOptions[0].label, projectOptions[0].value);
+      }
     } catch (error) {
       console.error('Failed to load projects:', error);
     } finally {
@@ -110,11 +115,7 @@ const ProjectSelect: React.FC<ProjectSelectProps> = ({
   };
 
   if (!apiKey || !workspaceId) {
-    return (
-      <div className="text-center py-4 text-muted-foreground">
-        Please connect to Motion API and select a workspace first.
-      </div>
-    );
+    return null;
   }
 
   return (
@@ -130,7 +131,14 @@ const ProjectSelect: React.FC<ProjectSelectProps> = ({
                 disabled={isLoading}
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select a project" />
+                  {isLoading ? (
+                    <div className="flex items-center">
+                      <LoaderIcon className="mr-2 h-3 w-3 animate-spin" />
+                      <span>Loading projects...</span>
+                    </div>
+                  ) : (
+                    <SelectValue placeholder="Select a project" />
+                  )}
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>

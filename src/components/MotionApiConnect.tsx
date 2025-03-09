@@ -152,12 +152,14 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
                   onWorkspaceSelect={handleWorkspaceSelect}
                 />
                 
-                <ProjectSelect
-                  apiKey={apiKey}
-                  workspaceId={selectedWorkspaceId}
-                  selectedProject={selectedProject}
-                  onProjectSelect={handleProjectSelect}
-                />
+                {selectedWorkspaceId && (
+                  <ProjectSelect
+                    apiKey={apiKey}
+                    workspaceId={selectedWorkspaceId}
+                    selectedProject={selectedProject}
+                    onProjectSelect={handleProjectSelect}
+                  />
+                )}
               </>
             )}
             
@@ -180,7 +182,7 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
           </Button>
           <Button 
             onClick={handleConnect}
-            disabled={!isKeyValid || isValidating}
+            disabled={!isKeyValid || !selectedWorkspaceId || isValidating}
             className="transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"
           >
             {isValidating ? (
