@@ -1,3 +1,4 @@
+
 /**
  * Utility functions for interacting with the Motion API
  */
@@ -59,44 +60,44 @@ export const findOrCreateProject = async (
 ): Promise<{ id: string; isNew: boolean; error?: MotionApiError }> => {
   console.log(`Searching for project: ${projectName} in workspace: ${workspaceId}`);
   
-  // Simulate API call to search for existing project
-  await new Promise(resolve => setTimeout(resolve, 600));
-  
-  // Mock implementation - in a real app, this would search Motion for the project
-  const mockProjects: MotionProject[] = [
-    { id: 'project-1', name: 'Website Redesign', workspace_id: 'workspace-1' },
-    { id: 'project-2', name: 'Marketing Campaign', workspace_id: 'workspace-2' },
-    { id: 'project-3', name: 'Product Launch', workspace_id: 'workspace-3' }
-  ];
-  
-  // Check if project already exists (case-insensitive partial match)
-  const existingProject = mockProjects.find(p => 
-    p.name.toLowerCase().includes(projectName.toLowerCase()) && 
-    p.workspace_id === workspaceId
-  );
-  
-  if (existingProject) {
-    return { id: existingProject.id, isNew: false };
+  try {
+    // First try to find the project
+    const projects = await searchProjects(projectName, workspaceId);
+    const existingProject = projects.find(p => 
+      p.name.toLowerCase() === projectName.toLowerCase()
+    );
+    
+    if (existingProject) {
+      return { id: existingProject.id, isNew: false };
+    }
+    
+    // Project doesn't exist, create a new one
+    console.log(`Creating new project: ${projectName}`);
+    const result = await createProject(projectName, workspaceId);
+    
+    if (!result.success || !result.project) {
+      return { 
+        id: '', 
+        isNew: false, 
+        error: result.error || { message: 'Failed to create project' } 
+      };
+    }
+    
+    return { id: result.project.id, isNew: true };
+  } catch (error) {
+    console.error('Error in findOrCreateProject:', error);
+    return { 
+      id: '', 
+      isNew: false, 
+      error: { message: 'Error finding or creating project' } 
+    };
   }
-  
-  // Project doesn't exist, create a new one
-  console.log(`Creating new project: ${projectName}`);
-  
-  // Simulate API call to create project
-  await new Promise(resolve => setTimeout(resolve, 800));
-  
-  // Generate a mock project ID
-  const newProjectId = `project-${Math.random().toString(36).substring(2, 8)}`;
-  
-  return { id: newProjectId, isNew: true };
 };
 
-// Mock function for Motion API integration
-// This would be replaced with actual API calls once the API key is provided
+// Function to add a task to Motion
 export const addTaskToMotion = async (task: Task): Promise<{ success: boolean; error?: MotionApiError }> => {
-  console.log('Simulating API call to Motion with task:', task);
+  console.log('Adding task to Motion:', task);
   
-  // Simulate API call
   try {
     // Validate required fields
     if (!task.title) {
@@ -160,10 +161,27 @@ export const addTaskToMotion = async (task: Task): Promise<{ success: boolean; e
       };
     }
     
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
+    // Make the API call to create the task
+    const response = await fetch('https://api.usemotion.com/v1/tasks', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-motion-api-key': window.localStorage.getItem('motion_api_key') || '',
+      },
+      body: JSON.stringify(motionTask),
+    });
     
-    // Simulate success
+    if (!response.ok) {
+      const errorData = await response.json();
+      return {
+        success: false,
+        error: {
+          message: errorData.message || 'Failed to add task to Motion',
+          code: errorData.code || 'API_ERROR'
+        }
+      };
+    }
+    
     return { success: true };
   } catch (error) {
     console.error('Error adding task to Motion:', error);
@@ -179,16 +197,23 @@ export const addTaskToMotion = async (task: Task): Promise<{ success: boolean; e
 
 // Function to validate Motion API key
 export const validateMotionApiKey = async (apiKey: string): Promise<boolean> => {
-  console.log('Validating Motion API key:', apiKey);
+  console.log('Validating Motion API key...');
   
-  // This is a placeholder for actual API validation
-  // In a real implementation, you would make a test call to the Motion API
-  
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 800));
-  
-  // For demonstration, we'll consider any non-empty key as valid
-  return apiKey.trim().length > 0;
+  try {
+    // Try to fetch workspaces to validate the API key
+    const response = await fetch('https://api.usemotion.com/v1/workspaces', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-motion-api-key': apiKey,
+      },
+    });
+    
+    return response.ok;
+  } catch (error) {
+    console.error('Error validating Motion API key:', error);
+    return false;
+  }
 };
 
 // Batch add multiple tasks
@@ -243,53 +268,73 @@ const convertStatusToMotion = (status: 'todo' | 'in-progress' | 'done'): string 
   }
 };
 
-// Fetch workspaces (mock function)
+// Fetch workspaces from Motion API
 export const fetchWorkspaces = async (): Promise<MotionWorkspace[]> => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 600));
+  console.log('Fetching workspaces from Motion API...');
   
-  // Return mock workspaces
-  return [
-    { id: 'workspace-1', name: 'Personal' },
-    { id: 'workspace-2', name: 'Team Projects' },
-    { id: 'workspace-3', name: 'Client Work' }
-  ];
+  try {
+    const response = await fetch('https://api.usemotion.com/v1/workspaces', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-motion-api-key': window.localStorage.getItem('motion_api_key') || '',
+      },
+    });
+    
+    if (!response.ok) {
+      console.error('Failed to fetch workspaces:', response.statusText);
+      return [];
+    }
+    
+    const data = await response.json();
+    return data.workspaces || [];
+  } catch (error) {
+    console.error('Error fetching workspaces:', error);
+    return [];
+  }
 };
 
 // Search for projects in Motion
 export const searchProjects = async (
-  query: string, 
+  query: string = '', 
   workspaceId?: string
 ): Promise<MotionProject[]> => {
-  console.log(`Searching for projects with query: ${query}${workspaceId ? ` in workspace: ${workspaceId}` : ''}`);
+  console.log(`Searching for projects in workspace: ${workspaceId}`);
   
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 700));
-  
-  // Mock projects
-  const allProjects: MotionProject[] = [
-    { id: 'project-1', name: 'Website Redesign', workspace_id: 'workspace-1' },
-    { id: 'project-2', name: 'Marketing Campaign', workspace_id: 'workspace-2' },
-    { id: 'project-3', name: 'Product Launch', workspace_id: 'workspace-3' },
-    { id: 'project-4', name: 'Q1 Planning', workspace_id: 'workspace-1' },
-    { id: 'project-5', name: 'Mobile App Development', workspace_id: 'workspace-2' },
-    { id: 'project-6', name: 'Annual Report', workspace_id: 'workspace-3' }
-  ];
-  
-  // Filter by workspace if provided
-  let filteredProjects = workspaceId 
-    ? allProjects.filter(p => p.workspace_id === workspaceId)
-    : allProjects;
-  
-  // Filter by query if provided
-  if (query) {
-    const lowerQuery = query.toLowerCase();
-    filteredProjects = filteredProjects.filter(p => 
-      p.name.toLowerCase().includes(lowerQuery)
-    );
+  if (!workspaceId) {
+    return [];
   }
   
-  return filteredProjects;
+  try {
+    const response = await fetch(`https://api.usemotion.com/v1/workspaces/${workspaceId}/projects`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-motion-api-key': window.localStorage.getItem('motion_api_key') || '',
+      },
+    });
+    
+    if (!response.ok) {
+      console.error('Failed to search projects:', response.statusText);
+      return [];
+    }
+    
+    const data = await response.json();
+    let projects = data.projects || [];
+    
+    // Filter by query if provided
+    if (query) {
+      const lowerQuery = query.toLowerCase();
+      projects = projects.filter((p: any) => 
+        p.name.toLowerCase().includes(lowerQuery)
+      );
+    }
+    
+    return projects;
+  } catch (error) {
+    console.error('Error searching projects:', error);
+    return [];
+  }
 };
 
 // Create a new project in Motion
@@ -321,21 +366,46 @@ export const createProject = async (
     };
   }
   
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 800));
-  
-  // Create a mock project
-  const newProject: MotionProject = {
-    id: `project-${Math.random().toString(36).substring(2, 8)}`,
-    name,
-    description,
-    workspace_id: workspaceId
-  };
-  
-  return {
-    success: true,
-    project: newProject
-  };
+  try {
+    const response = await fetch(`https://api.usemotion.com/v1/workspaces/${workspaceId}/projects`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-motion-api-key': window.localStorage.getItem('motion_api_key') || '',
+      },
+      body: JSON.stringify({
+        name,
+        description
+      }),
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      return {
+        success: false,
+        error: {
+          message: errorData.message || 'Failed to create project',
+          code: errorData.code || 'API_ERROR'
+        }
+      };
+    }
+    
+    const data = await response.json();
+    
+    return {
+      success: true,
+      project: data.project
+    };
+  } catch (error) {
+    console.error('Error creating project:', error);
+    return {
+      success: false,
+      error: {
+        message: 'Failed to create project',
+        code: 'API_ERROR'
+      }
+    };
+  }
 };
 
 // New function to get all workspaces for dropdown
@@ -352,7 +422,7 @@ export const getWorkspacesForDropdown = async (): Promise<{label: string, value:
   }
 };
 
-// New function to search projects for dropdown
+// New function to get projects for dropdown
 export const getProjectsForDropdown = async (
   query: string = '',
   workspaceId?: string

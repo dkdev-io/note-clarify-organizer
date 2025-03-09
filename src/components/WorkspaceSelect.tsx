@@ -42,7 +42,11 @@ const WorkspaceSelect: React.FC<WorkspaceSelectProps> = ({
   const loadWorkspaces = async () => {
     setIsLoading(true);
     try {
+      // Store the API key in localStorage for other functions to use
+      window.localStorage.setItem('motion_api_key', apiKey || '');
+      
       const workspaceOptions = await getWorkspacesForDropdown();
+      console.log('Loaded workspaces:', workspaceOptions);
       setWorkspaces(workspaceOptions);
       
       // If we have workspaces and none is selected, select the first one

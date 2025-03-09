@@ -5,7 +5,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { LoaderIcon, PlusCircleIcon, SearchIcon } from 'lucide-react';
+import { LoaderIcon, PlusCircleIcon } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -33,7 +33,6 @@ const ProjectSelect: React.FC<ProjectSelectProps> = ({
 }) => {
   const [projects, setProjects] = useState<{label: string, value: string}[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
   const [showNewProjectForm, setShowNewProjectForm] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
   const [newProjectDescription, setNewProjectDescription] = useState('');
@@ -46,12 +45,13 @@ const ProjectSelect: React.FC<ProjectSelectProps> = ({
     }
   }, [apiKey, workspaceId]);
 
-  const loadProjects = async (query = '') => {
+  const loadProjects = async () => {
     if (!workspaceId) return;
     
     setIsLoading(true);
     try {
-      const projectOptions = await getProjectsForDropdown(query, workspaceId);
+      const projectOptions = await getProjectsForDropdown('', workspaceId);
+      console.log('Loaded projects:', projectOptions);
       setProjects(projectOptions);
       
       // If we have projects and none is selected, select the first one
@@ -63,10 +63,6 @@ const ProjectSelect: React.FC<ProjectSelectProps> = ({
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleSearch = () => {
-    loadProjects(searchQuery);
   };
 
   const handleCreateProject = async () => {
@@ -162,32 +158,6 @@ const ProjectSelect: React.FC<ProjectSelectProps> = ({
                 <PlusCircleIcon className="h-4 w-4" />
               </Button>
             </div>
-          </div>
-          
-          <div className="flex items-end gap-2 mt-2">
-            <div className="flex-1">
-              <Label htmlFor="searchProject" className="text-xs">Search Projects</Label>
-              <Input
-                id="searchProject"
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                placeholder="Search projects..."
-                className="h-9"
-              />
-            </div>
-            <Button 
-              variant="secondary"
-              size="sm"
-              onClick={handleSearch}
-              disabled={isLoading}
-              className="h-9"
-            >
-              {isLoading ? (
-                <LoaderIcon className="h-4 w-4 animate-spin" />
-              ) : (
-                <SearchIcon className="h-4 w-4" />
-              )}
-            </Button>
           </div>
         </div>
       ) : (
