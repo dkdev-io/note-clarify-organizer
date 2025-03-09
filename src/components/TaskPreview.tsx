@@ -3,13 +3,14 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Task } from '@/utils/parser';
-import { ArrowLeftIcon, CheckIcon, LayoutListIcon, LoaderIcon } from 'lucide-react';
+import { AlertCircleIcon, ArrowLeftIcon, CheckIcon, LayoutListIcon, LoaderIcon } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { addTasksToMotion, validateMotionApiKey } from '@/utils/motion';
 import { useToast } from "@/components/ui/use-toast";
 import { format } from "date-fns";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface ApiProps {
   isConnected: boolean;
@@ -39,6 +40,7 @@ const TaskPreview: React.FC<TaskPreviewProps> = ({
   const [isKeyValid, setIsKeyValid] = useState<boolean | null>(apiProps?.isConnected ? true : null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
   const { toast } = useToast();
 
   const validateKey = async () => {
@@ -52,6 +54,7 @@ const TaskPreview: React.FC<TaskPreviewProps> = ({
     }
     
     setIsValidatingKey(true);
+    setSubmissionError(null);
     try {
       const isValid = await validateMotionApiKey(apiKey);
       setIsKeyValid(isValid);
@@ -91,8 +94,11 @@ const TaskPreview: React.FC<TaskPreviewProps> = ({
     }
     
     setIsSubmitting(true);
+    setSubmissionError(null);
     try {
-      const result = await addTasksToMotion(tasks);
+      console.log("Starting task submission to Motion...");
+      const result = await addTasksToMotion(tasks, apiKey);
+      console.log("Task submission result:", result);
       
       if (result.success) {
         toast({
@@ -105,10 +111,27 @@ const TaskPreview: React.FC<TaskPreviewProps> = ({
           onComplete();
         }, 400);
       } else {
+        if (result.successCount > 0) {
+          toast({
+            title: "Partial Success",
+            description: `${result.successCount} task${result.successCount !== 1 ? 's' : ''} added, ${result.failedCount} failed`,
+            variant: "warning",
+          });
+        } else {
+          toast({
+            title: "Failed",
+            description: `Failed to add tasks to Motion. Check console for details.`,
+            variant: "destructive",
+          });
+          
+          setSubmissionError("Failed to add tasks to Motion. See errors below.");
+        }
+        
         if (result.taskErrors && result.taskErrors.length > 0) {
           result.taskErrors.forEach(taskError => {
             const task = tasks.find(t => t.id === taskError.taskId);
             if (task) {
+              console.error(`Error with task "${task.title}":`, taskError.errors);
               toast({
                 title: `Error with task: ${task.title}`,
                 description: taskError.errors.join(', '),
@@ -116,15 +139,11 @@ const TaskPreview: React.FC<TaskPreviewProps> = ({
               });
             }
           });
-        } else {
-          toast({
-            title: "Warning",
-            description: `${result.successCount} added, ${result.failedCount} failed`,
-            variant: "destructive",
-          });
         }
       }
     } catch (error) {
+      console.error("Exception during task submission:", error);
+      setSubmissionError(error instanceof Error ? error.message : "Unknown error");
       toast({
         title: "Error",
         description: "Failed to add tasks to Motion",
@@ -160,7 +179,7 @@ const TaskPreview: React.FC<TaskPreviewProps> = ({
       'workspace-3': 'Client Work'
     };
     
-    return workspaceMap[workspaceId] || 'Unknown';
+    return workspaceMap[workspaceId] || workspaceId;
   };
 
   return (
@@ -220,6 +239,13 @@ const TaskPreview: React.FC<TaskPreviewProps> = ({
                   </div>
                 </div>
               </div>
+            )}
+            
+            {submissionError && (
+              <Alert variant="destructive">
+                <AlertCircleIcon className="h-4 w-4 mr-2" />
+                <AlertDescription>{submissionError}</AlertDescription>
+              </Alert>
             )}
             
             <div className="space-y-4">

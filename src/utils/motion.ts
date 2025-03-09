@@ -1,4 +1,3 @@
-
 /**
  * Motion API utilities for authentication and task management
  */
@@ -405,6 +404,8 @@ export const addTasksToMotion = async (tasks: Task[], apiKey?: string): Promise<
     let failedCount = 0;
     const taskErrors: { taskId: string; errors: string[] }[] = [];
     
+    console.log(`Attempting to add ${tasks.length} tasks to Motion`);
+    
     // Process each task one by one (for better error handling)
     for (const task of tasks) {
       try {
@@ -418,28 +419,66 @@ export const addTasksToMotion = async (tasks: Task[], apiKey?: string): Promise<
           continue;
         }
         
+        console.log(`Adding task: ${task.title} to Motion`);
+        
         // Prepare task data for Motion API
-        const taskData = {
+        const taskData: any = {
           title: task.title,
-          description: task.description || '',
-          workspace_id: task.workspace_id,
-          // Add other fields as needed by Motion API
+          workspaceId: task.workspace_id || null,
         };
         
-        // Call Motion API to create task
-        // This is a mock implementation - replace with actual Motion API endpoint
-        // const response = await fetch('https://api.usemotion.com/v1/tasks', {
-        //   method: 'POST',
-        //   headers: {
-        //     'X-API-Key': usedKey,
-        //     'Content-Type': 'application/json',
-        //   },
-        //   body: JSON.stringify(taskData),
-        // });
+        // Add optional properties if they exist
+        if (task.description) {
+          taskData.description = task.description;
+        }
         
-        // If the API call was successful, increment success count
-        // For now, we'll simulate success
-        successCount++;
+        if (task.dueDate) {
+          taskData.dueDate = new Date(task.dueDate).toISOString();
+        }
+        
+        if (task.priority) {
+          // Map priority string to Motion's priority levels
+          const priorityMap: Record<string, string> = {
+            'low': 'LOW',
+            'medium': 'MEDIUM',
+            'high': 'HIGH'
+          };
+          taskData.priorityLevel = priorityMap[task.priority] || 'MEDIUM';
+        }
+        
+        // Add status if available
+        if (task.status) {
+          // We would need to map status strings to Motion status IDs here
+          // For now we'll just log the status
+          console.log(`Task status: ${task.status} - would need to be mapped to Motion status ID`);
+        }
+        
+        // Make the API call to create task
+        const response = await fetch('https://api.usemotion.com/v1/tasks', {
+          method: 'POST',
+          headers: {
+            'X-API-Key': usedKey,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          mode: 'cors',
+          body: JSON.stringify(taskData),
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log(`Successfully added task: ${task.title}`, data);
+          successCount++;
+        } else {
+          const errorText = await response.text();
+          console.error(`Failed to add task ${task.id} with status ${response.status}:`, errorText);
+          
+          failedCount++;
+          taskErrors.push({
+            taskId: task.id,
+            errors: [`API Error (${response.status}): ${errorText}`]
+          });
+        }
         
       } catch (error) {
         failedCount++;
@@ -450,6 +489,8 @@ export const addTasksToMotion = async (tasks: Task[], apiKey?: string): Promise<
         });
       }
     }
+    
+    console.log(`Task addition complete. Success: ${successCount}, Failed: ${failedCount}`);
     
     return {
       success: failedCount === 0,
