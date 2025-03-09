@@ -4,7 +4,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AlertCircle, CheckIcon, LoaderIcon, InfoIcon, LinkIcon, RefreshCwIcon } from 'lucide-react';
+import { AlertCircle, CheckIcon, LoaderIcon, InfoIcon, LinkIcon, RefreshCwIcon, ShieldIcon } from 'lucide-react';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { validateMotionApiKey, fetchWorkspaces, setMotionApiKey } from '@/utils/motion';
 import { useToast } from "@/components/ui/use-toast";
@@ -53,49 +53,46 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
       // Set the API key globally first
       setMotionApiKey(trimmedKey);
       
-      const isValid = await validateMotionApiKey(trimmedKey);
-      setIsKeyValid(isValid);
+      await validateMotionApiKey(trimmedKey);
+      // If we got here without an error, the key is valid
+      setIsKeyValid(true);
       
-      if (isValid) {
-        // If valid, fetch workspaces
-        console.log('API key is valid, fetching workspaces...');
-        const fetchedWorkspaces = await fetchWorkspaces(trimmedKey);
-        console.log('Fetched workspaces:', fetchedWorkspaces);
-        setWorkspaces(fetchedWorkspaces);
-        
-        if (fetchedWorkspaces.length === 0) {
-          setErrorMessage(
-            "Your API key is valid, but no workspaces were found. " +
-            "Make sure you have at least one workspace in your Motion account."
-          );
-        } else {
-          toast({
-            title: "Successfully connected",
-            description: "Your Motion API key is valid and workspaces have been loaded.",
-          });
-        }
-      } else {
+      console.log('API key is valid, fetching workspaces...');
+      const fetchedWorkspaces = await fetchWorkspaces(trimmedKey);
+      console.log('Fetched workspaces:', fetchedWorkspaces);
+      setWorkspaces(fetchedWorkspaces);
+      
+      if (fetchedWorkspaces.length === 0) {
         setErrorMessage(
-          "Invalid Motion API key. Please check the key and try again. " +
-          "Make sure you are using an API key created in your Motion account settings with proper permissions."
+          "Your API key is valid, but no workspaces were found. " +
+          "Make sure you have at least one workspace in your Motion account."
         );
+      } else {
         toast({
-          title: "Connection Error",
-          description: "Invalid Motion API key - check for whitespace or quotes",
-          variant: "destructive",
+          title: "Successfully connected",
+          description: "Your Motion API key is valid and workspaces have been loaded.",
         });
       }
     } catch (error) {
       console.error("Error during validation:", error);
-      setErrorMessage(
-        "Failed to validate API key. Please check your internet connection and try again."
-      );
+      setIsKeyValid(false);
+      
+      if (error instanceof Error) {
+        setErrorMessage(error.message || 
+          "Invalid Motion API key. Please check the key and try again. " +
+          "Make sure you are using an API key created in your Motion account settings with proper permissions."
+        );
+      } else {
+        setErrorMessage(
+          "Failed to validate API key. Please check your internet connection and try again."
+        );
+      }
+      
       toast({
         title: "Connection Error",
-        description: "Failed to validate API key",
+        description: "Failed to validate API key. Please ensure it has correct permissions.",
         variant: "destructive",
       });
-      setIsKeyValid(false);
     } finally {
       setIsValidating(false);
     }
@@ -119,6 +116,10 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
 
   const handleMotionDocsClick = () => {
     window.open('https://docs.usemotion.com/docs/api/authentication', '_blank');
+  };
+
+  const handleMotionSettingsClick = () => {
+    window.open('https://app.usemotion.com/settings/developers/api-keys', '_blank');
   };
 
   const handleClearApiKey = () => {
@@ -183,15 +184,26 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
                 <AlertDescription className="text-xs">
                   Motion API keys can be found in your Motion account under Settings → API Keys. 
                   Make sure to create a new API key with read/write access.
-                  <Button
-                    variant="link"
-                    size="sm"
-                    className="p-0 h-auto text-blue-600 underline-offset-2 font-normal flex items-center mt-1"
-                    onClick={handleMotionDocsClick}
-                  >
-                    <LinkIcon className="h-3 w-3 mr-1" />
-                    View Motion API docs
-                  </Button>
+                  <div className="flex flex-col sm:flex-row gap-2 mt-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-blue-700 border-blue-200 bg-blue-50 hover:bg-blue-100"
+                      onClick={handleMotionSettingsClick}
+                    >
+                      <ShieldIcon className="mr-1 h-3 w-3" />
+                      Generate API Key
+                    </Button>
+                    <Button
+                      variant="link"
+                      size="sm"
+                      className="p-0 h-auto text-blue-600 underline-offset-2 font-normal flex items-center"
+                      onClick={handleMotionDocsClick}
+                    >
+                      <LinkIcon className="h-3 w-3 mr-1" />
+                      View Motion API docs
+                    </Button>
+                  </div>
                 </AlertDescription>
               </Alert>
               

@@ -47,17 +47,7 @@ const WorkspaceSelect: React.FC<WorkspaceSelectProps> = ({
     setIsLoading(true);
     setError(null);
     try {
-      // Store the API key in localStorage for other functions to use
-      if (apiKey) {
-        // Clean the API key - remove any whitespace, quotes or other characters
-        const cleanedKey = apiKey.trim().replace(/['"]/g, '');
-        window.localStorage.setItem('motion_api_key', cleanedKey);
-        
-        // Log the API key details (masked for security)
-        const maskedKey = cleanedKey.substring(0, 5) + '...' + cleanedKey.substring(cleanedKey.length - 5);
-        console.log('Using API key for workspaces (masked):', maskedKey);
-        console.log('API key length:', cleanedKey.length);
-      } else {
+      if (!apiKey) {
         console.error('No API key provided to WorkspaceSelect');
         setError("No API key provided. Please enter a valid Motion API key.");
         setIsLoading(false);
@@ -65,12 +55,12 @@ const WorkspaceSelect: React.FC<WorkspaceSelectProps> = ({
       }
       
       // Fetch workspaces from real API
-      const workspaceOptions = await getWorkspacesForDropdown();
+      const workspaceOptions = await getWorkspacesForDropdown(apiKey);
       
       console.log('Loaded workspaces:', workspaceOptions);
       
       if (workspaceOptions.length === 0) {
-        setError("No workspaces found. Please check your API key or try again later.");
+        setError("No workspaces found. Make sure your API key has the correct permissions.");
         toast({
           title: "No workspaces found",
           description: "Couldn't find any workspaces. Make sure your key has the correct permissions.",
@@ -86,10 +76,17 @@ const WorkspaceSelect: React.FC<WorkspaceSelectProps> = ({
       }
     } catch (error) {
       console.error('Failed to load workspaces:', error);
-      setError("Failed to load workspaces. Please check your API key and try again.");
+      
+      let errorMessage = "Failed to load workspaces. Please check your API key and try again.";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
+      setError(errorMessage);
+      
       toast({
         title: "Error loading workspaces",
-        description: "Could not load workspaces from Motion. Please check your API key and try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {

@@ -5,7 +5,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { LoaderIcon, PlusCircleIcon, RefreshCw } from 'lucide-react';
+import { LoaderIcon, PlusCircleIcon, RefreshCw, AlertTriangleIcon } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { getProjectsForDropdown, createProject } from '@/utils/motion';
 import { useToast } from "@/components/ui/use-toast";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface ProjectSelectProps {
   apiKey: string | null;
@@ -37,6 +38,7 @@ const ProjectSelect: React.FC<ProjectSelectProps> = ({
   const [newProjectName, setNewProjectName] = useState('');
   const [newProjectDescription, setNewProjectDescription] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -49,9 +51,9 @@ const ProjectSelect: React.FC<ProjectSelectProps> = ({
     if (!workspaceId) return;
     
     setIsLoading(true);
+    setError(null);
     try {
-      // Fix: Remove the first argument as it's not required anymore
-      const projectOptions = await getProjectsForDropdown(workspaceId);
+      const projectOptions = await getProjectsForDropdown(workspaceId, apiKey);
       console.log('Loaded projects:', projectOptions);
       setProjects(projectOptions);
       
@@ -61,9 +63,17 @@ const ProjectSelect: React.FC<ProjectSelectProps> = ({
       }
     } catch (error) {
       console.error('Failed to load projects:', error);
+      
+      let errorMessage = "Failed to load projects from Motion API.";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
+      setError(errorMessage);
+      
       toast({
         title: "Failed to load projects",
-        description: error instanceof Error ? error.message : 'An unexpected error occurred',
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
@@ -76,12 +86,12 @@ const ProjectSelect: React.FC<ProjectSelectProps> = ({
     
     setIsCreating(true);
     try {
-      const result = await createProject(newProjectName, workspaceId, newProjectDescription);
+      const result = await createProject(workspaceId, newProjectName, apiKey || undefined);
       
-      if (result.success && result.project) {
+      if (result) {
         const newProject = {
-          label: result.project.name,
-          value: result.project.id
+          label: result.name,
+          value: result.id
         };
         
         setProjects([...projects, newProject]);
@@ -95,13 +105,19 @@ const ProjectSelect: React.FC<ProjectSelectProps> = ({
           description: `Project "${newProject.label}" successfully created.`,
         });
       } else {
-        throw new Error(result.error?.message || 'Failed to create project');
+        throw new Error('Failed to create project - no response from API');
       }
     } catch (error) {
       console.error('Failed to create project:', error);
+      
+      let errorMessage = "Failed to create project. Check API key permissions.";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Failed to Create Project",
-        description: error instanceof Error ? error.message : 'An unexpected error occurred',
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
@@ -174,6 +190,19 @@ const ProjectSelect: React.FC<ProjectSelectProps> = ({
               </Button>
             </div>
           </div>
+          
+          {error && (
+            <Alert variant="destructive" className="mt-2">
+              <AlertTriangleIcon className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+          
+          {projects.length === 0 && !isLoading && !error && (
+            <p className="text-sm text-amber-600 mt-1">
+              No projects found in this workspace. You can create a new one.
+            </p>
+          )}
         </div>
       ) : (
         <Card className="border border-dashed">

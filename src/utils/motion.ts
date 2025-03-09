@@ -52,7 +52,11 @@ export const validateMotionApiKey = async (apiKey?: string): Promise<boolean> =>
       headers: {
         'X-API-Key': usedKey,
         'Content-Type': 'application/json',
+        // Add CORS headers for cross-domain requests
+        'Accept': 'application/json',
       },
+      // Include credentials for any cookies that might be relevant
+      credentials: 'include',
     });
     
     console.log('API validation response status:', response.status);
@@ -77,15 +81,15 @@ export const validateMotionApiKey = async (apiKey?: string): Promise<boolean> =>
           console.error('No error details available');
         }
         
-        return false;
+        throw new Error("Authentication failed: Check your API key or session. Make sure you've created a valid API key with read/write permissions in Motion settings.");
       } else {
         console.error(`API key validation failed with status: ${response.status}`);
-        return false;
+        throw new Error(`API request failed with status ${response.status}`);
       }
     }
   } catch (error) {
     console.error('Exception during API key validation:', error);
-    return false;
+    throw error; // Propagate the error for better handling in components
   }
 };
 
@@ -104,7 +108,9 @@ export const fetchWorkspaces = async (apiKey?: string): Promise<any[]> => {
       headers: {
         'X-API-Key': usedKey,
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
       },
+      credentials: 'include',
     });
     
     console.log('Workspace fetch response status:', response.status);
@@ -114,33 +120,38 @@ export const fetchWorkspaces = async (apiKey?: string): Promise<any[]> => {
       console.log('Workspaces fetched successfully:', data);
       return data;
     } else {
-      console.error(`Failed to fetch workspaces with status: ${response.status}`);
-      
       if (response.status === 401) {
-        console.error('Unauthorized. API key may be invalid or expired');
+        console.error('Unauthorized when fetching workspaces. API key may be invalid or missing permissions');
+        throw new Error("Authentication failed: Your API key doesn't have permission to access workspaces. Check your API key permissions in Motion settings.");
+      } else {
+        console.error(`Failed to fetch workspaces with status: ${response.status}`);
+        throw new Error(`Failed to fetch workspaces with status: ${response.status}`);
       }
-      
-      return [];
     }
   } catch (error) {
     console.error('Exception during workspaces fetch:', error);
-    return [];
+    throw error;
   }
 };
 
 // Format workspaces for dropdown selection
 export const getWorkspacesForDropdown = async (apiKey?: string): Promise<{label: string, value: string}[]> => {
-  const workspaces = await fetchWorkspaces(apiKey);
-  
-  if (!workspaces || workspaces.length === 0) {
-    console.log('No workspaces returned from API');
-    return [];
+  try {
+    const workspaces = await fetchWorkspaces(apiKey);
+    
+    if (!workspaces || workspaces.length === 0) {
+      console.log('No workspaces returned from API');
+      return [];
+    }
+    
+    return workspaces.map(workspace => ({
+      label: workspace.name,
+      value: workspace.id
+    }));
+  } catch (error) {
+    console.error('Error getting workspaces for dropdown:', error);
+    throw error;
   }
-  
-  return workspaces.map(workspace => ({
-    label: workspace.name,
-    value: workspace.id
-  }));
 };
 
 // Fetch projects for a specific workspace
@@ -163,7 +174,9 @@ export const fetchProjects = async (workspaceId: string, apiKey?: string): Promi
       headers: {
         'X-API-Key': usedKey,
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
       },
+      credentials: 'include',
     });
     
     console.log(`Projects fetch response for workspace ${workspaceId} status:`, response.status);
@@ -173,28 +186,38 @@ export const fetchProjects = async (workspaceId: string, apiKey?: string): Promi
       console.log('Projects fetched successfully:', data);
       return data;
     } else {
-      console.error(`Failed to fetch projects with status: ${response.status}`);
-      return [];
+      if (response.status === 401) {
+        console.error('Unauthorized when fetching projects. API key may be invalid or missing permissions');
+        throw new Error("Authentication failed: Your API key doesn't have permission to access projects. Check your API key permissions in Motion settings.");
+      } else {
+        console.error(`Failed to fetch projects with status: ${response.status}`);
+        throw new Error(`Failed to fetch projects with status: ${response.status}`);
+      }
     }
   } catch (error) {
     console.error('Exception during projects fetch:', error);
-    return [];
+    throw error;
   }
 };
 
 // Format projects for dropdown selection
 export const getProjectsForDropdown = async (workspaceId: string, apiKey?: string): Promise<{label: string, value: string}[]> => {
-  const projects = await fetchProjects(workspaceId, apiKey);
-  
-  if (!projects || projects.length === 0) {
-    console.log('No projects returned from API');
-    return [];
+  try {
+    const projects = await fetchProjects(workspaceId, apiKey);
+    
+    if (!projects || projects.length === 0) {
+      console.log('No projects returned from API');
+      return [];
+    }
+    
+    return projects.map(project => ({
+      label: project.name,
+      value: project.id
+    }));
+  } catch (error) {
+    console.error('Error getting projects for dropdown:', error);
+    throw error;
   }
-  
-  return projects.map(project => ({
-    label: project.name,
-    value: project.id
-  }));
 };
 
 // Create a new workspace in Motion
@@ -212,7 +235,9 @@ export const createWorkspace = async (name: string, apiKey?: string): Promise<an
       headers: {
         'X-API-Key': usedKey,
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
       },
+      credentials: 'include',
       body: JSON.stringify({ name }),
     });
     
@@ -223,7 +248,11 @@ export const createWorkspace = async (name: string, apiKey?: string): Promise<an
     } else {
       const errorData = await response.json();
       console.error('Failed to create workspace:', errorData);
-      throw new Error(errorData.message || 'Failed to create workspace');
+      if (response.status === 401) {
+        throw new Error("Authentication failed: Your API key doesn't have permission to create workspaces. Check your API key permissions in Motion settings.");
+      } else {
+        throw new Error(errorData.message || 'Failed to create workspace');
+      }
     }
   } catch (error) {
     console.error('Exception during workspace creation:', error);
@@ -246,7 +275,9 @@ export const createProject = async (workspaceId: string, name: string, apiKey?: 
       headers: {
         'X-API-Key': usedKey,
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
       },
+      credentials: 'include',
       body: JSON.stringify({ name }),
     });
     
@@ -257,7 +288,11 @@ export const createProject = async (workspaceId: string, name: string, apiKey?: 
     } else {
       const errorData = await response.json();
       console.error('Failed to create project:', errorData);
-      throw new Error(errorData.message || 'Failed to create project');
+      if (response.status === 401) {
+        throw new Error("Authentication failed: Your API key doesn't have permission to create projects. Check your API key permissions in Motion settings.");
+      } else {
+        throw new Error(errorData.message || 'Failed to create project');
+      }
     }
   } catch (error) {
     console.error('Exception during project creation:', error);
