@@ -400,15 +400,25 @@ export const addTasksToMotion = async (
     // Process tasks in sequence to avoid rate limiting
     for (const task of tasks) {
       try {
-        // Format the task for the Motion API - use the correct field names as expected by the API
-        const taskData = {
+        // Prepare task data with proper field names for the Motion API
+        const taskData: any = {
           name: task.title,
           description: task.description || "",
-          workspaceId: workspaceId, // Changed from workspace_id to workspaceId
-          projectId: projectId || undefined, // Changed from project_id to projectId
-          // Remove due_date if it's causing issues, can be added back after fixing
-          // dueDate: task.dueDate || undefined, // Changed from due_date to dueDate
+          workspaceId: workspaceId,
         };
+        
+        // Only add projectId if it's defined
+        if (projectId) {
+          taskData.projectId = projectId;
+          console.log(`Adding task "${task.title}" to project ID: ${projectId}`);
+        } else {
+          console.log(`Adding task "${task.title}" without project ID`);
+        }
+        
+        // We'll re-add dueDate later once we confirm the API is working
+        // if (task.dueDate) {
+        //   taskData.dueDate = task.dueDate;
+        // }
         
         console.log("Sending task to Motion:", taskData);
         
@@ -431,6 +441,8 @@ export const addTasksToMotion = async (
             status: response.status
           });
         } else {
+          const responseData = await response.json();
+          console.log("Success creating task:", responseData);
           successfulTasks.push(task);
         }
       } catch (err) {
