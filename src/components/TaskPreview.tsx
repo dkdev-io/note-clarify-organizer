@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { addTasksToMotion, validateMotionApiKey } from '@/utils/motion';
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -115,7 +115,7 @@ const TaskPreview: React.FC<TaskPreviewProps> = ({
           toast({
             title: "Partial Success",
             description: `${result.successCount} task${result.successCount !== 1 ? 's' : ''} added, ${result.failedCount} failed`,
-            variant: "warning",
+            variant: "default",
           });
         } else {
           toast({
