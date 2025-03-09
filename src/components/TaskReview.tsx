@@ -40,6 +40,7 @@ const TaskReview: React.FC<TaskReviewProps> = ({
     tasksWithMissingFields: { task: Task; missingFields: string[] }[]
   }>({ allValid: true, tasksWithMissingFields: [] });
   const [editedProjectName, setEditedProjectName] = useState<string | null>(projectName);
+  const [workspacePromptDismissed, setWorkspacePromptDismissed] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -81,6 +82,9 @@ const TaskReview: React.FC<TaskReviewProps> = ({
   useEffect(() => {
     setEditedProjectName(projectName);
   }, [projectName]);
+
+  // Check if any task is missing a workspace
+  const hasMissingWorkspaces = reviewedTasks.some(task => !task.workspace_id);
 
   const handleEditTask = (task: Task) => {
     setEditingTaskId(task.id);
@@ -144,6 +148,22 @@ const TaskReview: React.FC<TaskReviewProps> = ({
     return workspace ? workspace.name : "Unknown workspace";
   };
 
+  // Update all tasks to use the same workspace
+  const handleBulkWorkspaceUpdate = (workspaceId: string) => {
+    setReviewedTasks(prevTasks => 
+      prevTasks.map(task => ({
+        ...task,
+        workspace_id: workspaceId
+      }))
+    );
+    setWorkspacePromptDismissed(true);
+    
+    toast({
+      title: "Workspace updated",
+      description: `All tasks assigned to "${getWorkspaceName(workspaceId)}"`,
+    });
+  };
+
   return (
     <div className={`w-full max-w-2xl mx-auto transition-all duration-500 ${isTransitioning ? 'opacity-0 translate-x-10' : 'opacity-100 translate-x-0'}`}>
       <Card className="bg-white bg-opacity-80 backdrop-blur-sm border border-gray-100 shadow-card">
@@ -175,6 +195,37 @@ const TaskReview: React.FC<TaskReviewProps> = ({
             </p>
           </div>
           
+          {/* Workspace selection for all tasks */}
+          <div className="mb-6">
+            <Label htmlFor="globalWorkspace" className="flex items-center mb-2 font-medium">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect width="18" height="18" x="3" y="3" rx="2" />
+                <path d="M7 7h.01M7 17h.01M17 7h.01M17 17h.01M7 12h10" />
+              </svg>
+              Motion Workspace
+              <span className="text-red-500 ml-1">*</span>
+            </Label>
+            
+            <Select 
+              onValueChange={handleBulkWorkspaceUpdate}
+              defaultValue={reviewedTasks[0]?.workspace_id || ''}
+            >
+              <SelectTrigger id="globalWorkspace" className="border-gray-200">
+                <SelectValue placeholder="Select a workspace" />
+              </SelectTrigger>
+              <SelectContent>
+                {workspaces.map(workspace => (
+                  <SelectItem key={workspace.id} value={workspace.id}>
+                    {workspace.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground mt-1">
+              All tasks will be added to this Motion workspace
+            </p>
+          </div>
+          
           {!validation.allValid && validation.tasksWithMissingFields.length > 0 && (
             <Alert variant="destructive" className="mb-4">
               <AlertCircleIcon className="h-4 w-4" />
@@ -183,6 +234,21 @@ const TaskReview: React.FC<TaskReviewProps> = ({
                 {validation.tasksWithMissingFields.length} task(s) are missing required fields.
                 Please complete all required information to continue.
               </AlertDescription>
+            </Alert>
+          )}
+          
+          {/* Workspace selection prompt */}
+          {hasMissingWorkspaces && !workspacePromptDismissed && (
+            <Alert className="mb-4 border-blue-200 bg-blue-50">
+              <div className="flex items-start">
+                <AlertCircleIcon className="h-5 w-5 mr-2 text-blue-600" />
+                <div>
+                  <AlertTitle className="text-blue-700">Workspace Required</AlertTitle>
+                  <AlertDescription className="text-blue-600">
+                    Please select a Motion workspace for your tasks above. This is required for the Motion API integration.
+                  </AlertDescription>
+                </div>
+              </div>
             </Alert>
           )}
           
@@ -474,8 +540,8 @@ const TaskReview: React.FC<TaskReviewProps> = ({
                             </Badge>
                           )}
                           
-                          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-xs">
-                            Workspace: {getWorkspaceName(task.workspace_id)}
+                          <Badge variant={task.workspace_id ? "outline" : "destructive"} className={task.workspace_id ? "bg-blue-50 text-blue-700 border-blue-200 text-xs" : "text-xs"}>
+                            {task.workspace_id ? `Workspace: ${getWorkspaceName(task.workspace_id)}` : "Workspace required"}
                           </Badge>
                           
                           {task.dueDate && (
@@ -551,7 +617,7 @@ const TaskReview: React.FC<TaskReviewProps> = ({
           </Button>
           <Button 
             onClick={handleContinue}
-            disabled={reviewedTasks.length === 0 || isTransitioning}
+            disabled={reviewedTasks.length === 0 || isTransitioning || hasMissingWorkspaces}
             className="transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"
           >
             Preview Tasks
