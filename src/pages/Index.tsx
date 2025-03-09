@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import NoteInput from '@/components/NoteInput';
 import TaskExtractor from '@/components/TaskExtractor';
@@ -156,7 +155,6 @@ const Index = () => {
             const isCurrent = s.key === step;
             
             return (
-              // Fix for the React Fragment warning - use proper key
               <React.Fragment key={`step-${s.key}`}>
                 {index > 0 && (
                   // Only show connection lines between visible steps

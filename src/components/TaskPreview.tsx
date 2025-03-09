@@ -1,162 +1,143 @@
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardDescription, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Task } from '@/utils/parser';
-import { AlertCircleIcon, ArrowLeftIcon, CheckIcon, LayoutListIcon, LoaderIcon } from 'lucide-react';
+import { ArrowRightIcon, ArrowLeftIcon, CheckIcon, AlertTriangleIcon } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { addTasksToMotion, validateMotionApiKey } from '@/utils/motion';
-import { useToast } from "@/hooks/use-toast";
-import { format } from "date-fns";
+import { addTasksToMotion } from '@/utils/motion';
+import { useToast } from "@/components/ui/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
+// Define interface for the API props
 interface ApiProps {
   isConnected: boolean;
   apiKey: string | null;
   workspaces: any[];
+  selectedWorkspaceId?: string;
+  selectedProject?: string;
 }
 
-interface TaskPreviewProps {
+export interface TaskPreviewProps {
   tasks: Task[];
   projectName: string | null;
   onBack: () => void;
   onComplete: () => void;
-  apiProps?: ApiProps;
+  apiProps: ApiProps;
 }
 
 const TaskPreview: React.FC<TaskPreviewProps> = ({ 
   tasks, 
-  projectName,
+  projectName, 
   onBack, 
   onComplete,
   apiProps
 }) => {
-  // Initialize apiKey with the value from apiProps if connected
-  const [apiKey, setApiKey] = useState(apiProps?.isConnected ? apiProps.apiKey || '' : '');
-  const [isValidatingKey, setIsValidatingKey] = useState(false);
-  // Auto-validate the key if we're connected
-  const [isKeyValid, setIsKeyValid] = useState<boolean | null>(apiProps?.isConnected ? true : null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const [submissionError, setSubmissionError] = useState<string | null>(null);
-  const [taskErrors, setTaskErrors] = useState<{ taskId: string; errors: string[] }[]>([]);
+  const [errors, setErrors] = useState<any[] | null>(null);
   const { toast } = useToast();
 
-  const validateKey = async () => {
-    if (!apiKey.trim()) {
-      toast({
-        title: "Error",
-        description: "Please enter your Motion API key",
-        variant: "destructive",
-      });
-      return;
+  // Find the project ID that matches the project name
+  const findProjectId = (): string | undefined => {
+    // If we're not connected, return undefined
+    if (!apiProps.isConnected || !apiProps.workspaces) {
+      return undefined;
     }
     
-    setIsValidatingKey(true);
-    setSubmissionError(null);
-    try {
-      const isValid = await validateMotionApiKey(apiKey);
-      setIsKeyValid(isValid);
+    // Find the project ID by name
+    if (apiProps.workspaces && apiProps.selectedWorkspaceId && apiProps.selectedProject) {
+      // For now, return undefined as we need to implement logic to find the project ID
+      console.log("Looking for project ID for:", apiProps.selectedProject);
       
-      if (isValid) {
-        toast({
-          title: "Success",
-          description: "Your Motion API key is valid",
-        });
-      } else {
-        toast({
-          title: "Error",
-          description: "Invalid Motion API key",
-          variant: "destructive",
-        });
+      const selectedWorkspace = apiProps.workspaces.find(
+        workspace => workspace.id === apiProps.selectedWorkspaceId
+      );
+      
+      if (selectedWorkspace && selectedWorkspace.projects) {
+        const project = selectedWorkspace.projects.find(
+          (p: any) => p.name === apiProps.selectedProject
+        );
+        
+        if (project) {
+          console.log("Found project ID:", project.id);
+          return project.id;
+        }
       }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to validate API key",
-        variant: "destructive",
-      });
-      setIsKeyValid(false);
-    } finally {
-      setIsValidatingKey(false);
     }
+    
+    return undefined;
   };
 
-  const handleSubmit = async () => {
-    if (!isKeyValid) {
-      toast({
-        title: "Error",
-        description: "Please validate your Motion API key first",
-        variant: "destructive",
-      });
-      return;
-    }
-    
+  const handleAddToMotion = async () => {
     setIsSubmitting(true);
-    setSubmissionError(null);
-    setTaskErrors([]);
+    setErrors(null);
     
     try {
-      console.log("Starting task submission to Motion...");
-      const result = await addTasksToMotion(tasks, apiKey);
-      console.log("Task submission result:", result);
+      // If not connected to Motion API, simulate success
+      if (!apiProps.isConnected || !apiProps.apiKey || !apiProps.selectedWorkspaceId) {
+        toast({
+          title: "Success (Demo Mode)",
+          description: `${tasks.length} tasks would be added to Motion${projectName ? ` under project '${projectName}'` : ''}.`,
+        });
+        
+        // Wait a bit to simulate API call
+        await new Promise(resolve => setTimeout(resolve, 800));
+        handleComplete();
+        return;
+      }
+      
+      // Find the project ID
+      const projectId = findProjectId();
+      console.log("Using project ID:", projectId);
+      
+      // Add tasks to Motion via API
+      const result = await addTasksToMotion(
+        tasks, 
+        apiProps.selectedWorkspaceId,
+        apiProps.apiKey,
+        projectId
+      );
       
       if (result.success) {
         toast({
-          title: "Success",
-          description: `${result.successCount} task${result.successCount !== 1 ? 's' : ''} added to Motion`,
+          title: "Success!",
+          description: result.message,
         });
         
-        setIsTransitioning(true);
-        setTimeout(() => {
-          onComplete();
-        }, 400);
-      } else {
-        if (result.successCount > 0) {
-          toast({
-            title: "Partial Success",
-            description: `${result.successCount} task${result.successCount !== 1 ? 's' : ''} added, ${result.failedCount} failed`,
-            variant: "default",
-          });
+        if (result.errors && result.errors.length > 0) {
+          setErrors(result.errors);
         } else {
-          toast({
-            title: "Failed",
-            description: `Failed to add tasks to Motion. Check details below.`,
-            variant: "destructive",
-          });
-          
-          setSubmissionError("Failed to add tasks to Motion. See errors below.");
+          handleComplete();
         }
+      } else {
+        toast({
+          title: "Error",
+          description: result.message,
+          variant: "destructive",
+        });
         
-        if (result.taskErrors && result.taskErrors.length > 0) {
-          setTaskErrors(result.taskErrors);
-          
-          // Show the first error in a toast
-          const firstError = result.taskErrors[0];
-          const task = tasks.find(t => t.id === firstError.taskId);
-          
-          if (task) {
-            toast({
-              title: `Error with task: ${task.title}`,
-              description: firstError.errors.join(', '),
-              variant: "destructive",
-            });
-          }
+        if (result.errors) {
+          setErrors(result.errors);
         }
       }
     } catch (error) {
-      console.error("Exception during task submission:", error);
-      setSubmissionError(error instanceof Error ? error.message : "Unknown error");
+      console.error("Error adding tasks to Motion:", error);
       toast({
         title: "Error",
-        description: "Failed to add tasks to Motion",
+        description: "An unexpected error occurred while adding tasks to Motion.",
         variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleComplete = () => {
+    setIsTransitioning(true);
+    setTimeout(() => {
+      onComplete();
+    }, 400);
   };
 
   const handleBack = () => {
@@ -166,187 +147,116 @@ const TaskPreview: React.FC<TaskPreviewProps> = ({
     }, 400);
   };
 
-  const getWorkspaceName = (workspaceId: string | null) => {
-    if (!workspaceId) return "None";
-    
-    // Try to get workspace name from apiProps if available
-    if (apiProps?.workspaces && apiProps.workspaces.length > 0) {
-      const workspace = apiProps.workspaces.find(w => w.id === workspaceId);
-      if (workspace) {
-        return workspace.name;
-      }
-    }
-    
-    // Fallback to static mapping
-    const workspaceMap: Record<string, string> = {
-      'workspace-1': 'Personal',
-      'workspace-2': 'Team Projects',
-      'workspace-3': 'Client Work'
-    };
-    
-    return workspaceMap[workspaceId] || workspaceId;
-  };
-
   return (
     <div className={`w-full max-w-2xl mx-auto transition-all duration-500 ${isTransitioning ? 'opacity-0 translate-x-10' : 'opacity-100 translate-x-0'}`}>
-      <Card className="bg-white bg-opacity-80 backdrop-blur-sm border border-gray-100 shadow-card">
+      <Card className="bg-white bg-opacity-80 backdrop-blur-sm border border-gray-100 shadow-card overflow-hidden">
         <CardHeader>
-          <CardTitle className="text-2xl font-medium text-gray-900 flex items-center">
-            <LayoutListIcon className="inline-block mr-2 h-6 w-6 text-primary" />
-            Motion Task Preview
-          </CardTitle>
-          <p className="text-muted-foreground text-sm">
-            Preview your tasks before adding them to Motion
-          </p>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-2xl font-medium text-gray-900">
+              <CheckIcon className="inline-block mr-2 h-6 w-6 text-primary" />
+              Preview Tasks
+            </CardTitle>
+            <Badge variant="outline" className="font-normal">
+              {tasks.length} Tasks
+            </Badge>
+          </div>
+          <CardDescription>
+            Review your tasks before adding them to Motion
+          </CardDescription>
+          {apiProps.isConnected && apiProps.selectedProject && (
+            <div className="flex flex-wrap gap-2 mt-2">
+              <Badge className="bg-green-50 text-green-700 border-green-200">
+                <CheckIcon className="h-3 w-3 mr-1" />
+                Connected to Motion API
+              </Badge>
+              {apiProps.selectedWorkspaceId && (
+                <Badge className="bg-blue-50 text-blue-700 border-blue-200">
+                  Workspace: {apiProps.workspaces.find(w => w.id === apiProps.selectedWorkspaceId)?.name || apiProps.selectedWorkspaceId}
+                </Badge>
+              )}
+              {apiProps.selectedProject && (
+                <Badge className="bg-purple-50 text-purple-700 border-purple-200">
+                  Project: {apiProps.selectedProject}
+                </Badge>
+              )}
+            </div>
+          )}
         </CardHeader>
         
-        <CardContent>
-          <div className="space-y-6">
-            {!apiProps?.isConnected && (
-              <div className="bg-secondary p-4 rounded-md">
-                <h3 className="font-medium text-sm text-secondary-foreground mb-3">API Configuration</h3>
-                <div className="space-y-3">
-                  <div className="space-y-2">
-                    <Label htmlFor="apiKey">Motion API Key</Label>
-                    <div className="flex space-x-2">
-                      <Input
-                        id="apiKey"
-                        type="password"
-                        placeholder="Enter your Motion API key"
-                        value={apiKey}
-                        onChange={(e) => {
-                          setApiKey(e.target.value);
-                          setIsKeyValid(null);
-                        }}
-                        className={`flex-1 ${isKeyValid === true ? 'border-green-500 focus:border-green-500 focus:ring-green-500/20' : 
-                          isKeyValid === false ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : ''}`}
-                      />
-                      <Button 
-                        onClick={validateKey}
-                        disabled={!apiKey.trim() || isValidatingKey}
-                        variant="outline"
-                      >
-                        {isValidatingKey ? (
-                          <>
-                            <LoaderIcon className="mr-2 h-4 w-4 animate-spin" />
-                            Validating
-                          </>
-                        ) : isKeyValid === true ? (
-                          <>
-                            <CheckIcon className="mr-2 h-4 w-4 text-green-500" />
-                            Validated
-                          </>
-                        ) : (
-                          "Validate"
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-                </div>
+        <CardContent className="pb-0">
+          {errors && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertTriangleIcon className="h-4 w-4" />
+              <AlertDescription>
+                <div className="font-medium">Some tasks failed to add to Motion:</div>
+                <ul className="list-disc list-inside mt-2 text-sm">
+                  {errors.map((error, index) => (
+                    <li key={index}>
+                      {error.task}: {typeof error.error === 'object' && error.error.message 
+                        ? error.error.message 
+                        : typeof error.error === 'string' 
+                          ? error.error 
+                          : 'Unknown error'}
+                    </li>
+                  ))}
+                </ul>
+              </AlertDescription>
+            </Alert>
+          )}
+          
+          <div className="divide-y divide-gray-100">
+            {tasks.length === 0 ? (
+              <div className="py-10 text-center">
+                <p className="text-muted-foreground">No tasks to add. Go back to select some tasks.</p>
+                <Button variant="outline" onClick={handleBack} className="mt-4">
+                  <ArrowLeftIcon className="mr-2 h-4 w-4" />
+                  Back
+                </Button>
               </div>
-            )}
-            
-            {submissionError && (
-              <Alert variant="destructive">
-                <AlertCircleIcon className="h-4 w-4 mr-2" />
-                <AlertDescription>{submissionError}</AlertDescription>
-              </Alert>
-            )}
-            
-            {taskErrors.length > 0 && (
-              <div className="space-y-3">
-                <h3 className="font-medium text-red-600">Task Errors</h3>
-                <div className="space-y-2 max-h-[150px] overflow-y-auto pr-1">
-                  {taskErrors.map((error, index) => {
-                    const task = tasks.find(t => t.id === error.taskId);
-                    return (
-                      <Alert key={index} variant="destructive" className="py-2">
-                        <div className="flex flex-col space-y-1">
-                          <span className="font-medium">{task ? task.title : 'Unknown task'}</span>
-                          <span className="text-xs">{error.errors.join(', ')}</span>
-                        </div>
-                      </Alert>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-            
-            <div className="space-y-4">
-              <h3 className="font-medium">Tasks to Add ({tasks.length})</h3>
-              <div className="space-y-3 max-h-[320px] overflow-y-auto pr-1">
-                {tasks.map((task) => (
-                  <div 
-                    key={task.id} 
-                    className="p-3 border border-gray-100 rounded-md bg-white shadow-subtle"
-                  >
-                    <h4 className="font-medium text-gray-900">{task.title}</h4>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-xs">
-                        Workspace: {getWorkspaceName(task.workspace_id)}
-                      </Badge>
-                      
+            ) : (
+              tasks.map((task) => (
+                <div key={task.id} className="py-3 first:pt-0">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h3 className="font-medium text-gray-900">{task.title}</h3>
                       {task.description && (
-                        <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 text-xs">
-                          Has Description
-                        </Badge>
+                        <p className="text-sm text-muted-foreground mt-1">{task.description}</p>
                       )}
-                      
-                      {task.dueDate && (
-                        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-xs">
-                          Due: {format(new Date(task.dueDate), "MMM d, yyyy")}
-                        </Badge>
-                      )}
-                      
-                      {task.priority && (
-                        <Badge 
-                          variant="outline" 
-                          className={`text-xs ${
-                            task.priority === 'high' 
-                              ? 'bg-red-50 text-red-700 border-red-200' 
-                              : task.priority === 'medium' 
-                                ? 'bg-yellow-50 text-yellow-700 border-yellow-200' 
-                                : 'bg-green-50 text-green-700 border-green-200'
-                          }`}
-                        >
-                          {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)} Priority
-                        </Badge>
-                      )}
-                      
-                      {task.assignee && (
-                        <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 text-xs">
-                          Assignee: {task.assignee}
-                        </Badge>
-                      )}
-                      
-                      <Badge 
-                        variant="outline" 
-                        className={`text-xs ${
-                          task.status === 'done' 
-                            ? 'bg-green-50 text-green-700 border-green-200'
-                            : task.status === 'in-progress'
-                              ? 'bg-yellow-50 text-yellow-700 border-yellow-200'
-                              : 'bg-gray-50 text-gray-700 border-gray-200'
-                        }`}
-                      >
-                        {task.status === 'todo' ? 'To Do' : 
-                         task.status === 'in-progress' ? 'In Progress' : 'Done'}
-                      </Badge>
-                      
-                      {task.isRecurring && (
-                        <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-200 text-xs">
-                          Recurring: {task.frequency ? task.frequency.charAt(0).toUpperCase() + task.frequency.slice(1) : 'Not set'}
-                        </Badge>
-                      )}
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {task.dueDate && (
+                          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-[10px]">
+                            Due: {new Date(task.dueDate).toLocaleDateString()}
+                          </Badge>
+                        )}
+                        {task.priority && (
+                          <Badge 
+                            variant="outline" 
+                            className={`text-[10px] ${
+                              task.priority === 'high' 
+                                ? 'bg-red-50 text-red-700 border-red-200' 
+                                : task.priority === 'medium' 
+                                  ? 'bg-yellow-50 text-yellow-700 border-yellow-200' 
+                                  : 'bg-green-50 text-green-700 border-green-200'
+                            }`}
+                          >
+                            {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)} Priority
+                          </Badge>
+                        )}
+                        {task.assignee && (
+                          <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 text-[10px]">
+                            Assignee: {task.assignee}
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
+                </div>
+              ))
+            )}
           </div>
         </CardContent>
         
-        <CardFooter className="flex justify-between py-4">
+        <CardFooter className="flex justify-between py-4 mt-4">
           <Button 
             variant="outline" 
             onClick={handleBack}
@@ -356,19 +266,19 @@ const TaskPreview: React.FC<TaskPreviewProps> = ({
             Back
           </Button>
           <Button 
-            onClick={handleSubmit}
-            disabled={!isKeyValid || isSubmitting || isTransitioning}
+            onClick={handleAddToMotion}
+            disabled={tasks.length === 0 || isSubmitting || isTransitioning}
             className="transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"
           >
             {isSubmitting ? (
               <>
-                <LoaderIcon className="mr-2 h-4 w-4 animate-spin" />
-                Adding to Motion
+                <span className="mr-2 block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                Adding to Motion...
               </>
             ) : (
               <>
-                <CheckIcon className="mr-2 h-4 w-4" />
                 Add to Motion
+                <ArrowRightIcon className="ml-2 h-4 w-4" />
               </>
             )}
           </Button>

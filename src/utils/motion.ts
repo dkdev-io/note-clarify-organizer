@@ -378,154 +378,94 @@ export const createProject = async (workspaceId: string, name: string, apiKey?: 
 };
 
 // Add tasks to Motion
-export const addTasksToMotion = async (tasks: Task[], apiKey?: string): Promise<{
-  success: boolean;
-  successCount: number;
-  failedCount: number;
-  taskErrors?: { taskId: string; errors: string[] }[];
-}> => {
+export const addTasksToMotion = async (
+  tasks: Task[], 
+  workspaceId: string | null, 
+  apiKey?: string,
+  projectId?: string
+): Promise<{ success: boolean; message: string; errors?: any[] }> => {
+  if (!workspaceId || !apiKey) {
+    return { 
+      success: false, 
+      message: "Missing workspace ID or API key" 
+    };
+  }
+
   try {
-    const usedKey = getApiKey(apiKey);
+    // Create an array to store any errors that occur
+    const errors: any[] = [];
+    const successfulTasks: Task[] = [];
     
-    if (!usedKey) {
-      console.error('No API key provided for adding tasks');
-      return {
-        success: false,
-        successCount: 0,
-        failedCount: tasks.length,
-        taskErrors: tasks.map(task => ({
-          taskId: task.id,
-          errors: ['API key is required']
-        }))
-      };
-    }
-    
-    let successCount = 0;
-    let failedCount = 0;
-    const taskErrors: { taskId: string; errors: string[] }[] = [];
-    
-    console.log(`Attempting to add ${tasks.length} tasks to Motion`);
-    
-    // Process each task one by one (for better error handling)
+    // Process tasks in sequence to avoid rate limiting
     for (const task of tasks) {
       try {
-        // Basic task validation
-        if (!task.title) {
-          failedCount++;
-          taskErrors.push({
-            taskId: task.id,
-            errors: ['Task title is required']
-          });
-          continue;
-        }
-        
-        console.log(`Adding task: ${task.title} to Motion`);
-        
-        // Prepare task data for Motion API - using 'name' instead of 'title'
-        const taskData: any = {
-          name: task.title, // IMPORTANT: Motion API expects 'name', not 'title'
-          workspaceId: task.workspace_id || null,
+        // Format the task for the Motion API
+        const taskData = {
+          name: task.title,
+          description: task.description || "",
+          workspace_id: workspaceId,
+          project_id: projectId || undefined, // Add project_id if available
+          due_date: task.dueDate || undefined,
+          assignee_id: undefined, // Future enhancement
+          status: undefined, // Future enhancement
         };
         
-        // Add optional properties if they exist
-        if (task.description) {
-          taskData.description = task.description;
-        }
+        console.log("Sending task to Motion:", taskData);
         
-        if (task.dueDate) {
-          taskData.dueDate = new Date(task.dueDate).toISOString();
-        }
-        
-        if (task.priority) {
-          // Map priority string to Motion's priority levels
-          const priorityMap: Record<string, string> = {
-            'low': 'LOW',
-            'medium': 'MEDIUM',
-            'high': 'HIGH'
-          };
-          taskData.priorityLevel = priorityMap[task.priority] || 'MEDIUM';
-        }
-        
-        // Add status if available
-        if (task.status) {
-          // We would need to map status strings to Motion status IDs here
-          // For now we'll just log the status
-          console.log(`Task status: ${task.status} - would need to be mapped to Motion status ID`);
-        }
-        
-        // Make the API call to create task
-        const response = await fetch('https://api.usemotion.com/v1/tasks', {
-          method: 'POST',
+        // Call the Motion API to create the task
+        const response = await fetch("https://api.usemotion.com/v1/tasks", {
+          method: "POST",
           headers: {
-            'X-API-Key': usedKey,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
+            "Content-Type": "application/json",
+            "X-API-Key": apiKey,
           },
-          mode: 'cors',
           body: JSON.stringify(taskData),
         });
         
-        if (response.ok) {
-          const data = await response.json();
-          console.log(`Successfully added task: ${task.title}`, data);
-          successCount++;
-        } else {
-          const errorText = await response.text();
-          console.error(`Failed to add task ${task.id} with status ${response.status}:`, errorText);
-          
-          failedCount++;
-          
-          // Try to parse the error message if it's JSON
-          let errorMessages: string[] = [];
-          try {
-            const errorJson = JSON.parse(errorText);
-            if (errorJson.message) {
-              if (Array.isArray(errorJson.message)) {
-                errorMessages = errorJson.message;
-              } else {
-                errorMessages = [errorJson.message];
-              }
-            } else {
-              errorMessages = [`API Error (${response.status})`];
-            }
-          } catch (e) {
-            errorMessages = [`API Error (${response.status}): ${errorText}`];
-          }
-          
-          taskErrors.push({
-            taskId: task.id,
-            errors: errorMessages
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error("Error creating task:", errorData);
+          errors.push({
+            task: task.title,
+            error: errorData,
+            status: response.status
           });
+        } else {
+          successfulTasks.push(task);
         }
-        
-      } catch (error) {
-        failedCount++;
-        console.error(`Error adding task ${task.id}:`, error);
-        taskErrors.push({
-          taskId: task.id,
-          errors: [(error as Error).message || 'Unknown error']
+      } catch (err) {
+        console.error("Error processing individual task:", err);
+        errors.push({
+          task: task.title,
+          error: err instanceof Error ? err.message : "Unknown error",
         });
       }
     }
     
-    console.log(`Task addition complete. Success: ${successCount}, Failed: ${failedCount}`);
-    
-    return {
-      success: failedCount === 0,
-      successCount,
-      failedCount,
-      taskErrors: taskErrors.length > 0 ? taskErrors : undefined
-    };
+    // Determine if the operation was successful overall
+    if (errors.length === 0) {
+      return {
+        success: true,
+        message: `Successfully added ${tasks.length} tasks to Motion`,
+      };
+    } else if (successfulTasks.length > 0) {
+      return {
+        success: true,
+        message: `Added ${successfulTasks.length} out of ${tasks.length} tasks to Motion`,
+        errors,
+      };
+    } else {
+      return {
+        success: false,
+        message: "Failed to add tasks to Motion. See errors below",
+        errors,
+      };
+    }
   } catch (error) {
-    console.error('Exception during tasks addition:', error);
+    console.error("Error adding tasks to Motion:", error);
     return {
       success: false,
-      successCount: 0,
-      failedCount: tasks.length,
-      taskErrors: [{ 
-        taskId: 'batch', 
-        errors: [(error as Error).message || 'Unknown error'] 
-      }]
+      message: error instanceof Error ? error.message : "Unknown error occurred",
     };
   }
 };
