@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { LoaderIcon, PlusCircleIcon, AlertTriangleIcon, RefreshCw } from 'lucide-react';
+import { LoaderIcon, PlusCircleIcon, AlertTriangleIcon, RefreshCw, ExternalLinkIcon } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -129,6 +129,10 @@ const WorkspaceSelect: React.FC<WorkspaceSelectProps> = ({
     }
   };
 
+  const handleOpenMotionSettings = () => {
+    window.open('https://app.usemotion.com/settings/developers/api-keys', '_blank');
+  };
+
   if (!apiKey) {
     return null;
   }
@@ -193,7 +197,20 @@ const WorkspaceSelect: React.FC<WorkspaceSelectProps> = ({
           {error && (
             <Alert variant="destructive" className="mt-2">
               <AlertTriangleIcon className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
+              <AlertDescription>
+                {error}
+                {error?.includes("API key") && (
+                  <Button
+                    size="sm"
+                    variant="link"
+                    className="px-0 h-6 text-sm font-normal underline-offset-2 mt-1 flex items-center"
+                    onClick={handleOpenMotionSettings}
+                  >
+                    <ExternalLinkIcon className="h-3 w-3 mr-1" />
+                    Check your API keys in Motion
+                  </Button>
+                )}
+              </AlertDescription>
             </Alert>
           )}
           

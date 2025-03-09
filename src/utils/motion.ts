@@ -1,4 +1,3 @@
-
 /**
  * Motion API utilities for authentication and task management
  */
@@ -46,24 +45,23 @@ export const validateMotionApiKey = async (apiKey?: string): Promise<boolean> =>
     const maskedKey = usedKey.substring(0, 3) + '...' + usedKey.substring(usedKey.length - 3);
     console.log(`Validating API key: ${maskedKey}`);
     
-    // Call the /me endpoint to validate the key
-    const response = await fetch('https://api.usemotion.com/v1/me', {
+    // Try the workspaces endpoint instead of /me which might not exist
+    const response = await fetch('https://api.usemotion.com/v1/workspaces', {
       method: 'GET',
       headers: {
         'X-API-Key': usedKey,
         'Content-Type': 'application/json',
-        // Add CORS headers for cross-domain requests
         'Accept': 'application/json',
       },
-      // Include credentials for any cookies that might be relevant
-      credentials: 'include',
+      // Don't include credentials for cross-origin API calls
+      mode: 'cors',
     });
     
     console.log('API validation response status:', response.status);
     
     if (response.ok) {
       const data = await response.json();
-      console.log('API validation successful, user data:', data);
+      console.log('API validation successful, workspaces:', data);
       
       // Store the validated key globally
       setMotionApiKey(usedKey);
@@ -74,17 +72,16 @@ export const validateMotionApiKey = async (apiKey?: string): Promise<boolean> =>
       if (response.status === 401) {
         console.error('API key validation failed: Unauthorized (401)');
         
-        try {
-          const errorData = await response.json();
-          console.error('Error details:', errorData);
-        } catch (e) {
-          console.error('No error details available');
-        }
-        
-        throw new Error("Authentication failed: Check your API key or session. Make sure you've created a valid API key with read/write permissions in Motion settings.");
+        throw new Error("Authentication failed: Invalid API key or insufficient permissions. Make sure you've created a valid API key with read/write permissions in Motion settings.");
+      } else if (response.status === 403) {
+        console.error('API key validation failed: Forbidden (403)');
+        throw new Error("Access forbidden: Your API key doesn't have sufficient permissions for this operation.");
+      } else if (response.status === 404) {
+        console.error('API key validation failed: Not Found (404)');
+        throw new Error("API endpoint not found. The Motion API may have changed. Please check documentation for updates.");
       } else {
         console.error(`API key validation failed with status: ${response.status}`);
-        throw new Error(`API request failed with status ${response.status}`);
+        throw new Error(`API request failed with status ${response.status}. Please check your network connection and try again.`);
       }
     }
   } catch (error) {
