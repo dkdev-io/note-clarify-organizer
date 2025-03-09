@@ -107,7 +107,8 @@ export const fetchWorkspaces = async (apiKey?: string): Promise<any[]> => {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
-      credentials: 'include',
+      // Don't include credentials for cross-origin API calls
+      mode: 'cors',
     });
     
     console.log('Workspace fetch response status:', response.status);
@@ -115,7 +116,19 @@ export const fetchWorkspaces = async (apiKey?: string): Promise<any[]> => {
     if (response.ok) {
       const data = await response.json();
       console.log('Workspaces fetched successfully:', data);
-      return data;
+      
+      // Check if the response has a workspaces property
+      if (data && data.workspaces && Array.isArray(data.workspaces)) {
+        console.log('Found workspaces array in response:', data.workspaces.length);
+        return data.workspaces;
+      } else {
+        // If response is already an array, return it
+        if (Array.isArray(data)) {
+          return data;
+        }
+        console.error('Unexpected response format, no workspaces array found:', data);
+        return [];
+      }
     } else {
       if (response.status === 401) {
         console.error('Unauthorized when fetching workspaces. API key may be invalid or missing permissions');
@@ -149,6 +162,12 @@ export const getWorkspacesForDropdown = async (apiKey?: string): Promise<{label:
     console.error('Error getting workspaces for dropdown:', error);
     throw error;
   }
+};
+
+// Fix the React Fragment warning in Index.tsx
+export const fixReactFragmentWarning = () => {
+  // This is a dummy function to remind us to fix the React Fragment warning
+  console.warn('Remember to fix React Fragment warning in Index.tsx');
 };
 
 // Fetch projects for a specific workspace
