@@ -1,4 +1,3 @@
-
 /**
  * Utility functions for interacting with the Motion API
  */
@@ -195,13 +194,22 @@ export const addTaskToMotion = async (task: Task): Promise<{ success: boolean; e
   }
 };
 
-// Function to validate Motion API key
+// Function to validate Motion API key with more detailed error handling
 export const validateMotionApiKey = async (apiKey: string): Promise<boolean> => {
   console.log('Validating Motion API key...');
+  
+  if (!apiKey || apiKey.trim().length < 10) {
+    console.error('API key is too short or empty');
+    return false;
+  }
   
   try {
     // Store the API key in localStorage for other functions to use
     window.localStorage.setItem('motion_api_key', apiKey);
+    
+    // Log the API key (masked for security)
+    const maskedKey = apiKey.substring(0, 5) + '...' + apiKey.substring(apiKey.length - 5);
+    console.log('Using API key (masked):', maskedKey);
     
     // Try to fetch workspaces to validate the API key
     const response = await fetch('https://api.usemotion.com/v1/workspaces', {
@@ -215,15 +223,23 @@ export const validateMotionApiKey = async (apiKey: string): Promise<boolean> => 
     
     const responseText = await response.text();
     console.log('Motion API validation response status:', response.status);
-    console.log('Motion API validation response:', responseText);
+    console.log('Motion API validation response body:', responseText);
     
     if (!response.ok) {
+      // Log detailed error information
       console.error('Motion API validation failed with status:', response.status);
-      console.error('Response body:', responseText);
       
-      // Check if the API key format is valid (simple check)
-      if (!apiKey || apiKey.length < 10) {
-        console.error('API key appears to be invalid or too short');
+      // Try to parse error response
+      try {
+        const errorData = JSON.parse(responseText);
+        console.error('Error details:', errorData);
+        
+        // Check for specific error messages
+        if (errorData.message === "Unauthorized") {
+          console.error('API key is not authorized. Please check if the key is valid and has proper permissions.');
+        }
+      } catch (parseError) {
+        console.error('Error parsing error response:', parseError);
       }
       
       // Clear the API key from localStorage if validation fails
@@ -308,7 +324,7 @@ const convertStatusToMotion = (status: 'todo' | 'in-progress' | 'done'): string 
   }
 };
 
-// Fetch workspaces from Motion API
+// Fetch workspaces from Motion API with improved error handling
 export const fetchWorkspaces = async (): Promise<MotionWorkspace[]> => {
   console.log('Fetching workspaces from Motion API...');
   
@@ -318,6 +334,10 @@ export const fetchWorkspaces = async (): Promise<MotionWorkspace[]> => {
       console.error('No API key found in localStorage');
       return [];
     }
+
+    // Log the API key (masked for security)
+    const maskedKey = apiKey.substring(0, 5) + '...' + apiKey.substring(apiKey.length - 5);
+    console.log('Using API key for fetching workspaces (masked):', maskedKey);
 
     const response = await fetch('https://api.usemotion.com/v1/workspaces', {
       method: 'GET',
@@ -333,6 +353,15 @@ export const fetchWorkspaces = async (): Promise<MotionWorkspace[]> => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Failed to fetch workspaces:', response.status, errorText);
+      
+      // Try to parse error response
+      try {
+        const errorData = JSON.parse(errorText);
+        console.error('Error details:', errorData);
+      } catch (parseError) {
+        console.error('Raw error response:', errorText);
+      }
+      
       return [];
     }
     

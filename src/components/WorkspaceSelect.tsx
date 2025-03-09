@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { LoaderIcon, PlusCircleIcon, AlertTriangleIcon } from 'lucide-react';
+import { LoaderIcon, PlusCircleIcon, AlertTriangleIcon, RefreshCw } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getWorkspacesForDropdown, createProject } from '@/utils/motion';
+import { getWorkspacesForDropdown } from '@/utils/motion';
 import { useToast } from "@/components/ui/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -49,7 +49,7 @@ const WorkspaceSelect: React.FC<WorkspaceSelectProps> = ({
     try {
       // Store the API key in localStorage for other functions to use
       if (apiKey) {
-        window.localStorage.setItem('motion_api_key', apiKey);
+        window.localStorage.setItem('motion_api_key', apiKey.trim());
       } else {
         console.error('No API key provided to WorkspaceSelect');
         setError("No API key provided. Please enter a valid Motion API key.");
@@ -60,7 +60,7 @@ const WorkspaceSelect: React.FC<WorkspaceSelectProps> = ({
       // Log the API key (masked for security)
       if (apiKey) {
         const maskedKey = apiKey.substring(0, 5) + '...' + apiKey.substring(apiKey.length - 5);
-        console.log('Using API key (masked):', maskedKey);
+        console.log('Using API key for workspaces (masked):', maskedKey);
       }
       
       const workspaceOptions = await getWorkspacesForDropdown();
@@ -68,6 +68,11 @@ const WorkspaceSelect: React.FC<WorkspaceSelectProps> = ({
       
       if (workspaceOptions.length === 0) {
         setError("No workspaces found in your Motion account or there was an issue with the API key. Please check your API key and try again.");
+        toast({
+          title: "No workspaces found",
+          description: "Couldn't find any workspaces with the provided API key. Make sure your key has the correct permissions.",
+          variant: "destructive",
+        });
       }
       
       setWorkspaces(workspaceOptions);
@@ -134,40 +139,53 @@ const WorkspaceSelect: React.FC<WorkspaceSelectProps> = ({
         <div className="space-y-2">
           <Label htmlFor="workspace">Select Workspace</Label>
           <div className="flex gap-2">
-            <Select
-              value={selectedWorkspaceId || undefined}
-              onValueChange={onWorkspaceSelect}
-              disabled={isLoading}
-            >
-              <SelectTrigger className="w-full">
-                {isLoading ? (
-                  <div className="flex items-center">
-                    <LoaderIcon className="mr-2 h-3 w-3 animate-spin" />
-                    <span>Loading workspaces...</span>
-                  </div>
-                ) : (
-                  <SelectValue placeholder="Select a workspace" />
-                )}
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectLabel>Workspaces</SelectLabel>
-                  {workspaces.map(workspace => (
-                    <SelectItem key={workspace.value} value={workspace.value}>
-                      {workspace.label}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-            <Button 
-              variant="outline" 
-              size="icon" 
-              onClick={() => setShowNewWorkspaceForm(true)}
-              title="Create New Workspace"
-            >
-              <PlusCircleIcon className="h-4 w-4" />
-            </Button>
+            <div className="flex-1">
+              <Select
+                value={selectedWorkspaceId || undefined}
+                onValueChange={onWorkspaceSelect}
+                disabled={isLoading}
+              >
+                <SelectTrigger className="w-full">
+                  {isLoading ? (
+                    <div className="flex items-center">
+                      <LoaderIcon className="mr-2 h-3 w-3 animate-spin" />
+                      <span>Loading workspaces...</span>
+                    </div>
+                  ) : (
+                    <SelectValue placeholder="Select a workspace" />
+                  )}
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectLabel>Workspaces</SelectLabel>
+                    {workspaces.map(workspace => (
+                      <SelectItem key={workspace.value} value={workspace.value}>
+                        {workspace.label}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex gap-1">
+              <Button 
+                variant="outline" 
+                size="icon" 
+                onClick={loadWorkspaces}
+                disabled={isLoading}
+                title="Refresh Workspaces"
+              >
+                <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+              </Button>
+              <Button 
+                variant="outline" 
+                size="icon" 
+                onClick={() => setShowNewWorkspaceForm(true)}
+                title="Create New Workspace"
+              >
+                <PlusCircleIcon className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
           
           {error && (
@@ -182,25 +200,6 @@ const WorkspaceSelect: React.FC<WorkspaceSelectProps> = ({
               No workspaces found. You can create a new one or check your API key.
             </p>
           )}
-          
-          <div className="flex justify-end mt-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={loadWorkspaces}
-              disabled={isLoading}
-              className="text-xs"
-            >
-              {isLoading ? (
-                <>
-                  <LoaderIcon className="mr-1 h-3 w-3 animate-spin" />
-                  Refreshing...
-                </>
-              ) : (
-                "Refresh Workspaces"
-              )}
-            </Button>
-          </div>
         </div>
       ) : (
         <Card className="border border-dashed">

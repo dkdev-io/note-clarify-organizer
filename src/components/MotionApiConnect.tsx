@@ -4,7 +4,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AlertCircle, CheckIcon, LoaderIcon, InfoIcon } from 'lucide-react';
+import { AlertCircle, CheckIcon, LoaderIcon, InfoIcon, LinkIcon } from 'lucide-react';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { validateMotionApiKey, fetchWorkspaces } from '@/utils/motion';
 import { useToast } from "@/components/ui/use-toast";
@@ -33,26 +33,39 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
       return;
     }
     
+    // Trim the API key to remove any accidental whitespace
+    const trimmedKey = apiKey.trim();
+    
     setIsValidating(true);
     setErrorMessage(null);
     
     try {
-      const isValid = await validateMotionApiKey(apiKey);
+      console.log('Starting API key validation...');
+      const isValid = await validateMotionApiKey(trimmedKey);
       setIsKeyValid(isValid);
       
       if (isValid) {
         // If valid, fetch workspaces
+        console.log('API key is valid, fetching workspaces...');
         const fetchedWorkspaces = await fetchWorkspaces();
+        console.log('Fetched workspaces:', fetchedWorkspaces);
         setWorkspaces(fetchedWorkspaces);
         
-        toast({
-          title: "Successfully connected",
-          description: "Your Motion API key is valid and workspaces have been loaded.",
-        });
+        if (fetchedWorkspaces.length === 0) {
+          setErrorMessage(
+            "Your API key is valid, but no workspaces were found. " +
+            "Make sure you have at least one workspace in your Motion account."
+          );
+        } else {
+          toast({
+            title: "Successfully connected",
+            description: "Your Motion API key is valid and workspaces have been loaded.",
+          });
+        }
       } else {
         setErrorMessage(
           "Invalid Motion API key. Please check the key and try again. " +
-          "Make sure you are using an API key created in your Motion account settings."
+          "Make sure you are using an API key created in your Motion account settings with proper permissions."
         );
         toast({
           title: "Connection Error",
@@ -62,7 +75,9 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
       }
     } catch (error) {
       console.error("Error during validation:", error);
-      setErrorMessage("Failed to validate API key. Please try again.");
+      setErrorMessage(
+        "Failed to validate API key. Please check your internet connection and try again."
+      );
       toast({
         title: "Connection Error",
         description: "Failed to validate API key",
@@ -88,6 +103,10 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
 
   const handleConnect = () => {
     onConnect(apiKey, workspaces, selectedWorkspaceId || undefined, selectedProject || undefined);
+  };
+
+  const handleMotionDocsClick = () => {
+    window.open('https://docs.usemotion.com/docs/api/authentication', '_blank');
   };
 
   return (
@@ -130,6 +149,15 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
                 <AlertDescription className="text-xs">
                   Motion API keys can be found in your Motion account under Settings → API Keys. 
                   Make sure to create a new API key with read/write access.
+                  <Button
+                    variant="link"
+                    size="sm"
+                    className="p-0 h-auto text-blue-600 underline-offset-2 font-normal flex items-center mt-1"
+                    onClick={handleMotionDocsClick}
+                  >
+                    <LinkIcon className="h-3 w-3 mr-1" />
+                    View Motion API docs
+                  </Button>
                 </AlertDescription>
               </Alert>
               
