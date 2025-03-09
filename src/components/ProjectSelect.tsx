@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,6 +38,7 @@ const ProjectSelect: React.FC<ProjectSelectProps> = ({
   const [newProjectDescription, setNewProjectDescription] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -60,6 +60,7 @@ const ProjectSelect: React.FC<ProjectSelectProps> = ({
       // If we have projects and none is selected, select the first one
       if (projectOptions.length > 0 && !selectedProject) {
         onProjectSelect(projectOptions[0].label, projectOptions[0].value);
+        setSelectedProjectId(projectOptions[0].value);
       }
     } catch (error) {
       console.error('Failed to load projects:', error);
@@ -97,6 +98,7 @@ const ProjectSelect: React.FC<ProjectSelectProps> = ({
         
         setProjects([...projects, newProject]);
         onProjectSelect(newProject.label, newProject.value);
+        setSelectedProjectId(newProject.value);
         setShowNewProjectForm(false);
         setNewProjectName('');
         setNewProjectDescription('');
@@ -132,8 +134,18 @@ const ProjectSelect: React.FC<ProjectSelectProps> = ({
     const project = projects.find(p => p.value === projectId);
     if (project) {
       onProjectSelect(project.label, project.value);
+      setSelectedProjectId(projectId);
     }
   };
+
+  useEffect(() => {
+    if (selectedProject && projects.length > 0) {
+      const project = projects.find(p => p.label === selectedProject);
+      if (project) {
+        setSelectedProjectId(project.value);
+      }
+    }
+  }, [selectedProject, projects]);
 
   if (!apiKey || !workspaceId) {
     return null;
@@ -147,7 +159,7 @@ const ProjectSelect: React.FC<ProjectSelectProps> = ({
           <div className="flex gap-2">
             <div className="relative flex-1">
               <Select
-                value={selectedProject || undefined}
+                value={selectedProjectId || undefined}
                 onValueChange={handleSelectProject}
                 disabled={isLoading}
               >
@@ -158,10 +170,12 @@ const ProjectSelect: React.FC<ProjectSelectProps> = ({
                       <span>Loading projects...</span>
                     </div>
                   ) : (
-                    <SelectValue placeholder="Select a project" />
+                    <SelectValue placeholder="Select a project">
+                      {selectedProject}
+                    </SelectValue>
                   )}
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white">
                   <SelectGroup>
                     <SelectLabel>Projects</SelectLabel>
                     {projects.map(project => (
