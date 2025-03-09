@@ -186,9 +186,9 @@ export const fetchProjects = async (workspaceId: string, apiKey?: string): Promi
       return [];
     }
     
-    // Use the correct endpoint for Motion API's project lists
-    // The endpoint appears to be /v1/workspaces/{id}/lists according to the error
-    const response = await fetch(`https://api.usemotion.com/v1/workspaces/${workspaceId}/lists`, {
+    // Based on API error and documentation, try the /v1/lists endpoint with workspace ID as a query parameter
+    // This seems to be the correct approach according to errors and network requests
+    const response = await fetch(`https://api.usemotion.com/v1/lists?workspaceId=${workspaceId}`, {
       method: 'GET',
       headers: {
         'X-API-Key': usedKey,
@@ -301,8 +301,8 @@ export const createProject = async (workspaceId: string, name: string, apiKey?: 
       throw new Error('API key is required');
     }
     
-    // Use the correct endpoint for creating lists within a workspace
-    const response = await fetch(`https://api.usemotion.com/v1/workspaces/${workspaceId}/lists`, {
+    // Based on the tested endpoint for fetching projects, use the same pattern for creating
+    const response = await fetch(`https://api.usemotion.com/v1/lists`, {
       method: 'POST',
       headers: {
         'X-API-Key': usedKey,
@@ -310,7 +310,10 @@ export const createProject = async (workspaceId: string, name: string, apiKey?: 
         'Accept': 'application/json',
       },
       mode: 'cors',
-      body: JSON.stringify({ name }),
+      body: JSON.stringify({ 
+        name,
+        workspaceId 
+      }),
     });
     
     if (response.ok) {
