@@ -8,9 +8,11 @@ import { AlertCircle, CheckIcon, LoaderIcon } from 'lucide-react';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { validateMotionApiKey, fetchWorkspaces } from '@/utils/motion';
 import { useToast } from "@/components/ui/use-toast";
+import WorkspaceSelect from './WorkspaceSelect';
+import ProjectSelect from './ProjectSelect';
 
 interface MotionApiConnectProps {
-  onConnect: (apiKey: string, workspaces: any[]) => void;
+  onConnect: (apiKey: string, workspaces: any[], selectedWorkspace?: string, selectedProject?: string) => void;
   onSkip: () => void;
 }
 
@@ -19,6 +21,10 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
   const [isValidating, setIsValidating] = useState(false);
   const [isKeyValid, setIsKeyValid] = useState<boolean | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | null>(null);
+  const [selectedProject, setSelectedProject] = useState<string | null>(null);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const [workspaces, setWorkspaces] = useState<any[]>([]);
   const { toast } = useToast();
 
   const validateKey = async () => {
@@ -36,12 +42,13 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
       
       if (isValid) {
         // If valid, fetch workspaces
-        const workspaces = await fetchWorkspaces();
+        const fetchedWorkspaces = await fetchWorkspaces();
+        setWorkspaces(fetchedWorkspaces);
+        
         toast({
           title: "Successfully connected",
           description: "Your Motion API key is valid and workspaces have been loaded.",
         });
-        onConnect(apiKey, workspaces);
       } else {
         setErrorMessage("Invalid Motion API key. Please check and try again.");
         toast({
@@ -63,6 +70,22 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
     }
   };
 
+  const handleWorkspaceSelect = (workspaceId: string) => {
+    setSelectedWorkspaceId(workspaceId);
+    // Reset project when workspace changes
+    setSelectedProject(null);
+    setSelectedProjectId(null);
+  };
+
+  const handleProjectSelect = (projectName: string, projectId?: string) => {
+    setSelectedProject(projectName);
+    setSelectedProjectId(projectId || null);
+  };
+
+  const handleConnect = () => {
+    onConnect(apiKey, workspaces, selectedWorkspaceId || undefined, selectedProject || undefined);
+  };
+
   return (
     <div className="w-full max-w-2xl mx-auto">
       <Card className="bg-white bg-opacity-80 backdrop-blur-sm border border-gray-100 shadow-card">
@@ -75,7 +98,7 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
           </p>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
+          <div className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="apiKey">Motion API Key</Label>
               <Input
@@ -97,10 +120,49 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
                   <AlertDescription>{errorMessage}</AlertDescription>
                 </Alert>
               )}
+              
+              <div className="flex justify-end mt-2">
+                <Button
+                  onClick={validateKey}
+                  disabled={!apiKey.trim() || isValidating}
+                  size="sm"
+                >
+                  {isValidating ? (
+                    <>
+                      <LoaderIcon className="mr-2 h-3 w-3 animate-spin" />
+                      Validating...
+                    </>
+                  ) : isKeyValid === true ? (
+                    <>
+                      <CheckIcon className="mr-2 h-3 w-3 text-green-500" />
+                      Validated
+                    </>
+                  ) : (
+                    "Validate Key"
+                  )}
+                </Button>
+              </div>
             </div>
             
-            <div className="text-sm text-muted-foreground">
-              <p>Connecting early allows us to:</p>
+            {isKeyValid && (
+              <>
+                <WorkspaceSelect 
+                  apiKey={apiKey} 
+                  selectedWorkspaceId={selectedWorkspaceId}
+                  onWorkspaceSelect={handleWorkspaceSelect}
+                />
+                
+                <ProjectSelect
+                  apiKey={apiKey}
+                  workspaceId={selectedWorkspaceId}
+                  selectedProject={selectedProject}
+                  onProjectSelect={handleProjectSelect}
+                />
+              </>
+            )}
+            
+            <div className="text-sm text-muted-foreground border-t pt-4">
+              <p>Connecting to Motion API allows us to:</p>
               <ul className="list-disc list-inside mt-2 space-y-1">
                 <li>Validate assignee names against existing Motion users</li>
                 <li>Check if projects already exist or need to be created</li>
@@ -117,8 +179,8 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
             Skip for now
           </Button>
           <Button 
-            onClick={validateKey}
-            disabled={!apiKey.trim() || isValidating}
+            onClick={handleConnect}
+            disabled={!isKeyValid || isValidating}
             className="transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"
           >
             {isValidating ? (
@@ -126,13 +188,8 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
                 <LoaderIcon className="mr-2 h-4 w-4 animate-spin" />
                 Connecting...
               </>
-            ) : isKeyValid === true ? (
-              <>
-                <CheckIcon className="mr-2 h-4 w-4 text-green-500" />
-                Connected
-              </>
             ) : (
-              "Connect"
+              "Connect & Continue"
             )}
           </Button>
         </CardFooter>

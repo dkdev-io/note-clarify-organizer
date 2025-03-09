@@ -17,6 +17,8 @@ interface ApiProps {
   isConnected: boolean;
   apiKey: string | null;
   workspaces: any[];
+  selectedWorkspaceId?: string;
+  selectedProject?: string;
 }
 
 const Index = () => {
@@ -32,11 +34,16 @@ const Index = () => {
   const [motionApiKey, setMotionApiKey] = useState<string | null>(null);
   const [workspaces, setWorkspaces] = useState<any[]>([]);
   const [isConnected, setIsConnected] = useState(false);
+  const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | undefined>(undefined);
+  const [selectedProject, setSelectedProject] = useState<string | undefined>(undefined);
   
   // Handle API connection
-  const handleApiConnect = (apiKey: string, fetchedWorkspaces: any[]) => {
+  const handleApiConnect = (apiKey: string, fetchedWorkspaces: any[], workspaceId?: string, project?: string) => {
     setMotionApiKey(apiKey);
     setWorkspaces(fetchedWorkspaces);
+    setSelectedWorkspaceId(workspaceId);
+    setSelectedProject(project);
+    setProjectName(project || null);
     setIsConnected(true);
     setStep('input');
   };
@@ -50,19 +57,22 @@ const Index = () => {
   // Handle moving from note input to task extraction
   const handleParseText = (text: string, providedProjectName: string | null) => {
     setNoteText(text);
-    const tasks = parseTextIntoTasks(text, providedProjectName);
+    
+    // Use the selected project from Motion API if available, otherwise use provided name
+    const effectiveProjectName = selectedProject || providedProjectName;
+    
+    const tasks = parseTextIntoTasks(text, effectiveProjectName);
     
     // Extract project name from tasks if not provided
-    const extractedProjectName = tasks.find(task => task.project)?.project || null;
+    const extractedProjectName = tasks.find(task => task.project)?.project || effectiveProjectName || null;
     setProjectName(extractedProjectName);
     
     // If connected to API, enhance tasks with workspace IDs
-    if (isConnected && workspaces.length > 0) {
-      // Default to first workspace for now, can be refined later
-      const defaultWorkspaceId = workspaces[0]?.id || null;
+    if (isConnected && selectedWorkspaceId) {
       const tasksWithWorkspace = tasks.map(task => ({
         ...task,
-        workspace_id: defaultWorkspaceId
+        workspace_id: selectedWorkspaceId,
+        project: extractedProjectName || task.project
       }));
       setExtractedTasks(tasksWithWorkspace);
     } else {
@@ -109,7 +119,10 @@ const Index = () => {
     setExtractedTasks([]);
     setSelectedTasks([]);
     setReviewedTasks([]);
-    setProjectName(null);
+    // Keep project and workspace if connected to API
+    if (!isConnected) {
+      setProjectName(null);
+    }
     // Keep API connection but return to input step
     setStep('input');
   };
@@ -235,7 +248,9 @@ const Index = () => {
   const apiProps: ApiProps = {
     isConnected,
     apiKey: motionApiKey,
-    workspaces
+    workspaces,
+    selectedWorkspaceId,
+    selectedProject
   };
 
   return (
@@ -247,12 +262,24 @@ const Index = () => {
             Transform your meeting notes into structured tasks for Motion
           </p>
           {isConnected && step !== 'connect' && step !== 'complete' && (
-            <Badge 
-              className="mt-3 px-3 py-1 bg-green-50 text-green-700 border-green-200"
-            >
-              <CheckIcon className="h-3 w-3 mr-1" />
-              Connected to Motion API
-            </Badge>
+            <div className="mt-3 flex flex-wrap justify-center gap-2">
+              <Badge className="px-3 py-1 bg-green-50 text-green-700 border-green-200">
+                <CheckIcon className="h-3 w-3 mr-1" />
+                Connected to Motion API
+              </Badge>
+              
+              {selectedWorkspaceId && (
+                <Badge className="px-3 py-1 bg-blue-50 text-blue-700 border-blue-200">
+                  Workspace: {workspaces.find(w => w.id === selectedWorkspaceId)?.name || selectedWorkspaceId}
+                </Badge>
+              )}
+              
+              {selectedProject && (
+                <Badge className="px-3 py-1 bg-purple-50 text-purple-700 border-purple-200">
+                  Project: {selectedProject}
+                </Badge>
+              )}
+            </div>
           )}
         </header>
 

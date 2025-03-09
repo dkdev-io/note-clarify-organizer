@@ -1,4 +1,3 @@
-
 /**
  * Utility functions for interacting with the Motion API
  */
@@ -339,3 +338,33 @@ export const createProject = async (
   };
 };
 
+// New function to get all workspaces for dropdown
+export const getWorkspacesForDropdown = async (): Promise<{label: string, value: string}[]> => {
+  try {
+    const workspaces = await fetchWorkspaces();
+    return workspaces.map(workspace => ({
+      label: workspace.name,
+      value: workspace.id
+    }));
+  } catch (error) {
+    console.error('Error fetching workspaces for dropdown:', error);
+    return [];
+  }
+};
+
+// New function to search projects for dropdown
+export const getProjectsForDropdown = async (
+  query: string = '',
+  workspaceId?: string
+): Promise<{label: string, value: string}[]> => {
+  try {
+    const projects = await searchProjects(query, workspaceId);
+    return projects.map(project => ({
+      label: project.name,
+      value: project.id
+    }));
+  } catch (error) {
+    console.error('Error fetching projects for dropdown:', error);
+    return [];
+  }
+};
