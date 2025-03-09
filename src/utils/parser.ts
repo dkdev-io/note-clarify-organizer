@@ -518,43 +518,60 @@ const splitIntoSubtasks = (text: string): string[] => {
     }
   }
   
-  // Look for sequences
+  // Look for sequences - splitting by various patterns
+  const potentialTasks: string[] = [];
+  
+  // Split by period 
   const sequencesByPeriod = text.split(/\.\s+/).filter(s => s.trim().length > 0);
+  if (sequencesByPeriod.length > 1) {
+    potentialTasks.push(...sequencesByPeriod);
+  }
   
   // Look for "and then" or similar sequence indicators
   const sequencesByConnectors = text.split(/\s+and\s+then\s+|\s+after\s+that\s+|\s+next,?\s+|\s+subsequently\s+|\s+following\s+that\s+/i)
     .filter(s => s.trim().length > 0);
+  if (sequencesByConnectors.length > 1) {
+    potentialTasks.push(...sequencesByConnectors);
+  }
   
   // Look for numbered sequences like "1. First task 2. Second task"
   const sequencesByNumbers = text.split(/\s*\d+\.\s+/).filter(s => s.trim().length > 0);
+  if (sequencesByNumbers.length > 1) {
+    potentialTasks.push(...sequencesByNumbers);
+  }
   
   // Look for "before" clauses which often indicate two separate tasks
   const sequencesByBefore = text.split(/\s+before\s+/i).filter(s => s.trim().length > 0);
+  if (sequencesByBefore.length > 1) {
+    potentialTasks.push(...sequencesByBefore);
+  }
   
-  // Collect all potential sequences into a single array of potential tasks
-  const potentialTasks = [
-    ...sequencesByPeriod,
-    ...sequencesByConnectors,
-    ...sequencesByNumbers,
-    ...sequencesByBefore
-  ];
-  
-  // Collect unique task texts (may have duplicates from different patterns)
-  const uniqueTasks = new Set<string>();
+  // Track already seen tasks to avoid duplicates - NEW DEDUPLICATION MECHANISM
+  const seenTaskTexts = new Set<string>();
+  const uniqueTasks: string[] = [];
   
   // For each potential task, check if it appears to be a valid task (has a verb, reasonable length)
   for (const potential of potentialTasks) {
+    const normalized = potential.trim().toLowerCase();
+    
+    // Skip if we've already seen this task (case-insensitive)
+    if (seenTaskTexts.has(normalized)) {
+      continue;
+    }
+    
     // Skip if it's too short or doesn't have an action verb
     if (potential.trim().length < 10 || !(/\b(?:do|make|create|update|review|finish|complete|check|send|write|prepare|schedule|organize|develop|design|implement|test|fix|build|draft|edit|add|remove|change|modify|analyze|evaluate|assess|report|present|discuss|meet|call|email|post|share|upload|download|generate|produce|deliver|submit|approve|verify|check|complete|finish|send|write)\b/i.test(potential))) {
       continue;
     }
     
-    uniqueTasks.add(potential.trim());
+    // Mark this task as seen (case-insensitive)
+    seenTaskTexts.add(normalized);
+    uniqueTasks.push(potential.trim());
   }
   
-  // If we found more than one task, return them as separate tasks
-  if (uniqueTasks.size > 1) {
-    return Array.from(uniqueTasks);
+  // If we found more than one unique task, return them as separate tasks
+  if (uniqueTasks.length > 1) {
+    return uniqueTasks;
   }
   
   // Check for split by "to" where both parts make sense as separate tasks
@@ -702,7 +719,7 @@ export const parseTextIntoTasks = (text: string, defaultProjectName: string | nu
   const projectName = defaultProjectName || extractedProjectName || "Tasks";
   console.log("Using project name:", projectName);
   
-  // Split text into lines
+  // Split text into lines and filter out meeting chatter
   const lines = text.split(/\r?\n/).filter(filterMeetingChatter);
   
   // Identify potential tasks by looking for action items, bullet points, numbered lists, etc.
@@ -715,6 +732,8 @@ export const parseTextIntoTasks = (text: string, defaultProjectName: string | nu
   ];
   
   const tasks: Task[] = [];
+  // Track seen tasks to avoid duplicates - this is the important new addition
+  const seenTaskTitles = new Set<string>();
   let isFirstLine = true;
   
   for (const line of lines) {
@@ -792,6 +811,16 @@ export const parseTextIntoTasks = (text: string, defaultProjectName: string | nu
         }
       }
       
+      // NEW: Skip duplicate tasks by checking the title
+      const normalizedTitle = title.trim().toLowerCase();
+      if (seenTaskTitles.has(normalizedTitle)) {
+        console.log("Skipping duplicate task:", title);
+        continue;
+      }
+      
+      // Add to seen titles set to prevent duplicates
+      seenTaskTitles.add(normalizedTitle);
+      
       // Add a task with the project name explicitly set, but with a clean description that doesn't duplicate metadata
       tasks.push({
         id: generateId(),
@@ -857,4 +886,3 @@ export const validateTasks = (tasks: Task[]): { allValid: boolean; tasksWithMiss
     tasksWithMissingFields
   };
 };
-
