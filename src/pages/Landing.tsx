@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -8,6 +9,8 @@ const Landing = () => {
   
   const handleSignUp = () => {
     console.log('Navigating to signup page');
+    // Clear any existing skip_auth flag
+    sessionStorage.removeItem('skip_auth');
     navigate('/login?signup=true');
   };
   

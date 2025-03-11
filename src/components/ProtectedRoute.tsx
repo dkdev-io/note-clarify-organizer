@@ -1,6 +1,6 @@
 
 import { ReactNode, useEffect, useState } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { supabase, credentials } from '@/lib/supabase';
 import { Button } from './ui/button';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
@@ -15,13 +15,15 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const [authenticated, setAuthenticated] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Check if the user is trying to skip authentication
   const isSkipping = sessionStorage.getItem('skip_auth') === 'true';
 
   useEffect(() => {
-    // If skipping, set authenticated to true immediately
-    if (isSkipping) {
+    // Only apply skip_auth when explicitly on protected routes
+    // This prevents it from affecting the landing and login pages
+    if (isSkipping && location.pathname.startsWith('/app')) {
       console.log('Skipping authentication check due to skip_auth flag');
       setAuthenticated(true);
       setLoading(false);
@@ -60,7 +62,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
         authListener.subscription.unsubscribe();
       }
     };
-  }, [isSkipping]);
+  }, [isSkipping, location.pathname]);
 
   // Show loading spinner or placeholder while checking auth
   if (loading) {

@@ -9,6 +9,7 @@ import { ArrowLeft } from 'lucide-react';
 const Login = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  
   // Check for signup parameter in the URL
   const urlParams = new URLSearchParams(location.search);
   const signupParam = urlParams.get('signup');
@@ -16,6 +17,15 @@ const Login = () => {
   // Default to signup view when coming from landing page with signup=true
   const [isSignUp, setIsSignUp] = useState(signupParam === 'true');
   const { signIn, signUp, isLoading, authError, setAuthError } = useAuth();
+
+  // Clear skip_auth when on the login page
+  useEffect(() => {
+    // Remove the skip_auth flag when visiting login page
+    // This ensures the proper auth flow is followed
+    sessionStorage.removeItem('skip_auth');
+    
+    console.log('Login page loaded, signup param:', signupParam);
+  }, [signupParam]);
 
   // Set up an auth state listener
   useEffect(() => {
@@ -33,21 +43,16 @@ const Login = () => {
       navigate('/app');
     }
 
-    // Check if skip_auth is already set in sessionStorage
-    if (sessionStorage.getItem('skip_auth') === 'true') {
-      navigate('/app');
-    }
-
     return () => {
       subscription.unsubscribe();
     };
-  }, [navigate]);
+  }, [navigate, urlParams]);
 
   // Additional effect specifically for the signup parameter
   useEffect(() => {
     console.log('URL signup parameter changed:', signupParam);
     setIsSignUp(signupParam === 'true');
-  }, [signupParam, location.search]);
+  }, [signupParam]);
 
   const handleAuth = async (email: string, password: string) => {
     if (isSignUp) {
