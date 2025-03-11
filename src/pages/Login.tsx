@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, WifiOff } from 'lucide-react';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -16,6 +16,7 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [isNetworkError, setIsNetworkError] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -23,6 +24,7 @@ const Login = () => {
     e.preventDefault();
     setIsLoading(true);
     setAuthError(null);
+    setIsNetworkError(false);
 
     try {
       if (isSignUp) {
@@ -55,12 +57,21 @@ const Login = () => {
         navigate('/app');
       }
     } catch (error: any) {
-      console.error('Authentication error:', error.message || error);
-      setAuthError(error.message || 'An unknown authentication error occurred');
+      console.error('Authentication error:', error);
+      
+      // Check if it's a network error (Failed to fetch)
+      if (error.message === 'Failed to fetch' || error.toString().includes('Failed to fetch')) {
+        setIsNetworkError(true);
+        setAuthError("Network error: Could not connect to authentication service. Please check your internet connection and try again.");
+      } else {
+        setAuthError(error.message || 'An unknown authentication error occurred');
+      }
       
       toast({
         title: "Authentication error",
-        description: error.message || 'An unknown authentication error occurred',
+        description: isNetworkError 
+          ? "Network error: Cannot connect to authentication service" 
+          : error.message || 'An unknown authentication error occurred',
         variant: "destructive",
       });
     } finally {
@@ -83,10 +94,25 @@ const Login = () => {
           <CardContent className="space-y-4">
             {authError && (
               <Alert variant="destructive" className="border-4 border-black bg-red-100">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Error</AlertTitle>
+                {isNetworkError ? (
+                  <WifiOff className="h-4 w-4" />
+                ) : (
+                  <AlertCircle className="h-4 w-4" />
+                )}
+                <AlertTitle>{isNetworkError ? "Network Error" : "Error"}</AlertTitle>
                 <AlertDescription>{authError}</AlertDescription>
               </Alert>
+            )}
+            
+            {isNetworkError && (
+              <div className="text-sm text-gray-600 mt-2">
+                <p>This may be happening because:</p>
+                <ul className="list-disc list-inside ml-2 mt-1">
+                  <li>You're not connected to the internet</li>
+                  <li>The authentication service is temporarily unavailable</li>
+                  <li>The Supabase configuration needs to be updated</li>
+                </ul>
+              </div>
             )}
             
             <div className="space-y-2">
