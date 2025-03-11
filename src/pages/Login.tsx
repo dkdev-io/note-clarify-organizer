@@ -7,18 +7,22 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setAuthError(null);
 
     try {
       if (isSignUp) {
@@ -51,9 +55,12 @@ const Login = () => {
         navigate('/app');
       }
     } catch (error: any) {
+      console.error('Authentication error:', error.message || error);
+      setAuthError(error.message || 'An unknown authentication error occurred');
+      
       toast({
         title: "Authentication error",
-        description: error.message,
+        description: error.message || 'An unknown authentication error occurred',
         variant: "destructive",
       });
     } finally {
@@ -74,6 +81,14 @@ const Login = () => {
         </CardHeader>
         <form onSubmit={handleAuth}>
           <CardContent className="space-y-4">
+            {authError && (
+              <Alert variant="destructive" className="border-4 border-black bg-red-100">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>{authError}</AlertDescription>
+              </Alert>
+            )}
+            
             <div className="space-y-2">
               <Label htmlFor="email" className="font-georgia">Email</Label>
               <Input 
