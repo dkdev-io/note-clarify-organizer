@@ -95,7 +95,8 @@ const Landing = () => {
               <p className="font-georgia text-lg mb-6">Everything you need to streamline your project management</p>
               
               <div className="text-left mb-8">
-                <p className="font-georgia mb-4">One month of early access (May-June), with slack group and weekly feedback session with founder.</p>
+                <p className="font-georgia mb-4">One month of earliest access (May-June), with slack group and weekly feedback session with founder.</p>
+                <p className="font-georgia font-bold">First customers get 2026 access at First year prices</p>
               </div>
               
               <ul className="space-y-4 mb-8 text-left">
@@ -128,6 +129,7 @@ const Landing = () => {
               
               <div className="text-left mb-8">
                 <p className="font-georgia mb-4">Three months (July-Sep) of early access with slack group and weekly feedback sessions with founder.</p>
+                <p className="font-georgia font-bold">First customers get 2026 access at First year prices</p>
               </div>
               
               <ul className="space-y-4 mb-8 text-left">
@@ -160,6 +162,7 @@ const Landing = () => {
               
               <div className="text-left mb-8">
                 <p className="font-georgia mb-4">(Oct-Dec 31) early access slack group, weekly feedback session with founder.</p>
+                <p className="font-georgia font-bold">First customers get 2026 access at First year prices</p>
               </div>
               
               <ul className="space-y-4 mb-8 text-left">
