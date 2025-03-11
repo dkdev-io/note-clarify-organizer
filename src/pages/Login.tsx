@@ -1,14 +1,14 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { supabase, credentials } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, WifiOff, ExternalLink } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -16,37 +16,13 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
-  const [isNetworkError, setIsNetworkError] = useState(false);
-  const [configError, setConfigError] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-
-  useEffect(() => {
-    // Check if credentials are valid on component mount
-    if (!credentials.isValid) {
-      setConfigError(true);
-      setAuthError("Supabase integration needs to be connected through the Lovable interface.");
-    }
-  }, []);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setAuthError(null);
-    setIsNetworkError(false);
-
-    // Check if credentials are valid
-    if (!credentials.isValid) {
-      setConfigError(true);
-      setAuthError("Please make sure your Supabase project is properly connected through the Lovable interface.");
-      setIsLoading(false);
-      toast({
-        title: "Configuration Error",
-        description: "Supabase integration needs to be configured",
-        variant: "destructive",
-      });
-      return;
-    }
 
     try {
       if (isSignUp) {
@@ -81,76 +57,17 @@ const Login = () => {
     } catch (error: any) {
       console.error('Authentication error:', error);
       
-      if (error.message === 'Failed to fetch' || error.toString().includes('Failed to fetch')) {
-        setIsNetworkError(true);
-        setAuthError("Could not connect to Supabase. Please check your configuration and try again.");
-      } else {
-        setAuthError(error.message || 'An unknown authentication error occurred');
-      }
+      setAuthError(error.message || 'An unknown authentication error occurred');
       
       toast({
         title: "Authentication error",
-        description: isNetworkError 
-          ? "Could not connect to Supabase" 
-          : error.message || 'An unknown authentication error occurred',
+        description: error.message || 'An unknown authentication error occurred',
         variant: "destructive",
       });
     } finally {
       setIsLoading(false);
     }
   };
-
-  // If there's a configuration error, show a more prominant message
-  if (configError) {
-    return (
-      <div className="min-h-screen bg-[#fbbc05] flex items-center justify-center p-4">
-        <Card className="w-full max-w-md border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-          <CardHeader>
-            <CardTitle className="text-4xl font-bebas-neue">CONFIGURATION REQUIRED</CardTitle>
-            <CardDescription className="font-georgia">
-              Supabase integration needs to be connected
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Alert variant="destructive" className="border-4 border-black bg-red-100">
-              <WifiOff className="h-4 w-4" />
-              <AlertTitle>Supabase Connection Missing</AlertTitle>
-              <AlertDescription>{authError || "Please make sure your Supabase project is properly connected through the Lovable interface."}</AlertDescription>
-            </Alert>
-            
-            <div className="text-sm text-gray-700 mt-4 space-y-4">
-              <p className="font-bold">To connect your Supabase project:</p>
-              <ol className="list-decimal list-inside space-y-2">
-                <li>Click on the Supabase menu on the top right of the Lovable interface</li>
-                <li>Select "Connect to Supabase"</li>
-                <li>Follow the prompts to connect your Supabase project</li>
-                <li>Once connected, return to this page and refresh</li>
-              </ol>
-              
-              <div className="bg-yellow-100 p-4 rounded-md border-2 border-yellow-300 mt-4">
-                <p className="font-bold flex items-center gap-1">
-                  <ExternalLink className="h-4 w-4" />
-                  Need help?
-                </p>
-                <p className="mt-1">
-                  Check the <a href="https://docs.lovable.dev/integrations/supabase/" className="text-blue-600 underline" target="_blank" rel="noopener noreferrer">Supabase integration docs</a> for more information.
-                </p>
-              </div>
-            </div>
-          </CardContent>
-          <CardFooter className="flex flex-col gap-4">
-            <Button 
-              type="button" 
-              className="w-full bg-black hover:bg-black/90 text-white font-bold text-lg py-6 rounded-none transition-transform hover:-translate-y-1"
-              onClick={() => window.location.reload()}
-            >
-              Refresh Page
-            </Button>
-          </CardFooter>
-        </Card>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-[#fbbc05] flex items-center justify-center p-4">
@@ -167,25 +84,10 @@ const Login = () => {
           <CardContent className="space-y-4">
             {authError && (
               <Alert variant="destructive" className="border-4 border-black bg-red-100">
-                {isNetworkError ? (
-                  <WifiOff className="h-4 w-4" />
-                ) : (
-                  <AlertCircle className="h-4 w-4" />
-                )}
-                <AlertTitle>{isNetworkError ? "Configuration Error" : "Error"}</AlertTitle>
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Authentication Error</AlertTitle>
                 <AlertDescription>{authError}</AlertDescription>
               </Alert>
-            )}
-            
-            {isNetworkError && (
-              <div className="text-sm text-gray-600 mt-2">
-                <p>To resolve this:</p>
-                <ul className="list-disc list-inside ml-2 mt-1">
-                  <li>Connect your Supabase project in Lovable</li>
-                  <li>Make sure your Supabase project is active</li>
-                  <li>Verify your internet connection</li>
-                </ul>
-              </div>
             )}
             
             <div className="space-y-2">
