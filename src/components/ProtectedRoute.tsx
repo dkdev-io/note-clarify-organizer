@@ -20,8 +20,9 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const isSkipping = sessionStorage.getItem('skip_auth') === 'true';
 
   useEffect(() => {
-    // If skipping, set authenticated to true
+    // If skipping, set authenticated to true immediately
     if (isSkipping) {
+      console.log('Skipping authentication check due to skip_auth flag');
       setAuthenticated(true);
       setLoading(false);
       return;

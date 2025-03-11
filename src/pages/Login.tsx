@@ -26,6 +26,11 @@ const Login = () => {
       navigate('/app');
     }
 
+    // Check if skip_auth is already set in sessionStorage
+    if (sessionStorage.getItem('skip_auth') === 'true') {
+      navigate('/app');
+    }
+
     return () => {
       subscription.unsubscribe();
     };
