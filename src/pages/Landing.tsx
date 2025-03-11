@@ -1,7 +1,8 @@
+
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, CheckCircle, UserPlus } from 'lucide-react';
+import { ArrowRight, CheckCircle } from 'lucide-react';
 
 const Landing = () => {
   const navigate = useNavigate();
@@ -26,9 +27,8 @@ const Landing = () => {
             <Button 
               onClick={handleSignUp}
               variant="outline" 
-              className="ml-4 flex items-center gap-1 text-black hover:text-[#fbbc05] border-2 border-black hover:border-[#fbbc05] bg-white hover:bg-white"
+              className="ml-4 flex items-center gap-1 text-black font-bold bg-yellow-400 hover:bg-yellow-500 border-2 border-black hover:border-black"
             >
-              <UserPlus className="h-4 w-4" />
               Sign Up
             </Button>
           </div>
