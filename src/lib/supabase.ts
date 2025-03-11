@@ -10,7 +10,14 @@ if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KE
   console.warn('Using placeholder Supabase credentials. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your environment variables for full functionality.');
 }
 
+// Create the Supabase client
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+// Export the urls for access check
+export const credentials = {
+  url: supabaseUrl,
+  key: supabaseAnonKey
+};
 
 // Admin function to check if a user is an admin
 export const isAdminUser = async (email: string) => {

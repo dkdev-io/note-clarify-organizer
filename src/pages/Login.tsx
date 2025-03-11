@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/lib/supabase';
+import { supabase, credentials } from '@/lib/supabase';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, WifiOff } from 'lucide-react';
 
@@ -28,8 +28,8 @@ const Login = () => {
 
     // Check if using placeholder credentials
     const isUsingPlaceholder = 
-      supabase.supabaseUrl.includes('placeholder-project') || 
-      supabase.supabaseKey.includes('placeholder-key');
+      credentials.url.includes('placeholder-project') || 
+      credentials.key.includes('placeholder-key');
 
     if (isUsingPlaceholder) {
       setIsNetworkError(true);
