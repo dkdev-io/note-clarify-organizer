@@ -32,7 +32,7 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({ currentStep, isConnected 
               {index > 0 && (
                 <div 
                   className={`h-[1px] w-10 mx-1 ${
-                    isCompleted ? 'bg-primary' : 'bg-gray-200'
+                    isCompleted ? 'bg-[#fbbc05]' : 'bg-gray-200'
                   }`}
                 />
               )}
@@ -45,9 +45,9 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({ currentStep, isConnected 
                   className={`
                     h-8 w-8 rounded-full flex items-center justify-center transition-all duration-300
                     ${isCompleted 
-                      ? 'bg-primary text-white' 
+                      ? 'bg-[#fbbc05] text-white' 
                       : isCurrent 
-                        ? 'bg-accent border border-primary/50 text-primary' 
+                        ? 'bg-accent border border-[#fbbc05]/50 text-[#fbbc05]' 
                         : 'bg-gray-100 text-gray-400'
                     }
                   `}
@@ -56,7 +56,7 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({ currentStep, isConnected 
                 </div>
                 <span 
                   className={`text-xs mt-1 ${
-                    isCurrent ? 'text-primary font-medium' : 'text-muted-foreground'
+                    isCurrent ? 'text-[#fbbc05] font-medium' : 'text-muted-foreground'
                   }`}
                 >
                   {s.label}

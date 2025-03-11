@@ -68,7 +68,7 @@ const WorkspaceProjectSelect: React.FC<WorkspaceProjectSelectProps> = ({
           <Button 
             onClick={onContinue}
             disabled={!selectedWorkspaceId}
-            className="transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"
+            className="bg-[#fbbc05] hover:bg-[#fbbc05]/90 text-black transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"
           >
             Continue
           </Button>

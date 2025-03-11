@@ -22,6 +22,7 @@ export default {
 			fontFamily: {
 				'bebas-neue': ['"Bebas Neue"', 'sans-serif'],
 				'georgia': ['Georgia', 'serif'],
+				'inter': ['Inter', 'sans-serif'],
 			},
 			colors: {
 				border: 'hsl(var(--border))',
