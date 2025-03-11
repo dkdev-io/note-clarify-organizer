@@ -10,6 +10,8 @@ import { Task } from '@/utils/parser';
  */
 export async function processNotesWithLLM(text: string, projectName: string | null): Promise<Task[]> {
   try {
+    console.log(`Sending ${text.length} characters to process-notes function${projectName ? ` for project '${projectName}'` : ''}`);
+    
     // Call the Supabase edge function
     const { data, error } = await supabase.functions.invoke('process-notes', {
       body: { text, projectName },
@@ -20,10 +22,17 @@ export async function processNotesWithLLM(text: string, projectName: string | nu
       throw new Error(`Failed to process notes: ${error.message}`);
     }
 
-    if (!data?.tasks) {
+    if (!data) {
+      console.error('No data returned from process-notes function');
+      throw new Error('No data returned from LLM processing');
+    }
+
+    if (!data.tasks) {
+      console.error('No tasks in response:', data);
       throw new Error('No tasks returned from LLM processing');
     }
 
+    console.log(`Successfully received ${data.tasks.length} tasks from LLM processing`);
     return data.tasks as Task[];
   } catch (error) {
     console.error('Error in processNotesWithLLM:', error);

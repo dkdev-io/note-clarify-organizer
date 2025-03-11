@@ -53,31 +53,52 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Handle moving from note input to task extraction
   const handleParseText = async (text: string, providedProjectName: string | null) => {
     try {
+      if (!text || text.trim() === '') {
+        toast({
+          title: "Empty notes",
+          description: "Please enter some notes to extract tasks from.",
+          variant: "destructive"
+        });
+        return;
+      }
+      
       setNoteText(text);
       setIsProcessing(true);
       
       // Use the selected project from Motion API if available, otherwise use provided name
       const effectiveProjectName = apiProps.selectedProject || providedProjectName;
       
-      let tasks: Task[];
+      let tasks: Task[] = [];
+      let usedFallback = false;
       
       try {
         // Attempt to use the LLM processor
+        console.log('Attempting to use LLM processor...');
         tasks = await processNotesWithLLM(text, effectiveProjectName);
-        toast({
-          title: "AI Processing Complete",
-          description: `Successfully extracted ${tasks.length} tasks from your notes.`,
-        });
+        console.log(`LLM processor extracted ${tasks.length} tasks`);
+        
+        if (tasks.length === 0) {
+          console.log('LLM processor returned no tasks, falling back to simple parser');
+          usedFallback = true;
+          tasks = parseTextIntoTasks(text, effectiveProjectName);
+        } else {
+          toast({
+            title: "AI Processing Complete",
+            description: `Successfully extracted ${tasks.length} tasks from your notes.`,
+          });
+        }
       } catch (error) {
         console.error("Error using LLM processor, falling back to simple parser:", error);
+        usedFallback = true;
+        tasks = parseTextIntoTasks(text, effectiveProjectName);
+      }
+      
+      if (usedFallback) {
         toast({
           title: "Using fallback task parser",
           description: "There was an issue with AI processing. Using simple parsing instead.",
           variant: "destructive"
         });
-        
-        // Fallback to simple parser
-        tasks = parseTextIntoTasks(text, effectiveProjectName);
       }
       
       // Extract project name from tasks if not provided
