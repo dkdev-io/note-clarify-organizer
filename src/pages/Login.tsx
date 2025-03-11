@@ -28,11 +28,11 @@ const Login = () => {
     // Check if credentials are valid
     if (!credentials.isValid) {
       setIsNetworkError(true);
-      setAuthError("Supabase connection issue. Please ensure Supabase integration is properly configured.");
+      setAuthError("Please make sure your Supabase project is properly connected through the Lovable interface.");
       setIsLoading(false);
       toast({
         title: "Configuration Error",
-        description: "Supabase credentials are not properly configured",
+        description: "Supabase integration needs to be configured",
         variant: "destructive",
       });
       return;

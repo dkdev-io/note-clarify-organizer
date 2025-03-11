@@ -1,18 +1,16 @@
-
 import { createClient } from '@supabase/supabase-js';
 
 // Get Supabase URL and key from environment variables
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string || 'https://fvxfmlhvxmpmbtouarcp.supabase.co';
+const supabaseUrl = 'https://fvxfmlhvxmpmbtouarcp.supabase.co';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
 
 // Check if we have a valid configuration
 const hasValidCredentials = supabaseUrl && supabaseAnonKey && 
-  !supabaseUrl.includes('placeholder-project') && 
-  !supabaseAnonKey?.includes('placeholder-key');
+  supabaseAnonKey?.length > 0;
 
 // Log status message
 if (!hasValidCredentials) {
-  console.warn('Using fallback or incomplete Supabase credentials. For full functionality, ensure Supabase integration is properly connected.');
+  console.warn('Supabase anon key missing. Please ensure Supabase integration is properly connected through Lovable.');
 }
 
 // Create the Supabase client
