@@ -1,8 +1,8 @@
+
 import { createClient } from '@supabase/supabase-js';
 
-// Get Supabase URL and key from environment variables
 const supabaseUrl = 'https://fvxfmlhvxmpmbtouarcp.supabase.co';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ2eGZtbGh2eG1wbWJ0b3VhcmNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE3MjE0MzQsImV4cCI6MjA1NzI5NzQzNH0.r0h6kc5obgxrzBldoCFodRoo9pbY8tghWgnjtQ2BR9Q';
 
 // Create the Supabase client
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
