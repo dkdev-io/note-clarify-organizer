@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -26,18 +25,14 @@ const Login = () => {
     setAuthError(null);
     setIsNetworkError(false);
 
-    // Check if using placeholder credentials
-    const isUsingPlaceholder = 
-      credentials.url.includes('placeholder-project') || 
-      credentials.key.includes('placeholder-key');
-
-    if (isUsingPlaceholder) {
+    // Check if credentials are valid
+    if (!credentials.isValid) {
       setIsNetworkError(true);
-      setAuthError("Supabase configuration missing. Please configure your Supabase project credentials.");
+      setAuthError("Supabase connection issue. Please ensure Supabase integration is properly configured.");
       setIsLoading(false);
       toast({
         title: "Configuration Error",
-        description: "Supabase credentials are not configured",
+        description: "Supabase credentials are not properly configured",
         variant: "destructive",
       });
       return;

@@ -1,22 +1,28 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-// For development/demo purposes only - replace with real values in production
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string || 'https://placeholder-project.supabase.co';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string || 'placeholder-key-for-development-only';
+// Get Supabase URL and key from environment variables
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string || 'https://fvxfmlhvxmpmbtouarcp.supabase.co';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
 
-// Log a reminder message instead of an error
-if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
-  console.warn('Using placeholder Supabase credentials. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your environment variables for full functionality.');
+// Check if we have a valid configuration
+const hasValidCredentials = supabaseUrl && supabaseAnonKey && 
+  !supabaseUrl.includes('placeholder-project') && 
+  !supabaseAnonKey?.includes('placeholder-key');
+
+// Log status message
+if (!hasValidCredentials) {
+  console.warn('Using fallback or incomplete Supabase credentials. For full functionality, ensure Supabase integration is properly connected.');
 }
 
 // Create the Supabase client
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey || '');
 
-// Export the urls for access check
+// Export the credentials and status for access check
 export const credentials = {
   url: supabaseUrl,
-  key: supabaseAnonKey
+  key: supabaseAnonKey,
+  isValid: hasValidCredentials
 };
 
 // Admin function to check if a user is an admin
