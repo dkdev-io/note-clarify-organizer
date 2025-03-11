@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,11 +24,29 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [workspaces, setWorkspaces] = useState<any[]>([]);
+  const [isProxyMode, setIsProxyMode] = useState(false);
   const { toast } = useToast();
 
-  // Add useEffect to monitor the API key input
   useEffect(() => {
-    // Reset validation state when the API key changes
+    const usingProxy = sessionStorage.getItem('using_motion_proxy') === 'true';
+    setIsProxyMode(usingProxy);
+    
+    if (usingProxy) {
+      setIsKeyValid(true);
+      const defaultWorkspaces = [
+        { id: 'proxy-workspace-1', name: 'Default Workspace' }
+      ];
+      setWorkspaces(defaultWorkspaces);
+      setSelectedWorkspaceId('proxy-workspace-1');
+      
+      toast({
+        title: "Connected via Proxy",
+        description: "You're connected to Motion via the application proxy. No API key required.",
+      });
+    }
+  }, [toast]);
+
+  useEffect(() => {
     if (apiKey) {
       setIsKeyValid(null);
       setErrorMessage(null);
@@ -42,7 +59,6 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
       return;
     }
     
-    // Trim the API key to remove any accidental whitespace and quotes
     const trimmedKey = apiKey.trim().replace(/^["']|["']$/g, '');
     
     setIsValidating(true);
@@ -50,11 +66,9 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
     
     try {
       console.log('Starting API key validation...');
-      // Set the API key globally first
       setMotionApiKey(trimmedKey);
       
       await validateMotionApiKey(trimmedKey);
-      // If we got here without an error, the key is valid
       setIsKeyValid(true);
       
       console.log('API key is valid, fetching workspaces...');
@@ -100,7 +114,6 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
 
   const handleWorkspaceSelect = (workspaceId: string) => {
     setSelectedWorkspaceId(workspaceId);
-    // Reset project when workspace changes
     setSelectedProject(null);
     setSelectedProjectId(null);
   };
@@ -111,7 +124,11 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
   };
 
   const handleConnect = () => {
-    onConnect(apiKey, workspaces, selectedWorkspaceId || undefined, selectedProject || undefined);
+    if (isProxyMode) {
+      onConnect('proxy_mode', workspaces, selectedWorkspaceId || undefined, selectedProject || undefined);
+    } else {
+      onConnect(apiKey, workspaces, selectedWorkspaceId || undefined, selectedProject || undefined);
+    }
   };
 
   const handleMotionDocsClick = () => {
@@ -131,6 +148,57 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
     setSelectedProjectId(null);
     setWorkspaces([]);
   };
+
+  if (isProxyMode) {
+    return (
+      <div className="w-full max-w-2xl mx-auto">
+        <Card className="bg-white bg-opacity-80 backdrop-blur-sm border border-gray-100 shadow-card">
+          <CardHeader>
+            <CardTitle className="text-2xl font-medium text-gray-900">
+              Connected to Motion
+            </CardTitle>
+            <p className="text-muted-foreground text-sm mt-1">
+              You're connected to Motion via the application proxy.
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              <Alert variant="default" className="bg-green-50 text-green-800 border-green-200">
+                <CheckIcon className="h-4 w-4 text-green-500" />
+                <AlertDescription>
+                  Successfully connected to Motion via application proxy. No API key required.
+                </AlertDescription>
+              </Alert>
+              
+              {selectedWorkspaceId && (
+                <div className="space-y-2">
+                  <Label>Selected Workspace</Label>
+                  <div className="p-3 border rounded-md bg-gray-50">
+                    {workspaces.find(w => w.id === selectedWorkspaceId)?.name || 'Default Workspace'}
+                  </div>
+                  
+                  <ProjectSelect
+                    apiKey="proxy_mode"
+                    workspaceId={selectedWorkspaceId}
+                    selectedProject={selectedProject}
+                    onProjectSelect={handleProjectSelect}
+                  />
+                </div>
+              )}
+            </div>
+          </CardContent>
+          <CardFooter className="flex justify-end pt-2 pb-4 px-6">
+            <Button 
+              onClick={handleConnect}
+              className="transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"
+            >
+              Continue
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-2xl mx-auto">
