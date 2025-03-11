@@ -7,7 +7,8 @@ const Landing = () => {
   const navigate = useNavigate();
   
   const handleSignUp = () => {
-    navigate('/login?signup=true');
+    console.log('Navigating to signup page');
+    window.location.href = '/login?signup=true';
   };
   
   return (
@@ -120,11 +121,12 @@ const Landing = () => {
                 </li>
               </ul>
               
-              <Link to="/login?signup=true">
-                <Button className="w-full bg-[#fbbc05] hover:bg-[#fbbc05]/90 text-black font-bold text-lg py-6 rounded-none border-black border-4 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-1">
-                  Get Started
-                </Button>
-              </Link>
+              <Button 
+                onClick={handleSignUp}
+                className="w-full bg-[#fbbc05] hover:bg-[#fbbc05]/90 text-black font-bold text-lg py-6 rounded-none border-black border-4 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-1"
+              >
+                Get Started
+              </Button>
             </div>
             
             {/* First One Hundred */}
@@ -153,11 +155,12 @@ const Landing = () => {
                 </li>
               </ul>
               
-              <Link to="/login?signup=true">
-                <Button className="w-full bg-[#fbbc05] hover:bg-[#fbbc05]/90 text-black font-bold text-lg py-6 rounded-none border-black border-4 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-1">
-                  Get Started
-                </Button>
-              </Link>
+              <Button 
+                onClick={handleSignUp}
+                className="w-full bg-[#fbbc05] hover:bg-[#fbbc05]/90 text-black font-bold text-lg py-6 rounded-none border-black border-4 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-1"
+              >
+                Get Started
+              </Button>
             </div>
             
             {/* First Year */}
@@ -186,11 +189,12 @@ const Landing = () => {
                 </li>
               </ul>
               
-              <Link to="/login?signup=true">
-                <Button className="w-full bg-[#fbbc05] hover:bg-[#fbbc05]/90 text-black font-bold text-lg py-6 rounded-none border-black border-4 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-1">
-                  Get Started
-                </Button>
-              </Link>
+              <Button 
+                onClick={handleSignUp}
+                className="w-full bg-[#fbbc05] hover:bg-[#fbbc05]/90 text-black font-bold text-lg py-6 rounded-none border-black border-4 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-1"
+              >
+                Get Started
+              </Button>
             </div>
           </div>
         </div>

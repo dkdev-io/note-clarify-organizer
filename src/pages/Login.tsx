@@ -43,6 +43,12 @@ const Login = () => {
     };
   }, [navigate, location]);
 
+  // Additional effect to handle URL parameter changes
+  useEffect(() => {
+    console.log('URL signup parameter changed:', signupParam);
+    setIsSignUp(signupParam === 'true');
+  }, [signupParam]);
+
   const handleAuth = async (email: string, password: string) => {
     if (isSignUp) {
       await signUp(email, password);
