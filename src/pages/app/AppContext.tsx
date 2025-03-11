@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext } from 'react';
 import { AppContextType, ApiProps, Step } from './types';
 import { Task, parseTextIntoTasks } from '@/utils/parser';
@@ -33,6 +32,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   
   // Handle API connection
   const handleApiConnect = (apiKey: string, fetchedWorkspaces: any[], workspaceId?: string, project?: string) => {
+    // Just update API key and workspaces but move to workspace selection step instead
     setApiProps({
       apiKey,
       workspaces: fetchedWorkspaces,
@@ -40,8 +40,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       selectedProject: project,
       isConnected: true,
     });
-    setProjectName(project || null);
-    setStep('input');
+    
+    // If connected via proxy mode with default workspace, skip to input
+    if (apiKey === 'proxy_mode' && workspaceId) {
+      setProjectName(project || null);
+      setStep('input');
+    } else {
+      // Otherwise go to workspace selection step
+      setStep('workspace');
+    }
   };
 
   // Handle skipping API connection

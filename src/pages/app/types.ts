@@ -2,7 +2,7 @@
 import { Task } from '@/utils/parser';
 
 // Define application steps
-export type Step = 'connect' | 'input' | 'tasks' | 'complete';
+export type Step = 'connect' | 'workspace' | 'input' | 'tasks' | 'complete';
 
 // Define interface for API props that will be passed to components
 export interface ApiProps {

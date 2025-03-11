@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Step } from './types';
-import { CheckIcon, ClipboardIcon, LinkIcon } from 'lucide-react';
+import { CheckIcon, ClipboardIcon, LinkIcon, FolderIcon } from 'lucide-react';
 
 interface StepIndicatorProps {
   currentStep: Step;
@@ -12,6 +12,7 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({ currentStep, isConnected 
   // Define steps and their properties
   const steps: { key: Step; label: string; icon: React.ReactNode }[] = [
     { key: 'connect', label: 'Connect API', icon: <LinkIcon className="h-4 w-4" /> },
+    { key: 'workspace', label: 'Select Workspace', icon: <FolderIcon className="h-4 w-4" /> },
     { key: 'input', label: 'Input Notes', icon: <ClipboardIcon className="h-4 w-4" /> },
     { key: 'tasks', label: 'Review Tasks', icon: <CheckIcon className="h-4 w-4" /> },
   ];
@@ -22,17 +23,27 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({ currentStep, isConnected 
     <div className="flex justify-center mb-8">
       <div className="inline-flex items-center">
         {steps.map((s, index) => {
-          // Skip the connect step in the display if we're already connected and past that step
-          if (s.key === 'connect' && isConnected && currentStep !== 'connect') return null;
+          // Skip the connect step in the display if we're already past that step
+          if ((s.key === 'connect' || s.key === 'workspace') && 
+              isConnected && 
+              currentStep !== 'connect' && 
+              currentStep !== 'workspace' && 
+              index < currentStepIndex) {
+            return null;
+          }
           
           const isCompleted = index < currentStepIndex || currentStep === 'complete';
           const isCurrent = s.key === currentStep;
           
           return (
-            <React.Fragment key={`step-${s.key}`}>
+            <React.Fragment key={s.key}>
               {index > 0 && (
                 // Only show connection lines between visible steps
-                (!(isConnected && (s.key === 'connect' || steps[index-1].key === 'connect') && currentStep !== 'connect')) && (
+                (!(isConnected && 
+                   ((s.key === 'connect' || steps[index-1].key === 'connect') && currentStep !== 'connect') ||
+                   ((s.key === 'workspace' || steps[index-1].key === 'workspace') && currentStep !== 'workspace')
+                ) || 
+                 (index === currentStepIndex || index === currentStepIndex - 1)) && (
                   <div 
                     className={`h-[1px] w-10 mx-1 ${
                       isCompleted ? 'bg-primary' : 'bg-gray-200'

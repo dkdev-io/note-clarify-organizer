@@ -7,6 +7,7 @@ import { AppHeader } from './AppLayout';
 import NoteInput from '@/components/NoteInput';
 import TasksReview from '@/components/TasksReview';
 import MotionApiConnect from '@/components/MotionApiConnect';
+import WorkspaceProjectSelect from '@/components/WorkspaceProjectSelect';
 
 const AppContent: React.FC = () => {
   const { 
@@ -15,13 +16,27 @@ const AppContent: React.FC = () => {
     extractedTasks,
     projectName,
     apiProps,
+    updateApiProps,
     handleApiConnect,
     handleSkipConnect,
     handleParseText,
     handleAddToMotion,
     handleStartOver,
-    handleReconnect
+    handleReconnect,
+    setStep
   } = useAppContext();
+  
+  const handleWorkspaceSelect = (workspaceId: string) => {
+    updateApiProps({ selectedWorkspaceId: workspaceId });
+  };
+
+  const handleProjectSelect = (projectName: string, projectId?: string) => {
+    updateApiProps({ selectedProject: projectName });
+  };
+
+  const handleContinueToInput = () => {
+    setStep('input');
+  };
   
   const renderStepContent = () => {
     switch (step) {
@@ -30,6 +45,20 @@ const AppContent: React.FC = () => {
           <MotionApiConnect 
             onConnect={handleApiConnect} 
             onSkip={handleSkipConnect} 
+          />
+        );
+      
+      case 'workspace':
+        return (
+          <WorkspaceProjectSelect 
+            apiKey={apiProps.apiKey}
+            workspaces={apiProps.workspaces}
+            selectedWorkspaceId={apiProps.selectedWorkspaceId || null}
+            selectedProject={apiProps.selectedProject || null}
+            onWorkspaceSelect={handleWorkspaceSelect}
+            onProjectSelect={handleProjectSelect}
+            onContinue={handleContinueToInput}
+            onBack={() => setStep('connect')}
           />
         );
         
