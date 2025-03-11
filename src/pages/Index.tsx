@@ -1,16 +1,18 @@
+
 import React, { useState } from 'react';
 import NoteInput from '@/components/NoteInput';
 import TaskExtractor from '@/components/TaskExtractor';
 import TaskReview from '@/components/TaskReview';
 import TaskPreview from '@/components/TaskPreview';
+import LLMProcessor from '@/components/LLMProcessor';
 import MotionApiConnect from '@/components/MotionApiConnect';
 import { Task, parseTextIntoTasks } from '@/utils/parser';
-import { CheckIcon, ClipboardIcon, ArrowRightIcon, LinkIcon } from 'lucide-react';
+import { CheckIcon, ClipboardIcon, ArrowRightIcon, LinkIcon, BrainIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from "@/components/ui/use-toast";
 
 // Define application steps
-type Step = 'connect' | 'input' | 'extract' | 'review' | 'preview' | 'complete';
+type Step = 'connect' | 'input' | 'extract' | 'process' | 'review' | 'preview' | 'complete';
 
 // Define interface for API props that will be passed to components
 interface ApiProps {
@@ -26,6 +28,7 @@ const Index = () => {
   const [noteText, setNoteText] = useState('');
   const [extractedTasks, setExtractedTasks] = useState<Task[]>([]);
   const [selectedTasks, setSelectedTasks] = useState<Task[]>([]);
+  const [processedTasks, setProcessedTasks] = useState<Task[]>([]);
   const [reviewedTasks, setReviewedTasks] = useState<Task[]>([]);
   const [projectName, setProjectName] = useState<string | null>(null);
   const { toast } = useToast();
@@ -82,9 +85,15 @@ const Index = () => {
     setStep('extract');
   };
 
-  // Handle moving from extraction to review
-  const handleContinueToReview = (tasks: Task[]) => {
+  // Handle moving from extraction to LLM processing
+  const handleContinueToProcess = (tasks: Task[]) => {
     setSelectedTasks(tasks);
+    setStep('process');
+  };
+
+  // Handle moving from LLM processing to review
+  const handleContinueToReview = (tasks: Task[]) => {
+    setProcessedTasks(tasks);
     setStep('review');
   };
 
@@ -118,6 +127,7 @@ const Index = () => {
     setNoteText('');
     setExtractedTasks([]);
     setSelectedTasks([]);
+    setProcessedTasks([]);
     setReviewedTasks([]);
     // Keep project and workspace if connected to API
     if (!isConnected) {
@@ -138,6 +148,7 @@ const Index = () => {
       { key: 'connect', label: 'Connect API', icon: <LinkIcon className="h-4 w-4" /> },
       { key: 'input', label: 'Input Notes', icon: <ClipboardIcon className="h-4 w-4" /> },
       { key: 'extract', label: 'Extract Tasks', icon: <ArrowRightIcon className="h-4 w-4" /> },
+      { key: 'process', label: 'AI Process', icon: <BrainIcon className="h-4 w-4" /> },
       { key: 'review', label: 'Review', icon: <ArrowRightIcon className="h-4 w-4" /> },
       { key: 'preview', label: 'Add to Motion', icon: <CheckIcon className="h-4 w-4" /> },
     ];
@@ -306,6 +317,16 @@ const Index = () => {
               extractedTasks={extractedTasks}
               projectName={projectName}
               onBack={() => setStep('input')}
+              onContinue={handleContinueToProcess}
+              apiProps={apiProps}
+            />
+          )}
+          
+          {step === 'process' && (
+            <LLMProcessor 
+              selectedTasks={selectedTasks}
+              projectName={projectName}
+              onBack={() => setStep('extract')}
               onContinue={handleContinueToReview}
               apiProps={apiProps}
             />
@@ -313,9 +334,9 @@ const Index = () => {
           
           {step === 'review' && (
             <TaskReview 
-              tasks={selectedTasks}
+              tasks={processedTasks}
               projectName={projectName}
-              onBack={() => setStep('extract')}
+              onBack={() => setStep('process')}
               onContinue={handleContinueToPreview}
               apiProps={apiProps}
             />
