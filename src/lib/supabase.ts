@@ -4,8 +4,17 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = 'https://fvxfmlhvxmpmbtouarcp.supabase.co';
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ2eGZtbGh2eG1wbWJ0b3VhcmNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE3MjE0MzQsImV4cCI6MjA1NzI5NzQzNH0.r0h6kc5obgxrzBldoCFodRoo9pbY8tghWgnjtQ2BR9Q';
 
-// Create the Supabase client
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Create the Supabase client with redirect settings
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    // Try to use the current URL as the redirect URL
+    // This will work both in development and production
+    redirectTo: typeof window !== 'undefined' ? window.location.origin + '/login' : undefined,
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true
+  }
+});
 
 // Export the credentials and status for access check
 export const credentials = {
