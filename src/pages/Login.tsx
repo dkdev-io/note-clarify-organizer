@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,8 +16,61 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [verifying, setVerifying] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
+
+  // Handle auth state changes and URL parameter parsing for verification
+  useEffect(() => {
+    // Check if we have a verification token in the URL
+    const handleEmailVerification = async () => {
+      const params = new URLSearchParams(location.hash.substring(1));
+      const accessToken = params.get('access_token');
+      const refreshToken = params.get('refresh_token');
+      const type = params.get('type');
+
+      if (type === 'recovery' || type === 'signup' || accessToken) {
+        setVerifying(true);
+        try {
+          // Set the session manually if we have the tokens
+          if (accessToken && refreshToken) {
+            const { error } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken,
+            });
+            
+            if (error) throw error;
+            
+            toast({
+              title: "Email verified",
+              description: "Your email has been verified. You're now logged in.",
+            });
+            
+            navigate('/app');
+          }
+        } catch (error: any) {
+          console.error('Email verification error:', error);
+          setAuthError('Could not verify email. Please try logging in normally.');
+        } finally {
+          setVerifying(false);
+        }
+      }
+    };
+
+    handleEmailVerification();
+
+    // Also set up an auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        navigate('/app');
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [location, navigate, toast]);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,6 +83,9 @@ const Login = () => {
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/login`
+          }
         });
 
         if (error) throw error;
@@ -69,6 +125,8 @@ const Login = () => {
         errorMessage = 'Email or password is incorrect. Please try again.';
       } else if (errorMessage.includes('already registered')) {
         errorMessage = 'This email is already registered. Please log in instead.';
+      } else if (errorMessage.includes('Email not confirmed')) {
+        errorMessage = 'Please check your email and confirm your address before logging in.';
       }
       
       setAuthError(errorMessage);
@@ -82,6 +140,24 @@ const Login = () => {
       setIsLoading(false);
     }
   };
+
+  if (verifying) {
+    return (
+      <div className="min-h-screen bg-[#fbbc05] flex items-center justify-center p-4">
+        <Card className="w-full max-w-md border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+          <CardHeader>
+            <CardTitle className="text-4xl font-bebas-neue">VERIFYING</CardTitle>
+            <CardDescription className="font-georgia">
+              Please wait while we verify your email...
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex justify-center py-8">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black"></div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#fbbc05] flex items-center justify-center p-4">
