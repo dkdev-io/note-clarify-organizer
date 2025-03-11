@@ -27,26 +27,31 @@ const Login = () => {
     try {
       if (isSignUp) {
         // Sign up
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
         });
 
         if (error) throw error;
 
+        console.log('Sign up response:', data);
+        
         toast({
           title: "Account created",
           description: "Please check your email for verification link",
         });
       } else {
         // Login
-        const { error } = await supabase.auth.signInWithPassword({
+        console.log(`Attempting to log in with email: ${email}`);
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
 
         if (error) throw error;
 
+        console.log('Login successful:', data);
+        
         toast({
           title: "Welcome back!",
           description: "You've successfully logged in.",
@@ -57,11 +62,20 @@ const Login = () => {
     } catch (error: any) {
       console.error('Authentication error:', error);
       
-      setAuthError(error.message || 'An unknown authentication error occurred');
+      let errorMessage = error.message || 'An unknown authentication error occurred';
+      
+      // Provide more user-friendly messages for common errors
+      if (errorMessage.includes('Invalid login credentials')) {
+        errorMessage = 'Email or password is incorrect. Please try again.';
+      } else if (errorMessage.includes('already registered')) {
+        errorMessage = 'This email is already registered. Please log in instead.';
+      }
+      
+      setAuthError(errorMessage);
       
       toast({
         title: "Authentication error",
-        description: error.message || 'An unknown authentication error occurred',
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -113,6 +127,7 @@ const Login = () => {
                 required
                 className="border-2 border-black focus-visible:ring-[#fbbc05]"
               />
+              <p className="text-xs text-gray-500 mt-1">Password must be at least 6 characters</p>
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
