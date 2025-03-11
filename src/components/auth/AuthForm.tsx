@@ -33,7 +33,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
   };
 
   const handleSkip = () => {
-    navigate('/login');
+    navigate('/app');
   };
 
   return (
