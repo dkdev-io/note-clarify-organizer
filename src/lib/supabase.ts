@@ -7,9 +7,6 @@ const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 // Create the Supabase client with redirect settings
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
-    // Try to use the current URL as the redirect URL
-    // This will work both in development and production
-    redirectTo: typeof window !== 'undefined' ? window.location.origin + '/login' : undefined,
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true
