@@ -90,45 +90,8 @@ const LLMProcessor: React.FC<LLMProcessorProps> = ({
       }
     };
 
-    // For now, we'll simulate the LLM processing
-    // This will be replaced with actual API calls when Supabase is set up
-    const simulateProcessing = () => {
-      const enhancedTasksCopy = selectedTasks.map(task => {
-        // Simulate improvements that an LLM might make
-        const improved = { ...task };
-        
-        // Add more descriptive titles if they're too short
-        if (improved.title.length < 15) {
-          improved.title = `${improved.title} - Enhanced for clarity`;
-        }
-        
-        // Add more detailed descriptions if missing
-        if (!improved.description) {
-          improved.description = `Task requires planning and execution. Consider breaking this down into smaller steps.`;
-        }
-        
-        // Improve priority detection
-        if (!improved.priority && (
-          improved.title.toLowerCase().includes('urgent') || 
-          improved.title.toLowerCase().includes('asap') ||
-          improved.title.toLowerCase().includes('immediately')
-        )) {
-          improved.priority = 'high';
-        }
-        
-        return improved;
-      });
-      
-      // Simulate processing delay
-      setTimeout(() => {
-        setEnhancedTasks(enhancedTasksCopy);
-        setIsProcessing(false);
-      }, 2000);
-    };
-
-    // Use simulation for now, replace with actual API call when Supabase is connected
-    simulateProcessing();
-    // Once Supabase is set up: processTasksWithLLM();
+    // Now actually call the real processing function
+    processTasksWithLLM();
   }, [selectedTasks, projectName, toast]);
 
   const handleContinue = () => {
