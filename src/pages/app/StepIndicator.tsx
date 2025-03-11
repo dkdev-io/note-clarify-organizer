@@ -23,33 +23,18 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({ currentStep, isConnected 
     <div className="flex justify-center mb-8">
       <div className="inline-flex items-center">
         {steps.map((s, index) => {
-          // Skip the connect step in the display if we're already past that step
-          if ((s.key === 'connect' || s.key === 'workspace') && 
-              isConnected && 
-              currentStep !== 'connect' && 
-              currentStep !== 'workspace' && 
-              index < currentStepIndex) {
-            return null;
-          }
-          
+          // Always show all steps in the new workflow
           const isCompleted = index < currentStepIndex || currentStep === 'complete';
           const isCurrent = s.key === currentStep;
           
           return (
             <React.Fragment key={s.key}>
               {index > 0 && (
-                // Only show connection lines between visible steps
-                (!(isConnected && 
-                   ((s.key === 'connect' || steps[index-1].key === 'connect') && currentStep !== 'connect') ||
-                   ((s.key === 'workspace' || steps[index-1].key === 'workspace') && currentStep !== 'workspace')
-                ) || 
-                 (index === currentStepIndex || index === currentStepIndex - 1)) && (
-                  <div 
-                    className={`h-[1px] w-10 mx-1 ${
-                      isCompleted ? 'bg-primary' : 'bg-gray-200'
-                    }`}
-                  />
-                )
+                <div 
+                  className={`h-[1px] w-10 mx-1 ${
+                    isCompleted ? 'bg-primary' : 'bg-gray-200'
+                  }`}
+                />
               )}
               <div 
                 className={`flex flex-col items-center ${
