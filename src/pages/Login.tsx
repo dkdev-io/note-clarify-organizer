@@ -7,7 +7,8 @@ import { AuthForm } from '@/components/auth/AuthForm';
 import { ArrowLeft } from 'lucide-react';
 
 const Login = () => {
-  const [isSignUp, setIsSignUp] = useState(false);
+  // By default, show sign up view when coming from landing page
+  const [isSignUp, setIsSignUp] = useState(true);
   const navigate = useNavigate();
   const { signIn, signUp, isLoading, authError, setAuthError } = useAuth();
 
