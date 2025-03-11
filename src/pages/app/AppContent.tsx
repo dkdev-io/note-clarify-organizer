@@ -38,6 +38,10 @@ const AppContent: React.FC = () => {
     setStep('input');
   };
   
+  const handleAddMore = () => {
+    setStep('workspace');
+  };
+  
   const renderStepContent = () => {
     switch (step) {
       case 'connect':
@@ -90,6 +94,7 @@ const AppContent: React.FC = () => {
             isConnected={apiProps.isConnected}
             onStartOver={handleStartOver}
             onReconnect={handleReconnect}
+            onAddMore={apiProps.isConnected ? handleAddMore : undefined}
           />
         );
         

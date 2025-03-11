@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { CheckIcon } from 'lucide-react';
+import { CheckIcon, PlusIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Task } from '@/utils/parser';
@@ -11,6 +11,7 @@ interface CompletionScreenProps {
   isConnected: boolean;
   onStartOver: () => void;
   onReconnect: () => void;
+  onAddMore?: () => void;
 }
 
 const CompletionScreen: React.FC<CompletionScreenProps> = ({
@@ -18,7 +19,8 @@ const CompletionScreen: React.FC<CompletionScreenProps> = ({
   projectName,
   isConnected,
   onStartOver,
-  onReconnect
+  onReconnect,
+  onAddMore
 }) => {
   return (
     <div className="w-full max-w-md mx-auto text-center animate-fade-in">
@@ -44,13 +46,26 @@ const CompletionScreen: React.FC<CompletionScreenProps> = ({
           </Badge>
         )}
       </div>
-      <div className="mt-8 space-x-4">
-        <Button 
-          onClick={onStartOver}
-          className="px-6 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors"
-        >
-          Start Over
-        </Button>
+      <div className="mt-8 space-y-3">
+        <div className="flex justify-center space-x-4">
+          <Button 
+            onClick={onStartOver}
+            className="px-6 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors"
+          >
+            Start Over
+          </Button>
+          {isConnected && onAddMore && (
+            <Button 
+              onClick={onAddMore}
+              variant="outline"
+              className="flex items-center gap-1"
+            >
+              <PlusIcon className="h-4 w-4" />
+              Add More?
+            </Button>
+          )}
+        </div>
+        
         {!isConnected && (
           <Button 
             onClick={onReconnect}
