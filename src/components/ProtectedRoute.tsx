@@ -16,7 +16,17 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
+  // Check if the user is trying to skip authentication
+  const isSkipping = sessionStorage.getItem('skip_auth') === 'true';
+
   useEffect(() => {
+    // If skipping, set authenticated to true
+    if (isSkipping) {
+      setAuthenticated(true);
+      setLoading(false);
+      return;
+    }
+
     // First check if Supabase is properly configured
     if (!credentials.isValid) {
       setError('Supabase configuration missing. Please ensure your Supabase project is connected through Lovable.');
@@ -49,7 +59,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
         authListener.subscription.unsubscribe();
       }
     };
-  }, []);
+  }, [isSkipping]);
 
   // Show loading spinner or placeholder while checking auth
   if (loading) {

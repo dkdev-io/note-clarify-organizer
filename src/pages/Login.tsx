@@ -19,6 +19,13 @@ const Login = () => {
       }
     });
 
+    // Check if we should skip auth (from URL param)
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('skip') === 'true') {
+      sessionStorage.setItem('skip_auth', 'true');
+      navigate('/app');
+    }
+
     return () => {
       subscription.unsubscribe();
     };

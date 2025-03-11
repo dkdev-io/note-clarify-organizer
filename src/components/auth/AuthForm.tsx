@@ -33,7 +33,8 @@ export const AuthForm: React.FC<AuthFormProps> = ({
   };
 
   const handleSkip = () => {
-    navigate('/app');
+    // Force navigation to the app without auth check
+    window.location.href = '/app';
   };
 
   return (
