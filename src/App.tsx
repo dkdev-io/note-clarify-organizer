@@ -52,7 +52,7 @@ const App = () => {
             
             {/* Protected routes */}
             <Route 
-              path="/app" 
+              path="/app/*" 
               element={
                 <ProtectedRoute>
                   <IndexRefactored />

@@ -1,9 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
 import { AuthForm } from '@/components/auth/AuthForm';
+import { ArrowLeft } from 'lucide-react';
 
 const Login = () => {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -46,6 +47,10 @@ const Login = () => {
 
   return (
     <div className="min-h-screen bg-[#fbbc05] flex flex-col items-center justify-center p-4 font-georgia">
+      <Link to="/" className="absolute top-4 left-4 flex items-center text-black hover:text-gray-800">
+        <ArrowLeft className="h-4 w-4 mr-1" />
+        Back to Home
+      </Link>
       <AuthForm
         onSubmit={handleAuth}
         isLoading={isLoading}
