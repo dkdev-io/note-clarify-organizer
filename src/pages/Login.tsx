@@ -25,29 +25,42 @@ const Login = () => {
   useEffect(() => {
     // Check if we have a verification token in the URL
     const handleEmailVerification = async () => {
+      console.log('Current URL:', window.location.href);
+      console.log('Location hash:', location.hash);
+      
       const params = new URLSearchParams(location.hash.substring(1));
       const accessToken = params.get('access_token');
       const refreshToken = params.get('refresh_token');
       const type = params.get('type');
+      
+      console.log('URL params:', { accessToken: !!accessToken, refreshToken: !!refreshToken, type });
 
       if (type === 'recovery' || type === 'signup' || accessToken) {
         setVerifying(true);
         try {
           // Set the session manually if we have the tokens
           if (accessToken && refreshToken) {
+            console.log('Attempting to set session with tokens');
             const { error } = await supabase.auth.setSession({
               access_token: accessToken,
               refresh_token: refreshToken,
             });
             
-            if (error) throw error;
+            if (error) {
+              console.error('Session setting error:', error);
+              throw error;
+            }
             
+            console.log('Session set successfully');
             toast({
               title: "Email verified",
               description: "Your email has been verified. You're now logged in.",
             });
             
             navigate('/app');
+          } else {
+            console.log('Missing tokens in URL');
+            setAuthError('Verification link is missing required tokens. Please try logging in normally.');
           }
         } catch (error: any) {
           console.error('Email verification error:', error);
@@ -55,6 +68,8 @@ const Login = () => {
         } finally {
           setVerifying(false);
         }
+      } else {
+        console.log('No verification parameters found in URL');
       }
     };
 
@@ -62,6 +77,7 @@ const Login = () => {
 
     // Also set up an auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth state changed:', event, session ? 'Session exists' : 'No session');
       if (event === 'SIGNED_IN' && session) {
         navigate('/app');
       }
@@ -80,6 +96,7 @@ const Login = () => {
     try {
       if (isSignUp) {
         // Sign up
+        console.log(`Attempting to sign up with email: ${email}`);
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
