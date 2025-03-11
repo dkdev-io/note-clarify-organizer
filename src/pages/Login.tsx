@@ -48,7 +48,7 @@ const Login = () => {
           description: "You've successfully logged in.",
         });
         
-        navigate('/');
+        navigate('/app');
       }
     } catch (error: any) {
       toast({

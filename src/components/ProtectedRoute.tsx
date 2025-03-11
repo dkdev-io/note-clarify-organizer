@@ -32,7 +32,9 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     });
 
     return () => {
-      authListener.subscription.unsubscribe();
+      if (authListener?.subscription) {
+        authListener.subscription.unsubscribe();
+      }
     };
   }, []);
 

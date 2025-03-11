@@ -45,7 +45,7 @@ const Landing = () => {
           </div>
         </div>
       </section>
-
+      
       {/* Features Section */}
       <section className="bg-[#fbbc05] py-20 border-y-4 border-black">
         <div className="container mx-auto px-4">
