@@ -23,7 +23,7 @@ const Landing = () => {
       <section className="container mx-auto px-4 py-20 text-center">
         <div className="flex flex-col items-center">
           <div className="max-w-2xl mb-10">
-            <h1 className="text-6xl font-bebas-neue leading-none mb-6">From Meeting Notes to Actionable Tasks in Seconds</h1>
+            <h1 className="text-6xl font-bebas-neue leading-none mb-6 font-bold">From Meeting Notes to Actionable Tasks in Seconds</h1>
             <p className="font-georgia text-xl mb-10">
               Project Notes eliminates the tedious work of turning notes into action items, saving hours of data entry time and preventing missed details.
             </p>
@@ -39,25 +39,25 @@ const Landing = () => {
       {/* Features Section */}
       <section className="bg-[#fbbc05] py-20 border-y-4 border-black">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-5xl font-bebas-neue mb-16">How It Works</h2>
+          <h2 className="text-5xl font-bebas-neue mb-16 font-bold">How It Works</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10 max-w-4xl mx-auto">
             <div className="bg-white p-8 border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-              <h3 className="text-3xl font-bebas-neue mb-4">1. Connect or Paste</h3>
+              <h3 className="text-3xl font-bebas-neue mb-4 font-bold">1. Connect or Paste</h3>
               <p className="font-georgia">
                 Connect your favorite notetaking tool or paste your meeting notes directly into Project Notes.
               </p>
             </div>
             
             <div className="bg-white p-8 border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-              <h3 className="text-3xl font-bebas-neue mb-4">2. AI Transforms</h3>
+              <h3 className="text-3xl font-bebas-neue mb-4 font-bold">2. AI Transforms</h3>
               <p className="font-georgia">
                 Our AI extracts tasks, deadlines, and responsibilities, turning your notes into structured project language.
               </p>
             </div>
             
             <div className="bg-white p-8 border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-              <h3 className="text-3xl font-bebas-neue mb-4">3. Automatic Sync</h3>
+              <h3 className="text-3xl font-bebas-neue mb-4 font-bold">3. Automatic Sync</h3>
               <p className="font-georgia">
                 After your review, tasks are automatically added to your project management tool for everyone to see.
               </p>
@@ -70,13 +70,13 @@ const Landing = () => {
       <section className="container mx-auto px-4 py-20 text-center">
         <div className="max-w-3xl mx-auto bg-white p-10 border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
           <div className="font-georgia text-xl space-y-4">
-            <p>Every manager has been there.</p>
+            <p className="font-bold">Every manager has been there.</p>
             <p>You just had a great meeting and talked about the plans for your project.</p>
             <p>You asked everyone to make updates in your project management software.</p>
             <p>The tasks and deadlines you discussed in your meeting are a little more cloudy.</p>
             <p>And you don't quite remember who was responsible for what.</p>
           </div>
-          <p className="font-georgia text-xl mt-6">
+          <p className="font-georgia text-xl mt-6 font-bold">
             Project Notes changes that.
           </p>
         </div>
@@ -85,10 +85,10 @@ const Landing = () => {
       {/* Pricing Section */}
       <section className="bg-white py-20 border-y-4 border-black">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-5xl font-bebas-neue mb-16">Pricing</h2>
+          <h2 className="text-5xl font-bebas-neue mb-16 font-bold">Pricing</h2>
           
           <div className="max-w-md mx-auto bg-white p-10 border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-            <h3 className="text-5xl font-bebas-neue mb-2">$19/month</h3>
+            <h3 className="text-5xl font-bebas-neue mb-2 font-bold">$19/month</h3>
             <p className="font-georgia text-lg mb-6">Everything you need to streamline your project management</p>
             
             <ul className="space-y-4 mb-8">
