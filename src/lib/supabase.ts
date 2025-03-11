@@ -15,7 +15,11 @@ if (!hasValidCredentials) {
 }
 
 // Create the Supabase client with a fallback empty string for the key if it's missing
-export const supabase = createClient(supabaseUrl, supabaseAnonKey || '');
+// Using a dummy key for development/testing when real key is missing
+export const supabase = createClient(
+  supabaseUrl, 
+  hasValidCredentials ? supabaseAnonKey : 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0'
+);
 
 // Export the credentials and status for access check
 export const credentials = {

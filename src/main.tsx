@@ -65,16 +65,22 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
 const rootElement = document.getElementById("root");
 
 if (rootElement) {
+  // Render a basic loading message directly into the DOM before React renders
+  rootElement.innerHTML = '<div class="min-h-screen flex items-center justify-center bg-white"><div class="animate-pulse">Initializing application...</div></div>';
+  
   try {
-    createRoot(rootElement).render(
-      <StrictMode>
-        <ErrorBoundary>
-          <Suspense fallback={<LoadingFallback />}>
-            <App />
-          </Suspense>
-        </ErrorBoundary>
-      </StrictMode>
-    );
+    // Small delay to ensure the DOM has the initial message
+    setTimeout(() => {
+      createRoot(rootElement).render(
+        <StrictMode>
+          <ErrorBoundary>
+            <Suspense fallback={<LoadingFallback />}>
+              <App />
+            </Suspense>
+          </ErrorBoundary>
+        </StrictMode>
+      );
+    }, 0);
   } catch (error) {
     console.error("Failed to render application:", error);
     rootElement.innerHTML = `
@@ -94,4 +100,18 @@ if (rootElement) {
   }
 } else {
   console.error("Root element not found!");
+  document.body.innerHTML = `
+    <div class="min-h-screen flex flex-col items-center justify-center bg-white p-4">
+      <div class="max-w-md text-center">
+        <h1 class="text-2xl font-bold text-red-600 mb-4">Root Element Missing</h1>
+        <p class="mb-4">The application couldn't find the root element to render into.</p>
+        <button
+          onclick="window.location.reload()"
+          class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+        >
+          Refresh Page
+        </button>
+      </div>
+    </div>
+  `;
 }

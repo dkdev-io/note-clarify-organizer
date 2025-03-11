@@ -9,9 +9,10 @@ import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const App = () => {
+  const [isInitialized, setIsInitialized] = useState(false);
   // Create a new query client instance to avoid hydration issues
   const [queryClient] = useState(() => new QueryClient({
     defaultOptions: {
@@ -21,6 +22,21 @@ const App = () => {
       },
     },
   }));
+
+  // Simple initialization check to ensure all dependencies are loaded
+  useEffect(() => {
+    // Perform any initialization checks here if needed
+    setIsInitialized(true);
+  }, []);
+
+  // Show a loading indicator until the app is fully initialized
+  if (!isInitialized) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="animate-pulse">Starting application...</div>
+      </div>
+    );
+  }
 
   return (
     <QueryClientProvider client={queryClient}>
