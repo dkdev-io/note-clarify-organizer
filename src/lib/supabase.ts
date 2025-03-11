@@ -1,3 +1,4 @@
+
 import { createClient } from '@supabase/supabase-js';
 
 // Get Supabase URL and key from environment variables
@@ -13,7 +14,7 @@ if (!hasValidCredentials) {
   console.warn('Supabase anon key missing. Please ensure Supabase integration is properly connected through Lovable.');
 }
 
-// Create the Supabase client
+// Create the Supabase client with a fallback empty string for the key if it's missing
 export const supabase = createClient(supabaseUrl, supabaseAnonKey || '');
 
 // Export the credentials and status for access check
