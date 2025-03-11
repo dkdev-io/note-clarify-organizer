@@ -27,8 +27,19 @@ export async function processNotesWithLLM(text: string, projectName: string | nu
       throw new Error('No data returned from LLM processing');
     }
 
-    if (!data.tasks) {
-      console.error('No tasks in response:', data);
+    // Check for error message in the response 
+    if (data.error) {
+      console.error('Error from process-notes function:', data.error);
+      // If we get an error but also tasks, log the error but return the tasks
+      if (data.tasks && Array.isArray(data.tasks) && data.tasks.length > 0) {
+        console.log(`Function returned an error but also ${data.tasks.length} tasks. Using tasks despite error.`);
+        return data.tasks as Task[];
+      }
+      throw new Error(`Error from LLM processing: ${data.error}`);
+    }
+
+    if (!data.tasks || !Array.isArray(data.tasks)) {
+      console.error('No tasks array in response:', data);
       throw new Error('No tasks returned from LLM processing');
     }
 
