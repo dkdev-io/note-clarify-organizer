@@ -1,9 +1,15 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, CheckCircle } from 'lucide-react';
 
 const Landing = () => {
+  const navigate = useNavigate();
+  
+  const handleSignUp = () => {
+    navigate('/login?signup=true');
+  };
+  
   return (
     <div className="min-h-screen bg-white">
       {/* Navigation */}
@@ -26,11 +32,12 @@ const Landing = () => {
             <p className="font-georgia text-xl mb-10">
               Project Notes eliminates the tedious work of turning notes into action items, saving hours of data entry time and preventing missed details.
             </p>
-            <Link to="/login">
-              <Button className="bg-[#fbbc05] hover:bg-[#fbbc05]/90 text-black font-bold text-lg px-10 py-7 rounded-none border-black border-4 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-1">
-                Sign Up <ArrowRight className="ml-2" />
-              </Button>
-            </Link>
+            <Button 
+              onClick={handleSignUp}
+              className="bg-[#fbbc05] hover:bg-[#fbbc05]/90 text-black font-bold text-lg px-10 py-7 rounded-none border-black border-4 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-1"
+            >
+              Sign Up <ArrowRight className="ml-2" />
+            </Button>
           </div>
         </div>
       </section>
@@ -113,7 +120,7 @@ const Landing = () => {
                 </li>
               </ul>
               
-              <Link to="/login">
+              <Link to="/login?signup=true">
                 <Button className="w-full bg-[#fbbc05] hover:bg-[#fbbc05]/90 text-black font-bold text-lg py-6 rounded-none border-black border-4 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-1">
                   Get Started
                 </Button>
@@ -146,7 +153,7 @@ const Landing = () => {
                 </li>
               </ul>
               
-              <Link to="/login">
+              <Link to="/login?signup=true">
                 <Button className="w-full bg-[#fbbc05] hover:bg-[#fbbc05]/90 text-black font-bold text-lg py-6 rounded-none border-black border-4 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-1">
                   Get Started
                 </Button>
@@ -179,7 +186,7 @@ const Landing = () => {
                 </li>
               </ul>
               
-              <Link to="/login">
+              <Link to="/login?signup=true">
                 <Button className="w-full bg-[#fbbc05] hover:bg-[#fbbc05]/90 text-black font-bold text-lg py-6 rounded-none border-black border-4 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-1">
                   Get Started
                 </Button>

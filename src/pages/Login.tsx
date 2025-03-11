@@ -1,14 +1,19 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
 import { AuthForm } from '@/components/auth/AuthForm';
 import { ArrowLeft } from 'lucide-react';
 
 const Login = () => {
-  // By default, show sign up view when coming from landing page
-  const [isSignUp, setIsSignUp] = useState(true);
+  const location = useLocation();
+  // Check for signup parameter in the URL
+  const urlParams = new URLSearchParams(location.search);
+  const signupParam = urlParams.get('signup');
+  
+  // Default to signup view when coming from landing page with signup=true
+  const [isSignUp, setIsSignUp] = useState(signupParam === 'true');
   const navigate = useNavigate();
   const { signIn, signUp, isLoading, authError, setAuthError } = useAuth();
 
@@ -22,8 +27,8 @@ const Login = () => {
     });
 
     // Check if we should skip auth (from URL param)
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('skip') === 'true') {
+    const skipParam = urlParams.get('skip');
+    if (skipParam === 'true') {
       sessionStorage.setItem('skip_auth', 'true');
       navigate('/app');
     }
@@ -36,7 +41,7 @@ const Login = () => {
     return () => {
       subscription.unsubscribe();
     };
-  }, [navigate]);
+  }, [navigate, location]);
 
   const handleAuth = async (email: string, password: string) => {
     if (isSignUp) {
