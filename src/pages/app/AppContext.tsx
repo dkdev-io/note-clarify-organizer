@@ -11,9 +11,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [step, setStep] = useState<Step>('connect');
   const [noteText, setNoteText] = useState('');
   const [extractedTasks, setExtractedTasks] = useState<Task[]>([]);
-  const [selectedTasks, setSelectedTasks] = useState<Task[]>([]);
-  const [processedTasks, setProcessedTasks] = useState<Task[]>([]);
-  const [reviewedTasks, setReviewedTasks] = useState<Task[]>([]);
   const [projectName, setProjectName] = useState<string | null>(null);
   const { toast } = useToast();
   
@@ -75,43 +72,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setExtractedTasks(tasks);
     }
     
-    setStep('extract');
+    setStep('tasks');
   };
 
-  // Handle moving from extraction to LLM processing
-  const handleContinueToProcess = (tasks: Task[]) => {
-    setSelectedTasks(tasks);
-    setStep('process');
-  };
-
-  // Handle moving from LLM processing to review
-  const handleContinueToReview = (tasks: Task[]) => {
-    setProcessedTasks(tasks);
-    setStep('review');
-  };
-
-  // Handle moving from review to preview
-  const handleContinueToPreview = (tasks: Task[], updatedProjectName?: string) => {
+  // Handle adding tasks to Motion
+  const handleAddToMotion = (tasks: Task[], updatedProjectName: string | null) => {
     if (updatedProjectName) {
       setProjectName(updatedProjectName);
-      // Update all tasks with the project name
-      const updatedTasks = tasks.map(task => ({
-        ...task,
-        project: updatedProjectName
-      }));
-      setReviewedTasks(updatedTasks);
-    } else {
-      setReviewedTasks(tasks);
     }
-    setStep('preview');
-  };
-
-  // Handle completion of the workflow
-  const handleComplete = () => {
+    
     setStep('complete');
     toast({
       title: "Success!",
-      description: `${reviewedTasks.length} tasks have been added to Motion${projectName ? ` under project '${projectName}'` : ''}.`,
+      description: `${tasks.length} tasks have been added to Motion${updatedProjectName ? ` under project '${updatedProjectName}'` : ''}.`,
     });
   };
 
@@ -119,9 +92,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const handleStartOver = () => {
     setNoteText('');
     setExtractedTasks([]);
-    setSelectedTasks([]);
-    setProcessedTasks([]);
-    setReviewedTasks([]);
     // Keep project and workspace if connected to API
     if (!apiProps.isConnected) {
       setProjectName(null);
@@ -143,12 +113,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setNoteText,
     extractedTasks,
     setExtractedTasks,
-    selectedTasks,
-    setSelectedTasks,
-    processedTasks,
-    setProcessedTasks,
-    reviewedTasks,
-    setReviewedTasks,
     projectName,
     setProjectName,
     apiProps,
@@ -156,10 +120,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     handleApiConnect,
     handleSkipConnect,
     handleParseText,
-    handleContinueToProcess,
-    handleContinueToReview,
-    handleContinueToPreview,
-    handleComplete,
+    handleAddToMotion,
     handleStartOver,
     handleReconnect
   };

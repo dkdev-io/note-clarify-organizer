@@ -5,30 +5,20 @@ import StepIndicator from './StepIndicator';
 import CompletionScreen from './CompletionScreen';
 import { AppHeader } from './AppLayout';
 import NoteInput from '@/components/NoteInput';
-import TaskExtractor from '@/components/TaskExtractor';
-import LLMProcessor from '@/components/LLMProcessor';
-import TaskReview from '@/components/TaskReview';
-import TaskPreview from '@/components/TaskPreview';
+import TasksReview from '@/components/TasksReview';
 import MotionApiConnect from '@/components/MotionApiConnect';
 
 const AppContent: React.FC = () => {
   const { 
     step,
-    setStep,
     noteText,
     extractedTasks,
-    selectedTasks,
-    processedTasks,
-    reviewedTasks,
     projectName,
     apiProps,
     handleApiConnect,
     handleSkipConnect,
     handleParseText,
-    handleContinueToProcess,
-    handleContinueToReview,
-    handleContinueToPreview,
-    handleComplete,
+    handleAddToMotion,
     handleStartOver,
     handleReconnect
   } = useAppContext();
@@ -51,47 +41,14 @@ const AppContent: React.FC = () => {
           />
         );
         
-      case 'extract':
+      case 'tasks':
         return (
-          <TaskExtractor 
+          <TasksReview 
             rawText={noteText}
-            extractedTasks={extractedTasks}
+            initialTasks={extractedTasks}
             projectName={projectName}
-            onBack={() => setStep('input')}
-            onContinue={handleContinueToProcess}
-            apiProps={apiProps}
-          />
-        );
-        
-      case 'process':
-        return (
-          <LLMProcessor 
-            selectedTasks={selectedTasks}
-            projectName={projectName}
-            onBack={() => setStep('extract')}
-            onContinue={handleContinueToReview}
-            apiProps={apiProps}
-          />
-        );
-        
-      case 'review':
-        return (
-          <TaskReview 
-            tasks={processedTasks}
-            projectName={projectName}
-            onBack={() => setStep('process')}
-            onContinue={handleContinueToPreview}
-            apiProps={apiProps}
-          />
-        );
-        
-      case 'preview':
-        return (
-          <TaskPreview 
-            tasks={reviewedTasks}
-            projectName={projectName}
-            onBack={() => setStep('review')}
-            onComplete={handleComplete}
+            onBack={() => handleStartOver()}
+            onAddToMotion={handleAddToMotion}
             apiProps={apiProps}
           />
         );
@@ -99,7 +56,7 @@ const AppContent: React.FC = () => {
       case 'complete':
         return (
           <CompletionScreen 
-            tasks={reviewedTasks}
+            tasks={extractedTasks}
             projectName={projectName}
             isConnected={apiProps.isConnected}
             onStartOver={handleStartOver}

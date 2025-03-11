@@ -2,7 +2,7 @@
 import { Task } from '@/utils/parser';
 
 // Define application steps
-export type Step = 'connect' | 'input' | 'extract' | 'process' | 'review' | 'preview' | 'complete';
+export type Step = 'connect' | 'input' | 'tasks' | 'complete';
 
 // Define interface for API props that will be passed to components
 export interface ApiProps {
@@ -21,12 +21,6 @@ export interface AppContextType {
   setNoteText: (text: string) => void;
   extractedTasks: Task[];
   setExtractedTasks: (tasks: Task[]) => void;
-  selectedTasks: Task[];
-  setSelectedTasks: (tasks: Task[]) => void;
-  processedTasks: Task[];
-  setProcessedTasks: (tasks: Task[]) => void;
-  reviewedTasks: Task[];
-  setReviewedTasks: (tasks: Task[]) => void;
   projectName: string | null;
   setProjectName: (name: string | null) => void;
   apiProps: ApiProps;
@@ -34,10 +28,7 @@ export interface AppContextType {
   handleApiConnect: (apiKey: string, fetchedWorkspaces: any[], workspaceId?: string, project?: string) => void;
   handleSkipConnect: () => void;
   handleParseText: (text: string, providedProjectName: string | null) => void;
-  handleContinueToProcess: (tasks: Task[]) => void;
-  handleContinueToReview: (tasks: Task[]) => void;
-  handleContinueToPreview: (tasks: Task[], updatedProjectName?: string) => void;
-  handleComplete: () => void;
+  handleAddToMotion: (tasks: Task[], projectName: string | null) => void;
   handleStartOver: () => void;
   handleReconnect: () => void;
 }

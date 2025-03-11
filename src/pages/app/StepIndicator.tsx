@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Step } from './types';
-import { CheckIcon, ClipboardIcon, ArrowRightIcon, LinkIcon, BrainIcon } from 'lucide-react';
+import { CheckIcon, ClipboardIcon, LinkIcon } from 'lucide-react';
 
 interface StepIndicatorProps {
   currentStep: Step;
@@ -13,10 +13,7 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({ currentStep, isConnected 
   const steps: { key: Step; label: string; icon: React.ReactNode }[] = [
     { key: 'connect', label: 'Connect API', icon: <LinkIcon className="h-4 w-4" /> },
     { key: 'input', label: 'Input Notes', icon: <ClipboardIcon className="h-4 w-4" /> },
-    { key: 'extract', label: 'Extract Tasks', icon: <ArrowRightIcon className="h-4 w-4" /> },
-    { key: 'process', label: 'AI Process', icon: <BrainIcon className="h-4 w-4" /> },
-    { key: 'review', label: 'Review', icon: <ArrowRightIcon className="h-4 w-4" /> },
-    { key: 'preview', label: 'Add to Motion', icon: <CheckIcon className="h-4 w-4" /> },
+    { key: 'tasks', label: 'Review Tasks', icon: <CheckIcon className="h-4 w-4" /> },
   ];
 
   const currentStepIndex = steps.findIndex(s => s.key === currentStep);
