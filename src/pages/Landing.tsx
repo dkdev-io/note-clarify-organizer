@@ -29,7 +29,7 @@ const Landing = () => {
               variant="outline" 
               className="ml-4 flex items-center gap-1 text-black font-bold bg-yellow-400 hover:bg-yellow-500 border-2 border-black hover:border-black"
             >
-              Sign Up
+              Get Started
             </Button>
           </div>
         </div>
@@ -49,7 +49,7 @@ const Landing = () => {
                 onClick={handleSignUp}
                 className="bg-[#fbbc05] hover:bg-[#fbbc05]/90 text-black font-bold text-lg px-10 py-7 rounded-none border-black border-4 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-1"
               >
-                Sign Up <ArrowRight className="ml-2" />
+                Get Started <ArrowRight className="ml-2" />
               </Button>
             </div>
           </div>
