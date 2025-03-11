@@ -90,8 +90,69 @@ const LLMProcessor: React.FC<LLMProcessorProps> = ({
       }
     };
 
-    // Now actually call the real processing function
-    processTasksWithLLM();
+    // Mock implementation for LLM processing while Supabase Edge Function is being set up
+    const mockProcessTasks = () => {
+      const enhancedTasksCopy = selectedTasks.map(task => {
+        // Create a deep copy of the task
+        const improved = { ...task };
+        
+        // Enhance the title with more clarity if needed
+        if (improved.title.length < 20) {
+          improved.title = improved.title.includes('Enhance') 
+            ? improved.title 
+            : `${improved.title} - Enhanced with AI`;
+        }
+        
+        // Add or improve descriptions
+        if (!improved.description) {
+          improved.description = `This task requires attention and should be broken down into smaller subtasks. Consider creating a plan before executing.`;
+        } else if (improved.description.length < 30) {
+          improved.description = `${improved.description} Additional context: This task is important for project progress and should be prioritized accordingly.`;
+        }
+        
+        // Set priority based on content if not already set
+        if (!improved.priority) {
+          if (
+            improved.title.toLowerCase().includes('urgent') || 
+            improved.title.toLowerCase().includes('asap') ||
+            improved.title.toLowerCase().includes('critical') ||
+            improved.title.toLowerCase().includes('immediately')
+          ) {
+            improved.priority = 'high';
+          } else if (
+            improved.title.toLowerCase().includes('soon') ||
+            improved.title.toLowerCase().includes('important')
+          ) {
+            improved.priority = 'medium';
+          } else {
+            improved.priority = 'low';
+          }
+        }
+        
+        // Suggest a due date if none exists
+        if (!improved.dueDate) {
+          // Set a random due date within the next 1-14 days
+          const daysToAdd = Math.floor(Math.random() * 14) + 1;
+          const dueDate = new Date();
+          dueDate.setDate(dueDate.getDate() + daysToAdd);
+          improved.dueDate = dueDate.toISOString().split('T')[0];
+        }
+        
+        return improved;
+      });
+      
+      // Simulate processing delay for better UX
+      setTimeout(() => {
+        setEnhancedTasks(enhancedTasksCopy);
+        setIsProcessing(false);
+      }, 2000);
+    };
+
+    // Use mock implementation instead of actual API calls until Supabase is ready
+    mockProcessTasks();
+    
+    // Uncomment the line below once Supabase Edge Function is properly set up
+    // processTasksWithLLM();
   }, [selectedTasks, projectName, toast]);
 
   const handleContinue = () => {
