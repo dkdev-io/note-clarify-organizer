@@ -31,4 +31,5 @@ export interface AppContextType {
   handleAddToMotion: (tasks: Task[], projectName: string | null) => void;
   handleStartOver: () => void;
   handleReconnect: () => void;
+  isProcessing: boolean;
 }

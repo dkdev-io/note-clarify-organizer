@@ -1,7 +1,9 @@
+
 import React, { createContext, useState, useContext } from 'react';
 import { AppContextType, ApiProps, Step } from './types';
 import { Task, parseTextIntoTasks } from '@/utils/parser';
 import { useToast } from "@/components/ui/use-toast";
+import { processNotesWithLLM } from '@/utils/llm';
 
 // Create the context with a default value
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -12,6 +14,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [noteText, setNoteText] = useState('');
   const [extractedTasks, setExtractedTasks] = useState<Task[]>([]);
   const [projectName, setProjectName] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
   
   // Motion API connection state
@@ -48,31 +51,62 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   // Handle moving from note input to task extraction
-  const handleParseText = (text: string, providedProjectName: string | null) => {
-    setNoteText(text);
-    
-    // Use the selected project from Motion API if available, otherwise use provided name
-    const effectiveProjectName = apiProps.selectedProject || providedProjectName;
-    
-    const tasks = parseTextIntoTasks(text, effectiveProjectName);
-    
-    // Extract project name from tasks if not provided
-    const extractedProjectName = tasks.find(task => task.project)?.project || effectiveProjectName || null;
-    setProjectName(extractedProjectName);
-    
-    // If connected to API, enhance tasks with workspace IDs
-    if (apiProps.isConnected && apiProps.selectedWorkspaceId) {
-      const tasksWithWorkspace = tasks.map(task => ({
-        ...task,
-        workspace_id: apiProps.selectedWorkspaceId,
-        project: extractedProjectName || task.project
-      }));
-      setExtractedTasks(tasksWithWorkspace);
-    } else {
-      setExtractedTasks(tasks);
+  const handleParseText = async (text: string, providedProjectName: string | null) => {
+    try {
+      setNoteText(text);
+      setIsProcessing(true);
+      
+      // Use the selected project from Motion API if available, otherwise use provided name
+      const effectiveProjectName = apiProps.selectedProject || providedProjectName;
+      
+      let tasks: Task[];
+      
+      try {
+        // Attempt to use the LLM processor
+        tasks = await processNotesWithLLM(text, effectiveProjectName);
+        toast({
+          title: "AI Processing Complete",
+          description: `Successfully extracted ${tasks.length} tasks from your notes.`,
+        });
+      } catch (error) {
+        console.error("Error using LLM processor, falling back to simple parser:", error);
+        toast({
+          title: "Using fallback task parser",
+          description: "There was an issue with AI processing. Using simple parsing instead.",
+          variant: "destructive"
+        });
+        
+        // Fallback to simple parser
+        tasks = parseTextIntoTasks(text, effectiveProjectName);
+      }
+      
+      // Extract project name from tasks if not provided
+      const extractedProjectName = tasks.find(task => task.project)?.project || effectiveProjectName || null;
+      setProjectName(extractedProjectName);
+      
+      // If connected to API, enhance tasks with workspace IDs
+      if (apiProps.isConnected && apiProps.selectedWorkspaceId) {
+        const tasksWithWorkspace = tasks.map(task => ({
+          ...task,
+          workspace_id: apiProps.selectedWorkspaceId,
+          project: extractedProjectName || task.project
+        }));
+        setExtractedTasks(tasksWithWorkspace);
+      } else {
+        setExtractedTasks(tasks);
+      }
+      
+      setStep('tasks');
+    } catch (error) {
+      console.error("Error parsing text:", error);
+      toast({
+        title: "Error processing notes",
+        description: error instanceof Error ? error.message : "An unknown error occurred",
+        variant: "destructive"
+      });
+    } finally {
+      setIsProcessing(false);
     }
-    
-    setStep('tasks');
   };
 
   // Handle adding tasks to Motion
@@ -122,7 +156,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     handleParseText,
     handleAddToMotion,
     handleStartOver,
-    handleReconnect
+    handleReconnect,
+    isProcessing
   };
 
   return (
