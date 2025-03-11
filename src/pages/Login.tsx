@@ -26,6 +26,23 @@ const Login = () => {
     setAuthError(null);
     setIsNetworkError(false);
 
+    // Check if using placeholder credentials
+    const isUsingPlaceholder = 
+      supabase.supabaseUrl.includes('placeholder-project') || 
+      supabase.supabaseKey.includes('placeholder-key');
+
+    if (isUsingPlaceholder) {
+      setIsNetworkError(true);
+      setAuthError("Supabase configuration missing. Please configure your Supabase project credentials.");
+      setIsLoading(false);
+      toast({
+        title: "Configuration Error",
+        description: "Supabase credentials are not configured",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       if (isSignUp) {
         // Sign up
@@ -59,10 +76,9 @@ const Login = () => {
     } catch (error: any) {
       console.error('Authentication error:', error);
       
-      // Check if it's a network error (Failed to fetch)
       if (error.message === 'Failed to fetch' || error.toString().includes('Failed to fetch')) {
         setIsNetworkError(true);
-        setAuthError("Network error: Could not connect to authentication service. Please check your internet connection and try again.");
+        setAuthError("Could not connect to Supabase. Please check your configuration and try again.");
       } else {
         setAuthError(error.message || 'An unknown authentication error occurred');
       }
@@ -70,7 +86,7 @@ const Login = () => {
       toast({
         title: "Authentication error",
         description: isNetworkError 
-          ? "Network error: Cannot connect to authentication service" 
+          ? "Could not connect to Supabase" 
           : error.message || 'An unknown authentication error occurred',
         variant: "destructive",
       });
@@ -99,18 +115,18 @@ const Login = () => {
                 ) : (
                   <AlertCircle className="h-4 w-4" />
                 )}
-                <AlertTitle>{isNetworkError ? "Network Error" : "Error"}</AlertTitle>
+                <AlertTitle>{isNetworkError ? "Configuration Error" : "Error"}</AlertTitle>
                 <AlertDescription>{authError}</AlertDescription>
               </Alert>
             )}
             
             {isNetworkError && (
               <div className="text-sm text-gray-600 mt-2">
-                <p>This may be happening because:</p>
+                <p>To resolve this:</p>
                 <ul className="list-disc list-inside ml-2 mt-1">
-                  <li>You're not connected to the internet</li>
-                  <li>The authentication service is temporarily unavailable</li>
-                  <li>The Supabase configuration needs to be updated</li>
+                  <li>Connect your Supabase project in Lovable</li>
+                  <li>Make sure your Supabase project is active</li>
+                  <li>Verify your internet connection</li>
                 </ul>
               </div>
             )}
