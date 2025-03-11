@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { StrictMode, Suspense } from 'react';
 import App from './App.tsx';
 import './index.css';
+import React from 'react';
 
 // Fallback loading component
 const LoadingFallback = () => (
@@ -11,22 +12,32 @@ const LoadingFallback = () => (
   </div>
 );
 
-// Error boundary component
-class ErrorBoundary extends React.Component {
-  constructor(props) {
+// Define proper types for the ErrorBoundary component
+interface ErrorBoundaryProps {
+  children: React.ReactNode;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+}
+
+// Error boundary component with proper TypeScript types
+class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false, error: null };
   }
 
-  static getDerivedStateFromError(error) {
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
     return { hasError: true, error };
   }
 
-  componentDidCatch(error, errorInfo) {
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
     console.error("App crashed:", error, errorInfo);
   }
 
-  render() {
+  render(): React.ReactNode {
     if (this.state.hasError) {
       return (
         <div className="min-h-screen flex flex-col items-center justify-center bg-white p-4">
@@ -49,9 +60,6 @@ class ErrorBoundary extends React.Component {
     return this.props.children;
   }
 }
-
-// Import React to use the ErrorBoundary class component
-import React from 'react';
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
