@@ -87,34 +87,102 @@ const Landing = () => {
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-5xl font-bebas-neue mb-16 font-bold">Pricing</h2>
           
-          <div className="max-w-md mx-auto bg-white p-10 border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-            <h3 className="text-5xl font-bebas-neue mb-2 font-bold">$19/month</h3>
-            <p className="font-georgia text-lg mb-6">Everything you need to streamline your project management</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            {/* First Ten */}
+            <div className="bg-white p-8 border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+              <h3 className="text-4xl font-bebas-neue mb-2 font-bold">First Ten</h3>
+              <p className="text-5xl font-bebas-neue my-4 font-bold">$50</p>
+              <p className="font-georgia text-lg mb-6">Everything you need to streamline your project management</p>
+              
+              <div className="text-left mb-8">
+                <p className="font-georgia mb-4">One month of early access (May-June), with slack group and weekly feedback session with founder.</p>
+              </div>
+              
+              <ul className="space-y-4 mb-8 text-left">
+                <li className="flex items-start font-georgia">
+                  <CheckCircle className="h-6 w-6 text-[#fbbc05] mr-3 flex-shrink-0" />
+                  <span>Unlimited note processing</span>
+                </li>
+                <li className="flex items-start font-georgia">
+                  <CheckCircle className="h-6 w-6 text-[#fbbc05] mr-3 flex-shrink-0" />
+                  <span>Integration with popular project management tools</span>
+                </li>
+                <li className="flex items-start font-georgia">
+                  <CheckCircle className="h-6 w-6 text-[#fbbc05] mr-3 flex-shrink-0" />
+                  <span>Advanced AI task extraction</span>
+                </li>
+              </ul>
+              
+              <Link to="/login">
+                <Button className="w-full bg-[#fbbc05] hover:bg-[#fbbc05]/90 text-black font-bold text-lg py-6 rounded-none border-black border-4 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-1">
+                  Get Started
+                </Button>
+              </Link>
+            </div>
             
-            <ul className="space-y-4 mb-8">
-              <li className="flex items-start font-georgia">
-                <CheckCircle className="h-6 w-6 text-[#fbbc05] mr-3 flex-shrink-0" />
-                <span>Unlimited note processing</span>
-              </li>
-              <li className="flex items-start font-georgia">
-                <CheckCircle className="h-6 w-6 text-[#fbbc05] mr-3 flex-shrink-0" />
-                <span>Integration with popular project management tools</span>
-              </li>
-              <li className="flex items-start font-georgia">
-                <CheckCircle className="h-6 w-6 text-[#fbbc05] mr-3 flex-shrink-0" />
-                <span>Advanced AI task extraction</span>
-              </li>
-              <li className="flex items-start font-georgia">
-                <CheckCircle className="h-6 w-6 text-[#fbbc05] mr-3 flex-shrink-0" />
-                <span>Email notifications</span>
-              </li>
-            </ul>
+            {/* First One Hundred */}
+            <div className="bg-white p-8 border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+              <h3 className="text-4xl font-bebas-neue mb-2 font-bold">First One Hundred</h3>
+              <p className="text-5xl font-bebas-neue my-4 font-bold">$50</p>
+              <p className="font-georgia text-lg mb-6">Everything you need to streamline your project management</p>
+              
+              <div className="text-left mb-8">
+                <p className="font-georgia mb-4">Three months (July-Sep) of early access with slack group and weekly feedback sessions with founder.</p>
+              </div>
+              
+              <ul className="space-y-4 mb-8 text-left">
+                <li className="flex items-start font-georgia">
+                  <CheckCircle className="h-6 w-6 text-[#fbbc05] mr-3 flex-shrink-0" />
+                  <span>Unlimited note processing</span>
+                </li>
+                <li className="flex items-start font-georgia">
+                  <CheckCircle className="h-6 w-6 text-[#fbbc05] mr-3 flex-shrink-0" />
+                  <span>Integration with popular project management tools</span>
+                </li>
+                <li className="flex items-start font-georgia">
+                  <CheckCircle className="h-6 w-6 text-[#fbbc05] mr-3 flex-shrink-0" />
+                  <span>Advanced AI task extraction</span>
+                </li>
+              </ul>
+              
+              <Link to="/login">
+                <Button className="w-full bg-[#fbbc05] hover:bg-[#fbbc05]/90 text-black font-bold text-lg py-6 rounded-none border-black border-4 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-1">
+                  Get Started
+                </Button>
+              </Link>
+            </div>
             
-            <Link to="/login">
-              <Button className="w-full bg-[#fbbc05] hover:bg-[#fbbc05]/90 text-black font-bold text-lg py-6 rounded-none border-black border-4 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-1">
-                Get Started
-              </Button>
-            </Link>
+            {/* First Year */}
+            <div className="bg-white p-8 border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+              <h3 className="text-4xl font-bebas-neue mb-2 font-bold">First Year</h3>
+              <p className="text-5xl font-bebas-neue my-4 font-bold">$50</p>
+              <p className="font-georgia text-lg mb-6">Everything you need to streamline your project management</p>
+              
+              <div className="text-left mb-8">
+                <p className="font-georgia mb-4">(Oct-Dec 31) early access slack group, weekly feedback session with founder.</p>
+              </div>
+              
+              <ul className="space-y-4 mb-8 text-left">
+                <li className="flex items-start font-georgia">
+                  <CheckCircle className="h-6 w-6 text-[#fbbc05] mr-3 flex-shrink-0" />
+                  <span>Unlimited note processing</span>
+                </li>
+                <li className="flex items-start font-georgia">
+                  <CheckCircle className="h-6 w-6 text-[#fbbc05] mr-3 flex-shrink-0" />
+                  <span>Integration with popular project management tools</span>
+                </li>
+                <li className="flex items-start font-georgia">
+                  <CheckCircle className="h-6 w-6 text-[#fbbc05] mr-3 flex-shrink-0" />
+                  <span>Advanced AI task extraction</span>
+                </li>
+              </ul>
+              
+              <Link to="/login">
+                <Button className="w-full bg-[#fbbc05] hover:bg-[#fbbc05]/90 text-black font-bold text-lg py-6 rounded-none border-black border-4 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-1">
+                  Get Started
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </section>
