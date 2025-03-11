@@ -8,7 +8,7 @@ const Landing = () => {
   
   const handleSignUp = () => {
     console.log('Navigating to signup page');
-    window.location.href = '/login?signup=true';
+    navigate('/login?signup=true');
   };
   
   return (

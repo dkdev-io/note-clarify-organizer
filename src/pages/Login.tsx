@@ -8,13 +8,13 @@ import { ArrowLeft } from 'lucide-react';
 
 const Login = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   // Check for signup parameter in the URL
   const urlParams = new URLSearchParams(location.search);
   const signupParam = urlParams.get('signup');
   
   // Default to signup view when coming from landing page with signup=true
   const [isSignUp, setIsSignUp] = useState(signupParam === 'true');
-  const navigate = useNavigate();
   const { signIn, signUp, isLoading, authError, setAuthError } = useAuth();
 
   // Set up an auth state listener
@@ -41,13 +41,13 @@ const Login = () => {
     return () => {
       subscription.unsubscribe();
     };
-  }, [navigate, location]);
+  }, [navigate]);
 
-  // Additional effect to handle URL parameter changes
+  // Additional effect specifically for the signup parameter
   useEffect(() => {
     console.log('URL signup parameter changed:', signupParam);
     setIsSignUp(signupParam === 'true');
-  }, [signupParam]);
+  }, [signupParam, location.search]);
 
   const handleAuth = async (email: string, password: string) => {
     if (isSignUp) {
