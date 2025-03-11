@@ -4,8 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, SkipForward } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { useNavigate } from 'react-router-dom';
 
 interface AuthFormProps {
   onSubmit: (email: string, password: string) => Promise<void>;
@@ -24,10 +25,15 @@ export const AuthForm: React.FC<AuthFormProps> = ({
 }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     await onSubmit(email, password);
+  };
+
+  const handleSkip = () => {
+    navigate('/app');
   };
 
   return (
@@ -91,6 +97,15 @@ export const AuthForm: React.FC<AuthFormProps> = ({
             onClick={() => setIsSignUp(!isSignUp)}
           >
             {isSignUp ? 'Already have an account? Login' : 'Need an account? Sign Up'}
+          </Button>
+          <Button 
+            type="button" 
+            variant="outline" 
+            className="w-full border-2 border-gray-400 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium mt-2 flex items-center justify-center gap-2"
+            onClick={handleSkip}
+          >
+            <SkipForward className="h-4 w-4" />
+            Skip until auth issues fixed
           </Button>
         </CardFooter>
       </form>
