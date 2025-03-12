@@ -74,171 +74,102 @@ Return ONLY a JSON array of task objects, nothing else.`;
 
     console.log('Calling OpenAI API...');
     
-    // Call OpenAI API with timeout and retry logic
-    let response;
-    let retries = 3; // Increase retries
-    let delay = 1000; // Start with 1s delay
-    
-    while (retries >= 0) {
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 18000); // 18 second timeout (increased)
-        
-        response = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${openAIApiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: 'gpt-4o-mini', // Update to use gpt-4o-mini which is more reliable
-            messages: [
-              { role: 'system', content: systemPrompt },
-              { role: 'user', content: userPrompt }
-            ],
-            temperature: 0.2, // Lower temperature for more deterministic responses
-          }),
-          signal: controller.signal
-        });
-        
-        clearTimeout(timeoutId);
-        
-        if (response.ok) {
-          break; // Success, exit retry loop
-        } else {
-          const errorData = await response.json();
-          console.error(`OpenAI API error (${response.status}):`, errorData);
-          
-          // If rate limited, wait longer
-          if (response.status === 429) {
-            retries--;
-            await new Promise(r => setTimeout(r, delay));
-            delay *= 2; // Exponential backoff
-            continue;
-          } else {
-            // For other errors, return gracefully with empty tasks
-            return new Response(
-              JSON.stringify({ 
-                error: `OpenAI API error: ${errorData.error?.message || `Status ${response.status}`}`,
-                tasks: []
-              }),
-              { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-            );
-          }
-        }
-      } catch (error) {
-        console.error('Fetch error:', error);
-        if (error.name === 'AbortError') {
-          console.error('Request timed out');
-        }
-        
-        retries--;
-        if (retries >= 0) {
-          await new Promise(r => setTimeout(r, delay));
-          delay *= 2; // Exponential backoff
-        } else {
-          // Return gracefully with empty tasks after all retries
-          return new Response(
-            JSON.stringify({ 
-              error: `Error calling OpenAI: ${error.message || 'Unknown error'}`,
-              tasks: []
-            }),
-            { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        }
-      }
-    }
-
-    // No successful response after retries
-    if (!response || !response.ok) {
-      return new Response(
-        JSON.stringify({ 
-          error: 'Failed to get a successful response from OpenAI after retries',
-          tasks: []
-        }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const data = await response.json();
-    
-    if (!data.choices || !data.choices[0]?.message?.content) {
-      console.error('Invalid response from OpenAI:', data);
-      return new Response(
-        JSON.stringify({ 
-          error: 'Invalid response format from OpenAI API',
-          tasks: []
-        }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-    
-    const tasksContent = data.choices[0].message.content;
-    
-    console.log(`Received response from OpenAI: ${tasksContent.length} characters`);
-    
-    // Parse the JSON response
-    let tasks;
+    // Simple approach with fewer retries and direct fetch
     try {
-      // First check if the response is directly parseable as JSON
-      try {
-        tasks = JSON.parse(tasksContent);
-      } catch (e) {
-        // If not, try to extract JSON by looking for array brackets
-        const jsonMatch = tasksContent.match(/\[[\s\S]*\]/);
-        if (jsonMatch) {
-          tasks = JSON.parse(jsonMatch[0]);
-        } else {
-          throw new Error('Could not extract JSON from response');
-        }
+      // Use a direct straightforward fetch to the OpenAI API
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${openAIApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini', // Use gpt-4o-mini for reliability
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt }
+          ],
+          temperature: 0.1, // Lower temperature for more deterministic outputs
+          max_tokens: 1500, // Ensure enough space for response
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error(`OpenAI API error (${response.status}):`, errorData);
+        throw new Error(`OpenAI API error: ${errorData.error?.message || `Status ${response.status}`}`);
       }
       
-      // Ensure tasks is an array
-      if (!Array.isArray(tasks)) {
-        console.error('OpenAI response is not an array:', tasks);
-        tasks = []; // Default to empty array if not array
+      const data = await response.json();
+      
+      if (!data.choices || !data.choices[0]?.message?.content) {
+        console.error('Invalid response from OpenAI:', data);
+        throw new Error('Invalid response format from OpenAI API');
       }
-    } catch (error) {
-      console.error('Error parsing OpenAI response as JSON:', error);
-      console.log('Raw response:', tasksContent);
-      return new Response(
-        JSON.stringify({ 
-          error: 'Failed to parse tasks from OpenAI response',
-          tasks: []
-        }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-    
-    // Add project name to tasks if provided and not already set
-    if (projectName) {
-      tasks = tasks.map(task => ({
-        ...task,
-        project: task.project || projectName
+      
+      const tasksContent = data.choices[0].message.content;
+      console.log(`Received response from OpenAI: ${tasksContent.length} characters`);
+      
+      // Parse the JSON response
+      let tasks;
+      try {
+        // First try to parse directly
+        try {
+          tasks = JSON.parse(tasksContent);
+        } catch (e) {
+          // Try to extract JSON by looking for array brackets
+          const jsonMatch = tasksContent.match(/\[[\s\S]*\]/);
+          if (jsonMatch) {
+            tasks = JSON.parse(jsonMatch[0]);
+          } else {
+            throw new Error('Could not extract JSON from response');
+          }
+        }
+        
+        // Ensure tasks is an array
+        if (!Array.isArray(tasks)) {
+          console.error('OpenAI response is not an array:', tasks);
+          tasks = []; // Default to empty array if not array
+        }
+      } catch (error) {
+        console.error('Error parsing OpenAI response as JSON:', error);
+        console.log('Raw response:', tasksContent);
+        throw new Error('Failed to parse tasks from OpenAI response');
+      }
+      
+      // Add project name to tasks if provided and not already set
+      if (projectName) {
+        tasks = tasks.map(task => ({
+          ...task,
+          project: task.project || projectName
+        }));
+      }
+      
+      // Add id field to each task and map response fields to Task interface fields
+      const processedTasks = tasks.map(task => ({
+        id: crypto.randomUUID(),
+        title: task.title || '',
+        description: task.description || '',
+        dueDate: task.due_date || null,
+        priority: task.priority || null,
+        status: task.status || 'todo',
+        assignee: null,
+        workspace_id: null,
+        isRecurring: false,
+        frequency: null,
+        project: task.project || projectName || null,
       }));
+      
+      console.log(`Successfully extracted ${processedTasks.length} tasks`);
+      
+      return new Response(
+        JSON.stringify({ tasks: processedTasks }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } catch (error) {
+      console.error('Error in OpenAI processing:', error);
+      throw error; // Let the outer catch handle this
     }
-    
-    // Add id field to each task and map response fields to Task interface fields
-    const processedTasks = tasks.map(task => ({
-      id: crypto.randomUUID(),
-      title: task.title || '',
-      description: task.description || '',
-      dueDate: task.due_date || null,
-      priority: task.priority || null,
-      status: task.status || 'todo',
-      assignee: null,
-      workspace_id: null,
-      isRecurring: false,
-      frequency: null,
-      project: task.project || projectName || null,
-    }));
-    
-    console.log(`Successfully extracted ${processedTasks.length} tasks`);
-    
-    return new Response(
-      JSON.stringify({ tasks: processedTasks }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
   } catch (error) {
     console.error('Error in process-notes function:', error);
     return new Response(
