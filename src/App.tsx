@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -47,7 +48,7 @@ const App = () => {
         <ErrorBoundary>
           <BrowserRouter>
             <Routes>
-              {/* Public routes - root path redirects to landing */}
+              {/* Public routes - root path shows landing */}
               <Route path="/" element={<Landing />} />
               <Route path="/landing" element={<Navigate to="/" replace />} />
               <Route path="/login" element={<Login />} />
@@ -64,7 +65,7 @@ const App = () => {
                 } 
               />
               
-              {/* Catch-all route - redirects to landing page instead of 404 */}
+              {/* Catch-all route - redirects to landing page */}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </BrowserRouter>

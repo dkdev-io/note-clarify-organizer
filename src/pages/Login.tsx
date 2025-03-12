@@ -48,6 +48,7 @@ const Login = () => {
     });
 
     // Check if we should skip auth (from URL param)
+    // We've moved this check ONLY to the skip parameter, not the initial path
     const skipParam = urlParams.get('skip');
     if (skipParam === 'true') {
       sessionStorage.setItem('skip_auth', 'true');

@@ -40,6 +40,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     const checkAuth = async () => {
       try {
         const { data } = await supabase.auth.getSession();
+        console.log('Auth check result:', data.session ? 'Has session' : 'No session');
         setAuthenticated(!!data.session);
       } catch (error) {
         console.error('Auth check error:', error);
@@ -54,6 +55,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
     // Set up auth state listener
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth state changed in ProtectedRoute:', event);
       setAuthenticated(!!session);
     });
 
