@@ -21,11 +21,17 @@ export async function processNotes(
     // Attempt to use the LLM processor if we have more than simple task text
     if (text.length > 50) {
       console.log('Attempting to use LLM processor...');
+      
+      toast({
+        title: "Processing notes with AI",
+        description: "This might take a few seconds..."
+      });
+      
       const llmPromise = processNotesWithLLM(text, effectiveProjectName);
       
       // Add a timeout for the entire LLM processing
       const timeoutPromise = new Promise<Task[]>((_, reject) => {
-        setTimeout(() => reject(new Error('LLM processing timed out after 15 seconds')), 15000);
+        setTimeout(() => reject(new Error('AI processing timed out after 15 seconds')), 15000);
       });
       
       // Race the LLM promise against the timeout
@@ -48,6 +54,27 @@ export async function processNotes(
     }
   } catch (error) {
     console.error("Error using LLM processor, using fallback parser results:", error);
+    
+    // Provide a helpful error message based on the type of error
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    
+    if (errorMessage.includes('exceeded your current quota') || 
+        errorMessage.includes('API key')) {
+      toast({
+        title: "AI service unavailable",
+        description: "Using basic parser due to AI service limitations."
+      });
+    } else if (errorMessage.includes('timeout')) {
+      toast({
+        title: "AI processing timed out",
+        description: "Using basic parser instead. Try again with shorter text."
+      });
+    } else {
+      toast({
+        title: "Using basic task parser",
+        description: "AI processing unavailable. Using simple parsing instead."
+      });
+    }
   }
   
   if (usedFallback) {
