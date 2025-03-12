@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Step } from './types';
-import { CheckCircle, CircleDashed, ArrowRight } from 'lucide-react';
+import { CheckCircle, CircleDashed } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface StepIndicatorProps {
@@ -34,7 +34,6 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({ currentStep, isConnected 
         {steps.map((step, index) => {
           const isCompleted = getStepState(step.key, currentStep) === 'completed';
           const isActive = getStepState(step.key, currentStep) === 'active';
-          const isUpcoming = getStepState(step.key, currentStep) === 'upcoming';
           
           // Determine if this is the last step
           const isLastStep = index === steps.length - 1;
@@ -72,9 +71,7 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({ currentStep, isConnected 
                     "flex-1 h-0.5 mx-2",
                     isCompleted ? "bg-primary" : "bg-gray-200"
                   )}
-                >
-                  <ArrowRight className="invisible" />
-                </div>
+                />
               )}
             </React.Fragment>
           );

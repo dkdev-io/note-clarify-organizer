@@ -11,6 +11,7 @@ import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useEffect, useState } from "react";
 import { AppProvider } from "./pages/app/AppContext";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 
 const App = () => {
   const [isInitialized, setIsInitialized] = useState(false);
@@ -18,8 +19,9 @@ const App = () => {
   const [queryClient] = useState(() => new QueryClient({
     defaultOptions: {
       queries: {
-        retry: 1,
+        retry: 2,
         refetchOnWindowFocus: false,
+        staleTime: 5 * 60 * 1000, // 5 minutes
       },
     },
   }));
@@ -44,29 +46,31 @@ const App = () => {
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter>
-          <Routes>
-            {/* Public routes */}
-            <Route path="/" element={<Landing />} />
-            <Route path="/landing" element={<Navigate to="/" replace />} />
-            <Route path="/login" element={<Login />} />
-            
-            {/* Protected routes */}
-            <Route 
-              path="/app/*" 
-              element={
-                <ProtectedRoute>
-                  <AppProvider>
-                    <IndexRefactored />
-                  </AppProvider>
-                </ProtectedRoute>
-              } 
-            />
-            
-            {/* Catch-all route */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
+        <ErrorBoundary>
+          <BrowserRouter>
+            <Routes>
+              {/* Public routes */}
+              <Route path="/" element={<Landing />} />
+              <Route path="/landing" element={<Navigate to="/" replace />} />
+              <Route path="/login" element={<Login />} />
+              
+              {/* Protected routes */}
+              <Route 
+                path="/app/*" 
+                element={
+                  <ProtectedRoute>
+                    <AppProvider>
+                      <IndexRefactored />
+                    </AppProvider>
+                  </ProtectedRoute>
+                } 
+              />
+              
+              {/* Catch-all route */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </ErrorBoundary>
       </TooltipProvider>
     </QueryClientProvider>
   );

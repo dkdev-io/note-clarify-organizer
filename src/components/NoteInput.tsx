@@ -22,6 +22,7 @@ interface NoteInputProps {
 const NoteInput: React.FC<NoteInputProps> = ({ onParseTasks, apiProps }) => {
   const [noteText, setNoteText] = useState('');
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
   const handleSubmit = () => {
@@ -35,13 +36,27 @@ const NoteInput: React.FC<NoteInputProps> = ({ onParseTasks, apiProps }) => {
     }
     
     setIsTransitioning(true);
+    setIsSubmitting(true);
+    
     console.log('Submitting note text:', noteText.substring(0, 50) + '...');
     console.log('Selected project:', apiProps.selectedProject);
     
+    // Short delay for animation
     setTimeout(() => {
-      // Pass null for project name to extract from text or use selectedProject from apiProps
-      onParseTasks(noteText, apiProps.selectedProject || null);
-      setIsTransitioning(false);
+      try {
+        // Pass null for project name to extract from text or use selectedProject from apiProps
+        onParseTasks(noteText, apiProps.selectedProject || null);
+      } catch (error) {
+        console.error("Error submitting notes:", error);
+        toast({
+          title: "Error submitting notes",
+          description: "There was a problem processing your notes. Please try again.",
+          variant: "destructive"
+        });
+      } finally {
+        setIsTransitioning(false);
+        setIsSubmitting(false);
+      }
     }, 400);
   };
 
@@ -53,6 +68,12 @@ const NoteInput: React.FC<NoteInputProps> = ({ onParseTasks, apiProps }) => {
 
   const loadSample = (index: number) => {
     setNoteText(sampleNotes[index]);
+    
+    // Small toast to confirm sample loaded
+    toast({
+      title: "Sample loaded",
+      description: "You can now extract tasks from this sample text.",
+    });
   };
 
   return (
@@ -93,12 +114,21 @@ const NoteInput: React.FC<NoteInputProps> = ({ onParseTasks, apiProps }) => {
         <CardFooter className="flex justify-end pt-2 pb-4 px-6">
           <Button 
             onClick={handleSubmit}
-            disabled={!noteText.trim() || isTransitioning}
+            disabled={!noteText.trim() || isTransitioning || isSubmitting}
             className="transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"
           >
-            <SendIcon className="h-4 w-4 mr-2" />
-            Extract Tasks
-            <ArrowRightIcon className="h-4 w-4 ml-2" />
+            {isSubmitting ? (
+              <>
+                <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                Processing...
+              </>
+            ) : (
+              <>
+                <SendIcon className="h-4 w-4 mr-2" />
+                Extract Tasks
+                <ArrowRightIcon className="h-4 w-4 ml-2" />
+              </>
+            )}
           </Button>
         </CardFooter>
       </Card>

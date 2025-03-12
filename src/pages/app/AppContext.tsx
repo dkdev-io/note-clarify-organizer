@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useContext } from 'react';
 import { AppContextType, ApiProps, Step } from './types';
 import { Task, parseTextIntoTasks } from '@/utils/parser';
@@ -91,45 +92,62 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const effectiveProjectName = apiProps.selectedProject || providedProjectName;
       console.log(`Effective project name: ${effectiveProjectName || 'none'}`);
       
-      let tasks: Task[] = [];
-      let usedFallback = false;
+      // Always start with the fallback parser to ensure we have results
+      const fallbackTasks = parseTextIntoTasks(text, effectiveProjectName);
+      console.log(`Fallback parser extracted ${fallbackTasks.length} tasks`);
+      
+      let tasks: Task[] = fallbackTasks;
+      let usedFallback = true;
       
       try {
-        // Attempt to use the LLM processor with explicit timeout and retries
-        console.log('Attempting to use LLM processor...');
-        const llmPromise = processNotesWithLLM(text, effectiveProjectName);
-        
-        // Add a timeout for the entire LLM processing
-        const timeoutPromise = new Promise<Task[]>((_, reject) => {
-          setTimeout(() => reject(new Error('LLM processing timed out after 30 seconds')), 30000);
-        });
-        
-        // Race the LLM promise against the timeout
-        tasks = await Promise.race([llmPromise, timeoutPromise]);
-        console.log(`LLM processor extracted ${tasks.length} tasks`);
-        
-        if (tasks.length === 0) {
-          console.log('LLM processor returned no tasks, falling back to simple parser');
-          usedFallback = true;
-          tasks = parseTextIntoTasks(text, effectiveProjectName);
-        } else {
-          toast({
-            title: "AI Processing Complete",
-            description: `Successfully extracted ${tasks.length} tasks from your notes.`,
+        // Attempt to use the LLM processor if we have more than simple task text
+        if (text.length > 50) {
+          console.log('Attempting to use LLM processor...');
+          const llmPromise = processNotesWithLLM(text, effectiveProjectName);
+          
+          // Add a timeout for the entire LLM processing
+          const timeoutPromise = new Promise<Task[]>((_, reject) => {
+            setTimeout(() => reject(new Error('LLM processing timed out after 15 seconds')), 15000);
           });
+          
+          // Race the LLM promise against the timeout
+          const llmTasks = await Promise.race([llmPromise, timeoutPromise]);
+          
+          if (llmTasks && llmTasks.length > 0) {
+            console.log(`LLM processor extracted ${llmTasks.length} tasks`);
+            tasks = llmTasks;
+            usedFallback = false;
+            
+            toast({
+              title: "AI Processing Complete",
+              description: `Successfully extracted ${tasks.length} tasks from your notes.`,
+            });
+          } else {
+            console.log('LLM processor returned no tasks, using fallback parser results');
+          }
+        } else {
+          console.log('Text too short, skipping LLM processing');
         }
       } catch (error) {
-        console.error("Error using LLM processor, falling back to simple parser:", error);
-        usedFallback = true;
-        tasks = parseTextIntoTasks(text, effectiveProjectName);
+        console.error("Error using LLM processor, using fallback parser results:", error);
       }
       
       if (usedFallback) {
         toast({
-          title: "Using fallback task parser",
-          description: "There was an issue with AI processing. Using simple parsing instead.",
+          title: "Using basic task parser",
+          description: `Extracted ${tasks.length} tasks using simple parsing.`,
+        });
+      }
+      
+      // If we still have no tasks, show an error
+      if (tasks.length === 0) {
+        toast({
+          title: "No tasks found",
+          description: "Couldn't extract any tasks from your notes. Try adding more detailed text.",
           variant: "destructive"
         });
+        setIsProcessing(false);
+        return;
       }
       
       // Extract project name from tasks if not provided
@@ -158,6 +176,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         description: error instanceof Error ? error.message : "An unknown error occurred",
         variant: "destructive"
       });
+      
+      // Use fallback parsing as a last resort
+      try {
+        const fallbackTasks = parseTextIntoTasks(text, projectName);
+        if (fallbackTasks.length > 0) {
+          setExtractedTasks(fallbackTasks);
+          setStep('tasks');
+          toast({
+            title: "Recovered with basic parsing",
+            description: `Extracted ${fallbackTasks.length} tasks using simple parsing.`,
+          });
+        }
+      } catch (e) {
+        console.error("Even fallback parsing failed:", e);
+      }
     } finally {
       setIsProcessing(false);
     }
