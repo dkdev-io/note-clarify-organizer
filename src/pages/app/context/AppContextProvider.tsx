@@ -49,7 +49,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   
   // Handler functions - now using the extracted handlers
   const handleApiConnect = (apiKey: string, fetchedWorkspaces: any[], workspaceId?: string, project?: string) => {
-    apiConnectHandler(apiKey, fetchedWorkspaces, workspaceId, project, setApiProps, setProjectName, setStep);
+    apiConnectHandler(apiKey, fetchedWorkspaces, setApiProps, setProjectName, setStep, workspaceId, project);
   };
 
   const handleSkipConnect = () => {

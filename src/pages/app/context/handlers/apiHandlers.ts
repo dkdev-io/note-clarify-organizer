@@ -1,3 +1,4 @@
+
 import { ApiProps } from '../../types';
 import { storeApiKey } from '@/utils/keyStorage';
 import { Step } from '../../types';
@@ -6,11 +7,11 @@ import { Step } from '../../types';
 export const handleApiConnect = (
   apiKey: string, 
   fetchedWorkspaces: any[], 
-  workspaceId?: string, 
-  project?: string,
   setApiProps: (props: ApiProps) => void,
   setProjectName: (name: string | null) => void,
-  setStep: (step: Step) => void
+  setStep: (step: Step) => void,
+  workspaceId?: string, 
+  project?: string
 ) => {
   // Store the API key in the app context
   if (apiKey !== 'proxy_mode') {
