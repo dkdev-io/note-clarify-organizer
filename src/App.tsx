@@ -10,7 +10,7 @@ import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useEffect, useState } from "react";
-import { AppProvider } from "./pages/app/AppContext";
+import { AppProvider } from "./pages/app/context/AppContextProvider";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 
 const App = () => {

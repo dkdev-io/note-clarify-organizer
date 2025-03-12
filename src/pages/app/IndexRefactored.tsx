@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { AppProvider } from './AppContext';
+import { AppProvider } from './context/AppContextProvider';
 import AppContent from './AppContent';
 
 const IndexRefactored = () => {
