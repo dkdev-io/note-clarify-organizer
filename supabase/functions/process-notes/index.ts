@@ -76,13 +76,13 @@ Return ONLY a JSON array of task objects, nothing else.`;
     
     // Call OpenAI API with timeout and retry logic
     let response;
-    let retries = 2;
+    let retries = 3; // Increase retries
     let delay = 1000; // Start with 1s delay
     
     while (retries >= 0) {
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+        const timeoutId = setTimeout(() => controller.abort(), 18000); // 18 second timeout (increased)
         
         response = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
@@ -91,12 +91,12 @@ Return ONLY a JSON array of task objects, nothing else.`;
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            model: 'gpt-3.5-turbo', // Fallback to 3.5 which is more reliable and often cheaper
+            model: 'gpt-4o-mini', // Update to use gpt-4o-mini which is more reliable
             messages: [
               { role: 'system', content: systemPrompt },
               { role: 'user', content: userPrompt }
             ],
-            temperature: 0.3, // Lower temperature for more deterministic responses
+            temperature: 0.2, // Lower temperature for more deterministic responses
           }),
           signal: controller.signal
         });
@@ -180,7 +180,19 @@ Return ONLY a JSON array of task objects, nothing else.`;
     // Parse the JSON response
     let tasks;
     try {
-      tasks = JSON.parse(tasksContent);
+      // First check if the response is directly parseable as JSON
+      try {
+        tasks = JSON.parse(tasksContent);
+      } catch (e) {
+        // If not, try to extract JSON by looking for array brackets
+        const jsonMatch = tasksContent.match(/\[[\s\S]*\]/);
+        if (jsonMatch) {
+          tasks = JSON.parse(jsonMatch[0]);
+        } else {
+          throw new Error('Could not extract JSON from response');
+        }
+      }
+      
       // Ensure tasks is an array
       if (!Array.isArray(tasks)) {
         console.error('OpenAI response is not an array:', tasks);

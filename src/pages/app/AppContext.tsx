@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useContext } from 'react';
 import { AppContextType, ApiProps, Step } from './types';
 import { Task, parseTextIntoTasks } from '@/utils/parser';
@@ -79,9 +80,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       let usedFallback = false;
       
       try {
-        // Attempt to use the LLM processor
+        // Attempt to use the LLM processor with explicit timeout and retries
         console.log('Attempting to use LLM processor...');
-        tasks = await processNotesWithLLM(text, effectiveProjectName);
+        const llmPromise = processNotesWithLLM(text, effectiveProjectName);
+        
+        // Add a timeout for the entire LLM processing
+        const timeoutPromise = new Promise<Task[]>((_, reject) => {
+          setTimeout(() => reject(new Error('LLM processing timed out after 30 seconds')), 30000);
+        });
+        
+        // Race the LLM promise against the timeout
+        tasks = await Promise.race([llmPromise, timeoutPromise]);
         console.log(`LLM processor extracted ${tasks.length} tasks`);
         
         if (tasks.length === 0) {

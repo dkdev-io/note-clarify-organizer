@@ -15,6 +15,8 @@ export async function processNotesWithLLM(text: string, projectName: string | nu
     // Call the Supabase edge function
     const { data, error } = await supabase.functions.invoke('process-notes', {
       body: { text, projectName },
+      // Add a longer timeout to allow for OpenAI processing time
+      options: { timeout: 25000 } // 25 seconds timeout
     });
 
     if (error) {
