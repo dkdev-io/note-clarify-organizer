@@ -1,9 +1,9 @@
-
 /**
  * Motion API utilities for authentication and task management
  */
 
 import { Task } from './parser';
+import { retrieveApiKey } from './keyStorage';
 
 // Store API key in memory for reuse across components
 let globalApiKey: string | null = null;
@@ -38,12 +38,18 @@ export const setMotionApiKey = (apiKey: string | null) => {
 };
 
 // Get the API key (or use the provided one)
-export const getApiKey = (providedApiKey?: string) => {
-  // Use provided key first (and clean it), then fall back to global key
+export const getApiKey = (providedApiKey?: string): string | null => {
+  // Use provided key first (and clean it), then fall back to global key, then localStorage
   if (providedApiKey) {
     return providedApiKey.trim().replace(/^["']|["']$/g, '');
   }
-  return globalApiKey;
+  
+  if (globalApiKey) {
+    return globalApiKey;
+  }
+  
+  // Try to get from localStorage as last resort
+  return retrieveApiKey();
 };
 
 // Check if we're in proxy mode

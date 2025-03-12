@@ -4,10 +4,12 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AlertCircle, CheckIcon, LoaderIcon, InfoIcon, LinkIcon, RefreshCwIcon, ShieldIcon } from 'lucide-react';
+import { AlertCircle, CheckIcon, LoaderIcon, InfoIcon, LinkIcon, RefreshCwIcon, ShieldIcon, SaveIcon, TrashIcon } from 'lucide-react';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { validateMotionApiKey, fetchWorkspaces, setMotionApiKey } from '@/utils/motion';
 import { useToast } from "@/components/ui/use-toast";
+import { storeApiKey, retrieveApiKey, clearStoredApiKey } from '@/utils/keyStorage';
+import { Switch } from "@/components/ui/switch";
 
 interface MotionApiConnectProps {
   onConnect: (apiKey: string, workspaces: any[], selectedWorkspace?: string, selectedProject?: string) => void;
@@ -20,6 +22,7 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
   const [isKeyValid, setIsKeyValid] = useState<boolean | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isProxyMode, setIsProxyMode] = useState(false);
+  const [rememberKey, setRememberKey] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -39,6 +42,16 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
       
       // Directly connect with proxy settings
       onConnect('proxy_mode', defaultWorkspaces, 'proxy-workspace-1');
+    } else {
+      // Try to load stored API key
+      const storedKey = retrieveApiKey();
+      if (storedKey) {
+        setApiKey(storedKey);
+        toast({
+          title: "API Key Loaded",
+          description: "A previously stored API key has been loaded. Click Connect to validate.",
+        });
+      }
     }
   }, [toast, onConnect]);
 
@@ -70,6 +83,14 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
       console.log('API key is valid, fetching workspaces...');
       const fetchedWorkspaces = await fetchWorkspaces(trimmedKey);
       console.log('Fetched workspaces:', fetchedWorkspaces);
+      
+      if (rememberKey) {
+        storeApiKey(trimmedKey);
+        toast({
+          title: "API Key Saved",
+          description: "Your API key has been saved for future use.",
+        });
+      }
       
       if (fetchedWorkspaces.length === 0) {
         setErrorMessage(
@@ -122,6 +143,12 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
     setApiKey('');
     setIsKeyValid(null);
     setErrorMessage(null);
+    clearStoredApiKey();
+    
+    toast({
+      title: "API Key Cleared",
+      description: "Your saved API key has been removed.",
+    });
   };
 
   // If we're in proxy mode, this component won't be shown as we'll skip directly to workspace selection
@@ -158,17 +185,31 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
                   className={`flex-1 ${isKeyValid === true ? 'border-green-500 focus:border-green-500 focus:ring-green-500/20' : 
                     isKeyValid === false ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : ''}`}
                 />
-                {apiKey && (
-                  <Button 
-                    variant="outline" 
-                    size="icon" 
-                    onClick={handleClearApiKey}
-                    title="Clear API Key"
-                  >
-                    <RefreshCwIcon className="h-4 w-4" />
-                  </Button>
-                )}
+                <div className="flex gap-1">
+                  {apiKey && (
+                    <Button 
+                      variant="outline" 
+                      size="icon" 
+                      onClick={handleClearApiKey}
+                      title="Clear API Key"
+                    >
+                      <TrashIcon className="h-4 w-4 text-red-500" />
+                    </Button>
+                  )}
+                </div>
               </div>
+              
+              <div className="flex items-center space-x-2 mt-2">
+                <Switch 
+                  id="remember-key" 
+                  checked={rememberKey} 
+                  onCheckedChange={setRememberKey} 
+                />
+                <Label htmlFor="remember-key" className="text-sm cursor-pointer">
+                  Remember API key for future sessions
+                </Label>
+              </div>
+              
               {errorMessage && (
                 <Alert variant="destructive" className="mt-2">
                   <AlertCircle className="h-4 w-4" />

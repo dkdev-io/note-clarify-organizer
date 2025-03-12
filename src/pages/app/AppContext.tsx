@@ -4,6 +4,7 @@ import { AppContextType, ApiProps, Step } from './types';
 import { Task, parseTextIntoTasks } from '@/utils/parser';
 import { useToast } from "@/components/ui/use-toast";
 import { processNotesWithLLM } from '@/utils/llm';
+import { storeApiKey } from '@/utils/keyStorage';
 
 // Create the context with a default value
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -33,6 +34,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   
   // Handle API connection
   const handleApiConnect = (apiKey: string, fetchedWorkspaces: any[], workspaceId?: string, project?: string) => {
+    // Store the API key in the app context
+    if (apiKey !== 'proxy_mode') {
+      // We'll store in localStorage in the MotionApiConnect component
+      // But we still update our application state
+      storeApiKey(apiKey);
+    }
+    
     // Just update API key and workspaces but move to workspace selection step instead
     setApiProps({
       apiKey,
