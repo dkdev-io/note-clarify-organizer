@@ -1,3 +1,4 @@
+
 /**
  * Utility functions for matching names in text to Motion users
  */
@@ -20,7 +21,10 @@ export function isNicknameOrShortened(input: string, target: string): boolean {
   const commonNicknames: Record<string, string[]> = {
     'dan': ['daniel', 'danny'],
     'mat': ['matthew', 'matt', 'mateo'],
+    'mtt': ['matthew', 'matt'],
     'dn': ['dan', 'daniel', 'danny', 'dean'],
+    'mt': ['matt', 'matthew'],
+    'matt': ['matthew'],
     'dave': ['david'],
     'jim': ['james'],
     'bob': ['robert'],
@@ -36,6 +40,7 @@ export function isNicknameOrShortened(input: string, target: string): boolean {
     'sam': ['samuel', 'samantha'],
     'beth': ['elizabeth'],
     'juan': ['juanito', 'juanita'],
+    'da': ['dan', 'daniel', 'dave', 'david'],
   };
   
   // Check if input is a known nickname

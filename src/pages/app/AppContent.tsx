@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useState } from 'react';
 import { useAppContext } from './context/AppContextProvider';
 import AppLayout from './components/AppLayout';
 import ConnectStep from './components/ConnectStep';
@@ -26,6 +26,9 @@ const AppContent: React.FC = () => {
     setStep
   } = useAppContext();
   
+  // State for handling unrecognized users
+  const [unrecognizedUserMappings, setUnrecognizedUserMappings] = useState<Record<string, string | null>>({});
+  
   const handleWorkspaceSelection = (workspaceId: string) => {
     handleWorkspaceSelect(workspaceId, apiProps.apiKey, updateApiProps);
   };
@@ -40,6 +43,22 @@ const AppContent: React.FC = () => {
   
   const handleAddMore = () => {
     setStep('workspace');
+  };
+  
+  const handleTaskParse = (text: string, providedProjectName: string | null, setUnrecognizedNames?: (names: string[]) => void | Record<string, string | null>) => {
+    // If we received user mappings, store them
+    if (typeof setUnrecognizedNames === 'object') {
+      setUnrecognizedUserMappings(setUnrecognizedNames);
+      // Regular parsing without the user mapping function
+      handleParseText(text, providedProjectName);
+    } else {
+      // Normal parsing with potential callback for unrecognized names
+      handleParseText(text, providedProjectName, setUnrecognizedNames);
+    }
+  };
+  
+  const handleTasksAddToMotion = (tasks: Task[], updatedProjectName: string | null, unassignedCount: number = 0) => {
+    handleAddToMotion(tasks, updatedProjectName, unassignedCount);
   };
   
   const renderStepContent = () => {
@@ -69,7 +88,7 @@ const AppContent: React.FC = () => {
       case 'input':
         return (
           <InputStep 
-            onParseTasks={handleParseText} 
+            onParseTasks={handleTaskParse} 
             apiProps={apiProps}
           />
         );
@@ -81,8 +100,9 @@ const AppContent: React.FC = () => {
             initialTasks={extractedTasks}
             projectName={projectName}
             onBack={handleStartOver}
-            onAddToMotion={handleAddToMotion}
+            onAddToMotion={handleTasksAddToMotion}
             apiProps={apiProps}
+            unrecognizedUserMappings={unrecognizedUserMappings}
           />
         );
         

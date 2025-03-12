@@ -17,7 +17,8 @@ export const handleParseText = async (
   setProjectName: (name: string | null) => void,
   setExtractedTasks: (tasks: Task[]) => void,
   setStep: (step: Step) => void,
-  toast: ToastType
+  toast: ToastType,
+  setUnrecognizedNames?: (names: string[]) => void
 ) => {
   try {
     if (!text || text.trim() === '') {
@@ -51,14 +52,22 @@ export const handleParseText = async (
       if (unmatchedNames.length > 0) {
         console.warn('Found unmatched names:', unmatchedNames);
         
-        toast({
-          title: "Unrecognized users in notes",
-          description: `We can't match user${unmatchedNames.length > 1 ? 's' : ''}: ${unmatchedNames.join(', ')}. Please confirm that they're Motion users or add them to your account.`,
-          variant: "destructive"
-        });
-        
-        setIsProcessing(false);
-        return;
+        if (setUnrecognizedNames) {
+          // Store unrecognized names for display in UI
+          setUnrecognizedNames(unmatchedNames);
+          
+          // Continue with parsing for now, we'll handle user selection later
+          console.log('Continuing with task extraction while user selects assignees');
+        } else {
+          toast({
+            title: "Unrecognized users in notes",
+            description: `We can't match user${unmatchedNames.length > 1 ? 's' : ''}: ${unmatchedNames.join(', ')}. Please confirm that they're Motion users or add them to your account.`,
+            variant: "destructive"
+          });
+          
+          setIsProcessing(false);
+          return;
+        }
       }
     }
     
@@ -132,15 +141,23 @@ export const handleAddToMotion = (
   updatedProjectName: string | null,
   setProjectName: (name: string | null) => void,
   setStep: (step: Step) => void,
-  toast: ToastType
+  toast: ToastType,
+  unassignedTaskCount: number = 0
 ) => {
   if (updatedProjectName) {
     setProjectName(updatedProjectName);
   }
   
   setStep('complete');
+  
+  let message = `${tasks.length} tasks have been added to Motion${updatedProjectName ? ` under project '${updatedProjectName}'` : ''}.`;
+  
+  if (unassignedTaskCount > 0) {
+    message += ` (${unassignedTaskCount} tasks were added without assignment)`;
+  }
+  
   toast({
     title: "Success!",
-    description: `${tasks.length} tasks have been added to Motion${updatedProjectName ? ` under project '${updatedProjectName}'` : ''}.`,
+    description: message,
   });
 };
