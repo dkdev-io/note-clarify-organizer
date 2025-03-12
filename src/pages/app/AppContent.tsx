@@ -1,13 +1,12 @@
 
 import React from 'react';
 import { useAppContext } from './AppContext';
-import StepIndicator from './StepIndicator';
-import CompletionScreen from './CompletionScreen';
-import { AppHeader } from './AppLayout';
-import NoteInput from '@/components/NoteInput';
-import TasksReview from '@/components/TasksReview';
-import MotionApiConnect from '@/components/MotionApiConnect';
-import WorkspaceProjectSelect from '@/components/WorkspaceProjectSelect';
+import AppLayout from './components/AppLayout';
+import ConnectStep from './components/ConnectStep';
+import WorkspaceStep from './components/WorkspaceStep';
+import InputStep from './components/InputStep';
+import TasksStep from './components/TasksStep';
+import CompleteStep from './components/CompleteStep';
 
 const AppContent: React.FC = () => {
   const { 
@@ -46,7 +45,7 @@ const AppContent: React.FC = () => {
     switch (step) {
       case 'connect':
         return (
-          <MotionApiConnect 
+          <ConnectStep 
             onConnect={handleApiConnect} 
             onSkip={handleSkipConnect} 
           />
@@ -54,7 +53,7 @@ const AppContent: React.FC = () => {
       
       case 'workspace':
         return (
-          <WorkspaceProjectSelect 
+          <WorkspaceStep 
             apiKey={apiProps.apiKey}
             workspaces={apiProps.workspaces}
             selectedWorkspaceId={apiProps.selectedWorkspaceId || null}
@@ -68,7 +67,7 @@ const AppContent: React.FC = () => {
         
       case 'input':
         return (
-          <NoteInput 
+          <InputStep 
             onParseTasks={handleParseText} 
             apiProps={apiProps}
           />
@@ -76,11 +75,11 @@ const AppContent: React.FC = () => {
         
       case 'tasks':
         return (
-          <TasksReview 
+          <TasksStep 
             rawText={noteText}
             initialTasks={extractedTasks}
             projectName={projectName}
-            onBack={() => handleStartOver()}
+            onBack={handleStartOver}
             onAddToMotion={handleAddToMotion}
             apiProps={apiProps}
           />
@@ -88,11 +87,10 @@ const AppContent: React.FC = () => {
         
       case 'complete':
         return (
-          <CompletionScreen 
+          <CompleteStep 
             tasks={extractedTasks}
             projectName={projectName}
             isConnected={apiProps.isConnected}
-            onStartOver={handleStartOver}
             onReconnect={handleReconnect}
             onAddMore={apiProps.isConnected ? handleAddMore : undefined}
           />
@@ -104,28 +102,15 @@ const AppContent: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex flex-col px-4 py-12">
-      <div className="container mx-auto max-w-3xl">
-        <AppHeader 
-          isConnected={apiProps.isConnected}
-          step={step}
-          workspaces={apiProps.workspaces}
-          selectedWorkspaceId={apiProps.selectedWorkspaceId}
-          selectedProject={apiProps.selectedProject}
-        />
-        
-        {step !== 'complete' && (
-          <StepIndicator 
-            currentStep={step} 
-            isConnected={apiProps.isConnected} 
-          />
-        )}
-        
-        <main className="flex-1">
-          {renderStepContent()}
-        </main>
-      </div>
-    </div>
+    <AppLayout
+      step={step}
+      isConnected={apiProps.isConnected}
+      workspaces={apiProps.workspaces}
+      selectedWorkspaceId={apiProps.selectedWorkspaceId}
+      selectedProject={apiProps.selectedProject}
+    >
+      {renderStepContent()}
+    </AppLayout>
   );
 };
 
