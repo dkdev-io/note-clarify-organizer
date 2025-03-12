@@ -46,6 +46,13 @@ export async function processNotesWithLLM(text: string, projectName: string | nu
       throw new Error(`Error from AI processing: ${data.error}`);
     }
 
+    // Check for unrecognized names in the response
+    if (data.unrecognizedNames && Array.isArray(data.unrecognizedNames) && data.unrecognizedNames.length > 0) {
+      console.warn('Unrecognized names in processed notes:', data.unrecognizedNames);
+      const namesStr = data.unrecognizedNames.join(', ');
+      throw new Error(`Unrecognized users in notes: ${namesStr}. Please verify these names exist in your Motion account.`);
+    }
+
     if (!data.tasks || !Array.isArray(data.tasks)) {
       console.error('No tasks array in response:', data);
       throw new Error('No tasks returned from AI processing');

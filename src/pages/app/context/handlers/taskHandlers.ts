@@ -5,6 +5,7 @@ import { Step } from '../../types';
 import { ApiProps } from '../../types';
 import { processNotes } from '../noteProcessing';
 import { parseTextIntoTasks } from '@/utils/parser';
+import { extractPotentialNames, findUserMatches } from '@/utils/nameMatching';
 
 // Handle moving from note input to task extraction
 export const handleParseText = async (
@@ -36,7 +37,37 @@ export const handleParseText = async (
     const effectiveProjectName = apiProps.selectedProject || providedProjectName;
     console.log(`Effective project name: ${effectiveProjectName || 'none'}`);
     
-    const { tasks, usedFallback } = await processNotes(text, effectiveProjectName, toast);
+    // Pre-check for potential name issues if we're connected to Motion
+    if (apiProps.isConnected && apiProps.users && apiProps.users.length > 0) {
+      const potentialNames = extractPotentialNames(text);
+      console.log('Potential assignee names found in text:', potentialNames);
+      
+      // Check each potential name against Motion users
+      const unmatchedNames = potentialNames.filter(name => {
+        const matches = findUserMatches(name, apiProps.users || [], 0.6);
+        return matches.length === 0;
+      });
+      
+      if (unmatchedNames.length > 0) {
+        console.warn('Found unmatched names:', unmatchedNames);
+        
+        toast({
+          title: "Unrecognized users in notes",
+          description: `We can't match user${unmatchedNames.length > 1 ? 's' : ''}: ${unmatchedNames.join(', ')}. Please confirm that they're Motion users or add them to your account.`,
+          variant: "destructive"
+        });
+        
+        setIsProcessing(false);
+        return;
+      }
+    }
+    
+    const { tasks, usedFallback } = await processNotes(
+      text, 
+      effectiveProjectName, 
+      toast,
+      apiProps.users || []
+    );
     
     // If we still have no tasks, show an error
     if (tasks.length === 0) {

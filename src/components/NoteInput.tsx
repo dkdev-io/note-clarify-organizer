@@ -3,8 +3,9 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { FileTextIcon, SendIcon, ArrowRightIcon, PlusIcon } from 'lucide-react';
+import { FileTextIcon, SendIcon, ArrowRightIcon, PlusIcon, InfoIcon } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface ApiProps {
   isConnected: boolean;
@@ -12,6 +13,7 @@ interface ApiProps {
   workspaces: any[];
   selectedWorkspaceId?: string;
   selectedProject?: string;
+  users?: any[];
 }
 
 interface NoteInputProps {
@@ -66,6 +68,30 @@ const NoteInput: React.FC<NoteInputProps> = ({ onParseTasks, apiProps }) => {
     "Creative Agency Rebranding:\n• Jennifer must take the logo and add the tagline by March 11.\n• Meet with stakeholders about budget concerns on Tuesday\n• Mark to redesign the website homepage by end of week"
   ];
 
+  // Create a sample based on the connected users if available
+  if (apiProps.isConnected && apiProps.users && apiProps.users.length > 0) {
+    // Get up to 3 random users from the list
+    const availableUsers = [...apiProps.users];
+    const selectedUsers = [];
+    
+    for (let i = 0; i < Math.min(3, availableUsers.length); i++) {
+      const randomIndex = Math.floor(Math.random() * availableUsers.length);
+      const user = availableUsers.splice(randomIndex, 1)[0];
+      if (user && user.name) {
+        // Extract first name
+        const firstName = user.name.split(' ')[0];
+        selectedUsers.push(firstName);
+      }
+    }
+    
+    if (selectedUsers.length > 0) {
+      // Replace sample 3 with a sample that uses the actual Motion users
+      const userSample = `Team Project Updates:\n• ${selectedUsers[0] || 'Alex'} will research new tools by March 15th.\n• ${selectedUsers[1] || 'Jamie'} needs to finish the documentation by next Friday.\n• ${selectedUsers[2] || 'Taylor'} will set up the project meeting for next week.`;
+      
+      sampleNotes[2] = userSample;
+    }
+  }
+
   const loadSample = (index: number) => {
     setNoteText(sampleNotes[index]);
     
@@ -80,10 +106,32 @@ const NoteInput: React.FC<NoteInputProps> = ({ onParseTasks, apiProps }) => {
     <div className={`w-full max-w-2xl mx-auto transition-all duration-500 ${isTransitioning ? 'opacity-0 translate-x-10' : 'opacity-100 translate-x-0'}`}>
       <Card className="bg-white bg-opacity-80 backdrop-blur-sm border border-gray-100 shadow-card">
         <CardHeader className="pb-4">
-          <CardTitle className="text-2xl font-medium text-gray-900">
-            <FileTextIcon className="inline-block mr-2 h-6 w-6 text-primary" />
-            Meeting Notes
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-2xl font-medium text-gray-900">
+              <FileTextIcon className="inline-block mr-2 h-6 w-6 text-primary" />
+              Meeting Notes
+            </CardTitle>
+            
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <InfoIcon className="h-4 w-4 text-muted-foreground" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs p-4 bg-white" side="left">
+                  <div className="space-y-2">
+                    <p className="font-medium">How to assign tasks to people:</p>
+                    <ul className="list-disc pl-4 text-sm space-y-1">
+                      <li>Use the format "Name will [task]"</li>
+                      <li>Make sure names match Motion users exactly</li>
+                      <li>Names like "Dn", "Mat", "Juan" may not match if not in Motion</li>
+                    </ul>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
           <p className="text-muted-foreground text-sm mt-1">
             Paste your meeting notes or any text to extract tasks and project name
           </p>

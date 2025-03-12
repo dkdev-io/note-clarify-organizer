@@ -29,7 +29,7 @@ serve(async (req) => {
       );
     }
     
-    const { text, projectName } = reqBody;
+    const { text, projectName, motionUsers } = reqBody;
     
     if (!text) {
       console.error('Missing required parameter: text');
@@ -43,14 +43,15 @@ serve(async (req) => {
     }
     
     console.log(`Processing notes: ${text.length} characters${projectName ? ` for project '${projectName}'` : ''}`);
+    console.log(`Available Motion users: ${motionUsers ? motionUsers.length : 0}`);
 
     // Try to use OpenAI first, then fall back to free alternative
     try {
-      return await processWithOpenAI(text, projectName, corsHeaders);
+      return await processWithOpenAI(text, projectName, motionUsers, corsHeaders);
     } catch (openAiError) {
       console.error('OpenAI processing failed, trying alternative API:', openAiError);
       // Try the free alternative API
-      return await processWithHuggingFace(text, projectName, corsHeaders);
+      return await processWithHuggingFace(text, projectName, motionUsers, corsHeaders);
     }
   } catch (error) {
     console.error('Error in process-notes function:', error);
@@ -64,13 +65,78 @@ serve(async (req) => {
   }
 });
 
+// Extract potential names from text
+function extractNamesFromText(text) {
+  // Look for patterns like "Name will..." which typically indicate a task assignment
+  const namePattern = /(\b[A-Z][a-z]*\b)\s+will\b/g;
+  const matches = [...text.matchAll(namePattern)];
+  return [...new Set(matches.map(match => match[1]))]; // Use Set to get unique names
+}
+
+// Check if names in the text exist in the Motion users
+function findUnrecognizedNames(extractedNames, motionUsers) {
+  if (!motionUsers || !Array.isArray(motionUsers) || motionUsers.length === 0) {
+    return []; // Can't verify without user list
+  }
+  
+  const userNames = motionUsers.map(user => {
+    return user.name ? user.name.split(' ')[0].toLowerCase() : ''; // Get first name in lowercase
+  }).filter(name => name); // Remove empty names
+  
+  return extractedNames.filter(name => {
+    const nameLower = name.toLowerCase();
+    
+    // Check direct match
+    if (userNames.includes(nameLower)) {
+      return false; // Name is recognized
+    }
+    
+    // Check partial matches (e.g., "Dan" could match "Daniel")
+    for (const userName of userNames) {
+      // Check if name is contained in username or vice versa
+      if (userName.includes(nameLower) || nameLower.includes(userName)) {
+        return false; // Name is potentially recognized
+      }
+      
+      // Check common nicknames (simple approach)
+      if ((nameLower === 'dan' && userName.includes('daniel')) ||
+          (nameLower === 'mat' && userName.includes('matthew')) ||
+          (nameLower === 'dn' && (userName.includes('dan') || userName.includes('daniel'))) ||
+          (nameLower === 'dave' && userName.includes('david')) ||
+          (nameLower === 'jim' && userName.includes('james'))) {
+        return false; // Name is potentially a nickname
+      }
+    }
+    
+    return true; // Name is not recognized
+  });
+}
+
 // Process notes with OpenAI
-async function processWithOpenAI(text, projectName, corsHeaders) {
+async function processWithOpenAI(text, projectName, motionUsers, corsHeaders) {
   // Get OpenAI API key from environment variable
   const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
   if (!openAIApiKey) {
     console.error('OpenAI API key not found in environment variables');
     throw new Error('OpenAI API key not configured');
+  }
+
+  // Check for unrecognized names before processing
+  const extractedNames = extractNamesFromText(text);
+  console.log('Extracted potential names from text:', extractedNames);
+  
+  const unrecognizedNames = findUnrecognizedNames(extractedNames, motionUsers);
+  
+  if (unrecognizedNames.length > 0) {
+    console.warn('Found unrecognized names:', unrecognizedNames);
+    return new Response(
+      JSON.stringify({ 
+        error: `Unrecognized users in notes: ${unrecognizedNames.join(', ')}`,
+        unrecognizedNames, 
+        tasks: [] 
+      }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
   }
 
   // Prepare the system prompt for task extraction
@@ -126,7 +192,25 @@ Return ONLY a JSON array of task objects, nothing else.`;
 }
 
 // Process notes with Hugging Face (free alternative)
-async function processWithHuggingFace(text, projectName, corsHeaders) {
+async function processWithHuggingFace(text, projectName, motionUsers, corsHeaders) {
+  // Check for unrecognized names before processing
+  const extractedNames = extractNamesFromText(text);
+  console.log('Extracted potential names from text:', extractedNames);
+  
+  const unrecognizedNames = findUnrecognizedNames(extractedNames, motionUsers);
+  
+  if (unrecognizedNames.length > 0) {
+    console.warn('Found unrecognized names:', unrecognizedNames);
+    return new Response(
+      JSON.stringify({ 
+        error: `Unrecognized users in notes: ${unrecognizedNames.join(', ')}`,
+        unrecognizedNames, 
+        tasks: [] 
+      }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
   // Get Hugging Face API token from environment variable
   const huggingFaceToken = Deno.env.get('HUGGINGFACE_API_KEY');
   if (!huggingFaceToken) {

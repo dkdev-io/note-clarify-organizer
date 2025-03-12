@@ -1,115 +1,157 @@
 
 /**
- * Utility functions for matching and suggesting user names
+ * Utility functions for matching names in text to Motion users
  */
 
-interface User {
-  id: string;
-  name: string;
-  email?: string;
+/**
+ * Checks if a name might be a shortened version of another name
+ * e.g., "Dan" could be short for "Daniel", "Mat" for "Matthew", etc.
+ */
+export function isNicknameOrShortened(input: string, target: string): boolean {
+  // Convert both to lowercase for case-insensitive comparison
+  const inputLower = input.toLowerCase().trim();
+  const targetLower = target.toLowerCase().trim();
+  
+  // Direct check if input is completely contained in target
+  if (targetLower.includes(inputLower)) {
+    return true;
+  }
+  
+  // Check for common nicknames and shortened versions
+  const commonNicknames: Record<string, string[]> = {
+    'dan': ['daniel', 'danny'],
+    'mat': ['matthew', 'matt', 'mateo'],
+    'dn': ['dan', 'daniel', 'danny', 'dean'],
+    'dave': ['david'],
+    'jim': ['james'],
+    'bob': ['robert'],
+    'bill': ['william'],
+    'mike': ['michael'],
+    'tom': ['thomas'],
+    'joe': ['joseph'],
+    'chris': ['christopher', 'christian'],
+    'alex': ['alexander', 'alexandra'],
+    'nick': ['nicholas'],
+    'rick': ['richard'],
+    'tony': ['anthony'],
+    'sam': ['samuel', 'samantha'],
+    'beth': ['elizabeth'],
+    'juan': ['juanito', 'juanita'],
+  };
+  
+  // Check if input is a known nickname
+  if (commonNicknames[inputLower]) {
+    return commonNicknames[inputLower].some(nick => targetLower.includes(nick));
+  }
+  
+  // If target is a known nickname, check if input is in its variations
+  for (const [nick, variations] of Object.entries(commonNicknames)) {
+    if (targetLower.includes(nick) && variations.some(v => inputLower.includes(v))) {
+      return true;
+    }
+  }
+  
+  // Check for first letter matching (e.g., "J" might refer to "Juan")
+  if (inputLower.length === 1 && targetLower.startsWith(inputLower)) {
+    return true;
+  }
+  
+  // Check for significant substring match (more than 2 characters)
+  if (inputLower.length > 2 && targetLower.includes(inputLower)) {
+    return true;
+  }
+  
+  return false;
 }
 
 /**
- * Calculate similarity score between two strings
- * using Levenshtein distance and other factors
+ * Calculates string similarity score (0-1) between two strings
+ * Higher score = more similar
  */
-export const calculateSimilarity = (name1: string, name2: string): number => {
-  if (!name1 || !name2) return 0;
+export function calculateSimilarity(str1: string, str2: string): number {
+  // Simple Levenshtein distance implementation
+  const a = str1.toLowerCase();
+  const b = str2.toLowerCase();
   
-  // Normalize strings for comparison
-  const s1 = name1.toLowerCase().trim();
-  const s2 = name2.toLowerCase().trim();
+  // Fast path for equal strings or empty strings
+  if (a === b) return 1;
+  if (a.length === 0 || b.length === 0) return 0;
   
-  // Exact match
-  if (s1 === s2) return 1;
+  // Create matrix
+  const matrix = [];
   
-  // Check if one is contained in the other
-  if (s1.includes(s2) || s2.includes(s1)) {
-    return 0.8;
+  // Initialize first row
+  for (let i = 0; i <= b.length; i++) {
+    matrix[i] = [i];
   }
   
-  // Check if one name is a part of another (e.g., first name only)
-  const words1 = s1.split(/\s+/);
-  const words2 = s2.split(/\s+/);
-  
-  for (const word1 of words1) {
-    if (word1.length < 3) continue; // Skip short words
-    for (const word2 of words2) {
-      if (word2.length < 3) continue; // Skip short words
-      if (word1 === word2) return 0.7;
-    }
+  // Initialize first column
+  for (let i = 0; i <= a.length; i++) {
+    matrix[0][i] = i;
   }
   
-  // Calculate Levenshtein distance for more complex matching
-  const levenshteinDistance = (str1: string, str2: string): number => {
-    const track = Array(str2.length + 1).fill(null).map(() => 
-      Array(str1.length + 1).fill(null));
-    
-    for (let i = 0; i <= str1.length; i += 1) {
-      track[0][i] = i;
-    }
-    
-    for (let j = 0; j <= str2.length; j += 1) {
-      track[j][0] = j;
-    }
-    
-    for (let j = 1; j <= str2.length; j += 1) {
-      for (let i = 1; i <= str1.length; i += 1) {
-        const indicator = str1[i - 1] === str2[j - 1] ? 0 : 1;
-        track[j][i] = Math.min(
-          track[j][i - 1] + 1, // deletion
-          track[j - 1][i] + 1, // insertion
-          track[j - 1][i - 1] + indicator, // substitution
+  // Fill in the rest of the matrix
+  for (let i = 1; i <= b.length; i++) {
+    for (let j = 1; j <= a.length; j++) {
+      if (b.charAt(i - 1) === a.charAt(j - 1)) {
+        matrix[i][j] = matrix[i - 1][j - 1];
+      } else {
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j - 1] + 1, // substitution
+          matrix[i][j - 1] + 1,     // insertion
+          matrix[i - 1][j] + 1      // deletion
         );
       }
     }
-    
-    return track[str2.length][str1.length];
-  };
+  }
   
-  const maxLength = Math.max(s1.length, s2.length);
-  if (maxLength === 0) return 0;
-  
-  const distance = levenshteinDistance(s1, s2);
-  return 1 - distance / maxLength;
-};
+  // Calculate similarity score (1 - normalized distance)
+  const maxLength = Math.max(a.length, b.length);
+  return maxLength === 0 ? 1 : 1 - matrix[b.length][a.length] / maxLength;
+}
 
 /**
- * Find potential user matches based on name
- * @param inputName The name to match
- * @param users List of users to match against
- * @param threshold Similarity threshold (0-1), defaults to 0.6
- * @returns Array of potential matches sorted by relevance
+ * Find potential matches for a name from a list of users
+ * @param name The name to match
+ * @param users Array of users to check against
+ * @param threshold Similarity threshold (0-1)
+ * @returns Array of potential matching users
  */
-export const findPotentialMatches = (
-  inputName: string, 
-  users: User[], 
-  threshold = 0.6
-): User[] => {
-  if (!inputName || !users || users.length === 0) {
+export function findUserMatches(name: string, users: any[], threshold = 0.5): any[] {
+  if (!name || !users || users.length === 0) {
     return [];
   }
   
-  // Calculate similarity scores for each user
-  const scoredUsers = users.map(user => ({
-    user,
-    score: calculateSimilarity(inputName, user.name)
-  }));
+  const nameLower = name.toLowerCase().trim();
   
-  // Filter by threshold and sort by score (highest first)
-  return scoredUsers
-    .filter(item => item.score >= threshold)
-    .sort((a, b) => b.score - a.score)
-    .map(item => item.user);
-};
+  return users.filter(user => {
+    // Skip users without names
+    if (!user.name) return false;
+    
+    const userName = user.name.toLowerCase();
+    
+    // Check exact match
+    if (userName === nameLower) return true;
+    
+    // Check if name is part of the username
+    if (userName.includes(nameLower) || nameLower.includes(userName)) return true;
+    
+    // Check for nickname matches
+    if (isNicknameOrShortened(nameLower, userName)) return true;
+    
+    // Calculate similarity score
+    const similarity = calculateSimilarity(nameLower, userName);
+    return similarity >= threshold;
+  });
+}
 
 /**
- * Check if a name has a potential match in the users list
+ * Extract potential names from text
+ * This is a simple implementation that looks for words followed by "will"
+ * A more sophisticated implementation would use NLP
  */
-export const hasNameMatch = (
-  name: string,
-  users: User[],
-  threshold = 0.8
-): boolean => {
-  return findPotentialMatches(name, users, threshold).length > 0;
-};
+export function extractPotentialNames(text: string): string[] {
+  const namePattern = /(\b[A-Z][a-z]*\b)\s+will\b/g;
+  const matches = [...text.matchAll(namePattern)];
+  return matches.map(match => match[1]);
+}

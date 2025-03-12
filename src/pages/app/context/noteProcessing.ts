@@ -3,12 +3,14 @@ import { Task } from '@/utils/parser';
 import { parseTextIntoTasks } from '@/utils/parser';
 import { processNotesWithLLM } from '@/utils/llm';
 import { ToastType } from './providers';
+import { extractPotentialNames } from '@/utils/nameMatching';
 
 // Process notes with both LLM and fallback parser
 export async function processNotes(
   text: string,
   effectiveProjectName: string | null,
-  toast: ToastType
+  toast: ToastType,
+  motionUsers: any[] = []
 ): Promise<{ tasks: Task[], usedFallback: boolean }> {
   // Always start with the fallback parser to ensure we have results
   const fallbackTasks = parseTextIntoTasks(text, effectiveProjectName);
@@ -18,6 +20,10 @@ export async function processNotes(
   let usedFallback = true;
   
   try {
+    // Check for potential name issues before sending to API
+    const potentialNames = extractPotentialNames(text);
+    console.log('Potential names found in text:', potentialNames);
+    
     // Attempt to use the LLM processor if we have more than simple task text
     if (text.length > 50) {
       console.log('Attempting to use LLM processor...');
@@ -58,7 +64,13 @@ export async function processNotes(
     // Provide a helpful error message based on the type of error
     const errorMessage = error instanceof Error ? error.message : String(error);
     
-    if (errorMessage.includes('exceeded your current quota') || 
+    if (errorMessage.includes('Unrecognized users')) {
+      toast({
+        title: "Unrecognized users in notes",
+        description: errorMessage,
+        variant: "destructive"
+      });
+    } else if (errorMessage.includes('exceeded your current quota') || 
         errorMessage.includes('API key')) {
       toast({
         title: "AI service unavailable",
