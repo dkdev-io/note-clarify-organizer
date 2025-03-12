@@ -16,7 +16,11 @@ export interface AppContextType {
   updateApiProps: (props: Partial<ApiProps>) => void;
   handleApiConnect: (apiKey: string, fetchedWorkspaces: any[], workspaceId?: string, project?: string) => void;
   handleSkipConnect: () => void;
-  handleParseText: (text: string, providedProjectName: string | null, setUnrecognizedNames?: (names: string[]) => void) => void;
+  handleParseText: (
+    text: string, 
+    providedProjectName: string | null, 
+    setUnrecognizedNames?: ((names: string[]) => void)
+  ) => void;
   handleAddToMotion: (tasks: Task[], projectName: string | null, unassignedCount?: number) => void;
   handleStartOver: () => void;
   handleReconnect: () => void;

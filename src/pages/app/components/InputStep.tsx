@@ -14,7 +14,7 @@ interface InputStepProps {
   onParseTasks: (
     text: string, 
     providedProjectName: string | null, 
-    unrecognizedUserMappings?: Record<string, string | null>
+    unrecognizedUserMappingsOrCallback?: Record<string, string | null> | ((names: string[]) => void)
   ) => void;
   apiProps: ApiProps;
 }
@@ -69,6 +69,7 @@ const InputStep: React.FC<InputStepProps> = ({
     }
     
     // Check for unrecognized names - we're only checking, not processing yet
+    // Pass the callback function directly
     onParseTasks(text, providedProjectName, tempSetUnrecognizedNames);
   };
   
