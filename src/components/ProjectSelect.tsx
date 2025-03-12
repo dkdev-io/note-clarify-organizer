@@ -42,10 +42,12 @@ const ProjectSelect: React.FC<ProjectSelectProps> = ({
   const { toast } = useToast();
 
   useEffect(() => {
-    if (apiKey && workspaceId) {
+    if (workspaceId) {
+      setProjects([]);
+      setSelectedProjectId(null);
       loadProjects();
     }
-  }, [apiKey, workspaceId]);
+  }, [workspaceId]);
 
   const loadProjects = async () => {
     if (!workspaceId) return;
@@ -57,10 +59,12 @@ const ProjectSelect: React.FC<ProjectSelectProps> = ({
       console.log('Loaded projects:', projectOptions);
       setProjects(projectOptions);
       
-      // If we have projects and none is selected, select the first one
       if (projectOptions.length > 0 && !selectedProject) {
         onProjectSelect(projectOptions[0].label, projectOptions[0].value);
         setSelectedProjectId(projectOptions[0].value);
+      } else if (projectOptions.length === 0) {
+        onProjectSelect('', undefined);
+        setSelectedProjectId(null);
       }
     } catch (error) {
       console.error('Failed to load projects:', error);
@@ -77,6 +81,9 @@ const ProjectSelect: React.FC<ProjectSelectProps> = ({
         description: errorMessage,
         variant: "destructive"
       });
+      
+      onProjectSelect('', undefined);
+      setSelectedProjectId(null);
     } finally {
       setIsLoading(false);
     }
@@ -143,6 +150,9 @@ const ProjectSelect: React.FC<ProjectSelectProps> = ({
       const project = projects.find(p => p.label === selectedProject);
       if (project) {
         setSelectedProjectId(project.value);
+      } else {
+        onProjectSelect('', undefined);
+        setSelectedProjectId(null);
       }
     }
   }, [selectedProject, projects]);

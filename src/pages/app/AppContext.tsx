@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext } from 'react';
 import { AppContextType, ApiProps, Step } from './types';
 import { Task, parseTextIntoTasks } from '@/utils/parser';
@@ -29,7 +28,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Update API props
   const updateApiProps = (props: Partial<ApiProps>) => {
-    setApiProps(prev => ({ ...prev, ...props }));
+    setApiProps(prev => {
+      // If workspace is changing, clear the selected project
+      if (props.selectedWorkspaceId && props.selectedWorkspaceId !== prev.selectedWorkspaceId) {
+        return { ...prev, ...props, selectedProject: undefined };
+      }
+      return { ...prev, ...props };
+    });
   };
   
   // Handle API connection
