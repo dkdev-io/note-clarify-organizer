@@ -14,7 +14,7 @@ interface InputStepProps {
   onParseTasks: (
     text: string, 
     providedProjectName: string | null, 
-    unrecognizedUserMappings?: ((names: string[]) => void) | Record<string, string | null>
+    unrecognizedUserMappings?: Record<string, string | null>
   ) => void;
   apiProps: ApiProps;
 }
@@ -29,6 +29,7 @@ const InputStep: React.FC<InputStepProps> = ({
   const [showUserDialog, setShowUserDialog] = useState(false);
   const [pendingText, setPendingText] = useState('');
   const [pendingProjectName, setPendingProjectName] = useState<string | null>(null);
+  const [isProcessingNames, setIsProcessingNames] = useState(false);
   
   // Determine if we should show the Motion connection alert
   const showMotionAlert = apiProps.isConnected && 
@@ -44,8 +45,10 @@ const InputStep: React.FC<InputStepProps> = ({
     
     // We'll handle unrecognized users differently now
     const tempSetUnrecognizedNames = (names: string[]) => {
-      setUnrecognizedNames(names);
       if (names.length > 0) {
+        setIsProcessingNames(true);
+        setUnrecognizedNames(names);
+        
         // Initialize user mappings with null (unassigned)
         const initialMappings: Record<string, string | null> = {};
         names.forEach(name => {
@@ -65,13 +68,25 @@ const InputStep: React.FC<InputStepProps> = ({
       return;
     }
     
-    // Check for unrecognized names
+    // Check for unrecognized names - we're only checking, not processing yet
     onParseTasks(text, providedProjectName, tempSetUnrecognizedNames);
   };
   
   const handleConfirmUserMapping = () => {
     setShowUserDialog(false);
+    setIsProcessingNames(false);
+    
+    // Now actually process with the user mappings
     onParseTasks(pendingText, pendingProjectName, userMappings);
+  };
+  
+  // Prevent dialog from being closed by clicking outside or pressing escape
+  const handleOpenChange = (open: boolean) => {
+    // Only allow closing if we're not processing names or if explicitly closed by button
+    if (isProcessingNames && !open) {
+      return;
+    }
+    setShowUserDialog(open);
   };
   
   return (
@@ -114,9 +129,13 @@ const InputStep: React.FC<InputStepProps> = ({
         </p>
       </div>
       
-      {/* Dialog for unrecognized users */}
-      <Dialog open={showUserDialog} onOpenChange={setShowUserDialog}>
-        <DialogContent className="sm:max-w-md">
+      {/* Dialog for unrecognized users - now prevents closing */}
+      <Dialog open={showUserDialog} onOpenChange={handleOpenChange}>
+        <DialogContent className="sm:max-w-md" onInteractOutside={(e) => {
+          if (isProcessingNames) {
+            e.preventDefault();
+          }
+        }}>
           <DialogHeader>
             <DialogTitle>Unrecognized Users</DialogTitle>
             <DialogDescription>

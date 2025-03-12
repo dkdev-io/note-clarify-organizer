@@ -32,7 +32,6 @@ export const handleParseText = async (
     
     console.log(`Parsing text with length: ${text.length} and project name: ${providedProjectName || 'none'}`);
     setNoteText(text);
-    setIsProcessing(true);
     
     // Use the selected project from Motion API if available, otherwise use provided name
     const effectiveProjectName = apiProps.selectedProject || providedProjectName;
@@ -53,11 +52,10 @@ export const handleParseText = async (
         console.warn('Found unmatched names:', unmatchedNames);
         
         if (setUnrecognizedNames) {
-          // Store unrecognized names for display in UI
+          // If this is a check for unrecognized names, return them without processing
           setUnrecognizedNames(unmatchedNames);
-          
-          // Continue with parsing for now, we'll handle user selection later
-          console.log('Continuing with task extraction while user selects assignees');
+          // Don't set processing=true here so we don't show a loading spinner during name selection
+          return;
         } else {
           toast({
             title: "Unrecognized users in notes",
@@ -70,6 +68,9 @@ export const handleParseText = async (
         }
       }
     }
+    
+    // If we get here, we're ready to actually process the notes
+    setIsProcessing(true);
     
     const { tasks, usedFallback } = await processNotes(
       text, 

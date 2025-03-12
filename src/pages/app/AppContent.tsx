@@ -46,15 +46,27 @@ const AppContent: React.FC = () => {
     setStep('workspace');
   };
   
-  const handleTaskParse = (text: string, providedProjectName: string | null, setUnrecognizedNames?: ((names: string[]) => void) | Record<string, string | null>) => {
-    // If we received user mappings, store them
-    if (typeof setUnrecognizedNames === 'object') {
-      setUnrecognizedUserMappings(setUnrecognizedNames);
-      // Regular parsing without the user mapping function
+  const handleTaskParse = (
+    text: string, 
+    providedProjectName: string | null, 
+    unrecognizedUserMappingsOrCallback?: Record<string, string | null> | ((names: string[]) => void)
+  ) => {
+    // If we received user mappings as an object (not a function), store them and process
+    if (unrecognizedUserMappingsOrCallback && typeof unrecognizedUserMappingsOrCallback !== 'function') {
+      // Store the mappings
+      setUnrecognizedUserMappings(unrecognizedUserMappingsOrCallback);
+      
+      // Continue with task parsing using the mappings
       handleParseText(text, providedProjectName);
     } else {
-      // Normal parsing with potential callback for unrecognized names
-      handleParseText(text, providedProjectName, setUnrecognizedNames);
+      // This is the initial parse or a callback for unrecognized names
+      handleParseText(
+        text, 
+        providedProjectName, 
+        typeof unrecognizedUserMappingsOrCallback === 'function' 
+          ? unrecognizedUserMappingsOrCallback 
+          : undefined
+      );
     }
   };
   
