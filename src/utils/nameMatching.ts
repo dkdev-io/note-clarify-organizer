@@ -1,4 +1,3 @@
-
 /**
  * Utility functions for matching names in text to Motion users
  */
@@ -155,3 +154,6 @@ export function extractPotentialNames(text: string): string[] {
   const matches = [...text.matchAll(namePattern)];
   return matches.map(match => match[1]);
 }
+
+// Add an alias for findUserMatches to maintain backwards compatibility
+export const findPotentialMatches = findUserMatches;

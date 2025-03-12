@@ -21,7 +21,7 @@ const InputStep: React.FC<InputStepProps> = ({
   return (
     <div className="w-full space-y-4">
       {showMotionAlert && (
-        <Alert variant="warning" className="mb-4 bg-amber-50 border-amber-300">
+        <Alert variant="destructive" className="mb-4 bg-amber-50 border-amber-300">
           <AlertCircle className="h-4 w-4 text-amber-500" />
           <AlertTitle className="text-amber-800">User Information Missing</AlertTitle>
           <AlertDescription className="text-amber-700">

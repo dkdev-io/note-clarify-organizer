@@ -9,6 +9,7 @@ export interface ApiProps {
   isConnected: boolean;
   apiKey: string | null;
   workspaces: any[];
+  users?: any[]; // Add the users property
   selectedWorkspaceId?: string;
   selectedProject?: string;
 }
