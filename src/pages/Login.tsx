@@ -24,7 +24,6 @@ const Login = () => {
     // This ensures the proper auth flow is followed
     sessionStorage.removeItem('skip_auth');
     
-    // Don't clear the session here, let the user decide to log out
     console.log('Login page loaded, signup param:', signupParam);
   }, [signupParam]);
 

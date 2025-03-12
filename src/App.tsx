@@ -29,10 +29,6 @@ const App = () => {
   useEffect(() => {
     // Perform any initialization checks here if needed
     setIsInitialized(true);
-    
-    // Make sure no redirects happen during initial load
-    sessionStorage.removeItem('skip_auth');
-    
     console.log('App initialized - should show landing page by default');
   }, []);
 
@@ -53,12 +49,13 @@ const App = () => {
         <ErrorBoundary>
           <BrowserRouter>
             <Routes>
-              {/* Default route - explicitly redirect to landing */}
+              {/* Landing page as the root route */}
               <Route path="/" element={<Landing />} />
-              <Route path="/landing" element={<Navigate to="/" replace />} />
+              
+              {/* Login page */}
               <Route path="/login" element={<Login />} />
               
-              {/* Protected routes */}
+              {/* Protected app routes */}
               <Route 
                 path="/app/*" 
                 element={
@@ -70,7 +67,7 @@ const App = () => {
                 } 
               />
               
-              {/* Catch-all route - redirects to landing page */}
+              {/* Redirect all other paths to landing */}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </BrowserRouter>
