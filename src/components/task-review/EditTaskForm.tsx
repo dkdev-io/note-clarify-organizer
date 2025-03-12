@@ -10,7 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { TrashIcon } from 'lucide-react';
+import { TrashIcon, User2Icon } from 'lucide-react';
 
 interface EditTaskFormProps {
   task: Task;
@@ -19,6 +19,10 @@ interface EditTaskFormProps {
 }
 
 const EditTaskForm: React.FC<EditTaskFormProps> = ({ task, onSave, onUpdateTask }) => {
+  const clearAssignee = () => {
+    onUpdateTask(task.id, 'assignee', null);
+  };
+
   return (
     <div className="space-y-4 bg-accent/30 p-3 rounded-md -mx-3">
       <div>
@@ -71,13 +75,25 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({ task, onSave, onUpdateTask 
           <Label htmlFor={`assignee-${task.id}`} className="text-sm font-medium mb-1 block">
             Assignee (Optional)
           </Label>
-          <Input 
-            id={`assignee-${task.id}`}
-            value={task.assignee || ''}
-            onChange={(e) => onUpdateTask(task.id, 'assignee', e.target.value)}
-            className="w-full"
-            placeholder="Assignee name"
-          />
+          <div className="flex gap-2">
+            <Input 
+              id={`assignee-${task.id}`}
+              value={task.assignee || ''}
+              onChange={(e) => onUpdateTask(task.id, 'assignee', e.target.value || null)}
+              className="w-full"
+              placeholder="Assignee name"
+            />
+            <Button 
+              variant="outline" 
+              size="icon"
+              className="h-10 w-10"
+              onClick={clearAssignee}
+              type="button"
+              title="Remove assignment"
+            >
+              <User2Icon className="h-4 w-4 text-muted-foreground" />
+            </Button>
+          </div>
         </div>
       </div>
       

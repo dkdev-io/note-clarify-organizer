@@ -1,9 +1,11 @@
 
 import React from 'react';
 import { Task } from '@/utils/parser';
-import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import { PencilIcon, TrashIcon } from 'lucide-react';
+import { PencilIcon, TrashIcon, CalendarIcon, User2Icon } from 'lucide-react';
+import { Badge } from "@/components/ui/badge";
+import { formatDate } from 'date-fns';
 
 interface TaskItemProps {
   task: Task;
@@ -12,70 +14,80 @@ interface TaskItemProps {
 }
 
 const TaskItem: React.FC<TaskItemProps> = ({ task, onEdit, onDelete }) => {
-  const renderAssigneeBadge = (assignee: string | null | undefined) => {
-    if (!assignee || assignee.trim() === '') {
-      return (
-        <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200 text-[10px]">
-          Not Assigned
-        </Badge>
-      );
-    }
-    
-    return (
-      <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 text-[10px]">
-        Assignee: {assignee}
-      </Badge>
-    );
+  const priorityColors = {
+    high: 'bg-red-100 text-red-800 border-red-200',
+    medium: 'bg-amber-100 text-amber-800 border-amber-200',
+    low: 'bg-green-100 text-green-800 border-green-200',
+    normal: 'bg-blue-100 text-blue-800 border-blue-200'
   };
-
+  
+  const priorityColor = task.priority ? priorityColors[task.priority as keyof typeof priorityColors] : priorityColors.normal;
+  
   return (
-    <div className="py-4 first:pt-0">
-      <div className="flex items-start justify-between group">
-        <div>
-          <h3 className="font-medium text-gray-900">{task.title}</h3>
-          {task.description && (
-            <p className="text-sm text-muted-foreground mt-1">{task.description}</p>
-          )}
-          <div className="flex flex-wrap gap-2 mt-2">
-            {task.dueDate && (
-              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-[10px]">
-                Due: {new Date(task.dueDate).toLocaleDateString()}
-              </Badge>
-            )}
-            {task.priority && (
-              <Badge 
-                variant="outline" 
-                className={`text-[10px] ${
-                  task.priority === 'high' 
-                    ? 'bg-red-50 text-red-700 border-red-200' 
-                    : task.priority === 'medium' 
-                      ? 'bg-yellow-50 text-yellow-700 border-yellow-200' 
-                      : 'bg-green-50 text-green-700 border-green-200'
-                }`}
-              >
-                {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)} Priority
-              </Badge>
-            )}
-            {renderAssigneeBadge(task.assignee)}
-          </div>
+    <div className="py-3 group">
+      <div className="flex items-start gap-3">
+        <div className="pt-0.5">
+          <Checkbox className="opacity-50" />
         </div>
-        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => onEdit(task.id)}
-            className="h-8 w-8 p-0"
-          >
-            <PencilIcon className="h-4 w-4" />
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => onDelete(task.id)}
-            className="h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-50"
-          >
-            <TrashIcon className="h-4 w-4" />
-          </Button>
+        
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <h3 className="font-medium text-gray-900 break-words pr-2">{task.title}</h3>
+              
+              {task.description && (
+                <p className="text-sm text-gray-500 mt-1 break-words">
+                  {task.description}
+                </p>
+              )}
+              
+              <div className="flex flex-wrap gap-2 mt-2">
+                {task.priority && (
+                  <Badge variant="outline" className={`${priorityColor} capitalize`}>
+                    {task.priority}
+                  </Badge>
+                )}
+                
+                {task.assignee !== null && task.assignee !== undefined && task.assignee !== '' ? (
+                  <Badge variant="secondary" className="flex items-center gap-1">
+                    <User2Icon className="h-3 w-3" />
+                    {task.assignee}
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="flex items-center gap-1 border-gray-200 text-gray-500">
+                    <User2Icon className="h-3 w-3" />
+                    Not Assigned
+                  </Badge>
+                )}
+                
+                {task.dueDate && (
+                  <Badge variant="outline" className="flex items-center gap-1 border-blue-200 bg-blue-50 text-blue-700">
+                    <CalendarIcon className="h-3 w-3" />
+                    {formatDate(new Date(task.dueDate), 'MMM d, yyyy')}
+                  </Badge>
+                )}
+              </div>
+            </div>
+            
+            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-8 w-8 text-gray-500 hover:text-gray-700"
+                onClick={() => onEdit(task.id)}
+              >
+                <PencilIcon className="h-4 w-4" />
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-8 w-8 text-gray-500 hover:text-red-600"
+                onClick={() => onDelete(task.id)}
+              >
+                <TrashIcon className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardDescription, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -44,7 +43,12 @@ const TasksReview: React.FC<TasksReviewProps> = ({
   const { toast } = useToast();
 
   useEffect(() => {
-    setEditedTasks([...initialTasks]);
+    const tasksWithCorrectAssignees = initialTasks.map(task => ({
+      ...task,
+      assignee: task.assignee || null
+    }));
+    
+    setEditedTasks(tasksWithCorrectAssignees);
     
     const timer = setTimeout(() => {
       setIsLoading(false);
@@ -86,7 +90,8 @@ const TasksReview: React.FC<TasksReviewProps> = ({
     try {
       const tasksWithProject = editedTasks.map(task => ({
         ...task,
-        project: editedProjectName || task.project
+        project: editedProjectName || task.project,
+        assignee: task.assignee || null
       }));
 
       if (apiProps.isConnected && apiProps.selectedWorkspaceId) {

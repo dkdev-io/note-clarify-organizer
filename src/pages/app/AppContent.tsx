@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAppContext } from './context/AppContextProvider';
 import AppLayout from './components/AppLayout';
@@ -55,6 +54,7 @@ const AppContent: React.FC = () => {
     if (unrecognizedUserMappingsOrCallback && typeof unrecognizedUserMappingsOrCallback !== 'function') {
       // Store the mappings
       setUnrecognizedUserMappings(unrecognizedUserMappingsOrCallback);
+      console.log('Saved user mappings:', unrecognizedUserMappingsOrCallback);
       
       // Continue with task parsing using the mappings
       handleParseText(text, providedProjectName);
