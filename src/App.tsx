@@ -29,6 +29,11 @@ const App = () => {
   useEffect(() => {
     // Perform any initialization checks here if needed
     setIsInitialized(true);
+    
+    // Make sure no redirects happen during initial load
+    sessionStorage.removeItem('skip_auth');
+    
+    console.log('App initialized - should show landing page by default');
   }, []);
 
   // Show a loading indicator until the app is fully initialized
