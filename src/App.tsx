@@ -49,7 +49,7 @@ const App = () => {
         <ErrorBoundary>
           <BrowserRouter>
             <Routes>
-              {/* Public routes */}
+              {/* Public routes - root path redirects to landing */}
               <Route path="/" element={<Landing />} />
               <Route path="/landing" element={<Navigate to="/" replace />} />
               <Route path="/login" element={<Login />} />
@@ -66,8 +66,8 @@ const App = () => {
                 } 
               />
               
-              {/* Catch-all route */}
-              <Route path="*" element={<NotFound />} />
+              {/* Catch-all route - redirects to landing page instead of 404 */}
+              <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </BrowserRouter>
         </ErrorBoundary>

@@ -90,8 +90,8 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
             <li>Verify your internet connection</li>
           </ul>
         </div>
-        <Button onClick={() => navigate('/login')} className="mb-2">
-          Go to Login
+        <Button onClick={() => navigate('/')} className="mb-2">
+          Go to Landing
         </Button>
         <Button variant="outline" onClick={() => window.location.reload()}>
           Refresh Page
@@ -100,9 +100,9 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     );
   }
 
-  // Redirect to login if not authenticated
+  // Redirect to landing if not authenticated
   if (!authenticated) {
-    return <Navigate to="/login" />;
+    return <Navigate to="/" />;
   }
 
   // Render children if authenticated
