@@ -1,18 +1,24 @@
 
 import React from 'react';
-import { Button } from '@/components/ui/button';
 import { CheckCircle } from 'lucide-react';
+import { CallToAction } from './CallToAction';
 
 interface PricingCardProps {
   title: string;
   description: string;
   note: string;
   onSignUp: () => void;
+  featured?: boolean;
 }
 
-export const PricingCard = ({ title, description, note, onSignUp }: PricingCardProps) => {
+export const PricingCard = ({ title, description, note, onSignUp, featured = false }: PricingCardProps) => {
   return (
-    <div className="bg-white p-8 border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+    <div className={`bg-white p-8 border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-2 hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] ${featured ? 'transform -translate-y-4 border-[#fbbc05]' : ''}`}>
+      {featured && (
+        <div className="bg-[#fbbc05] text-black font-bold py-1 px-4 absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 border-2 border-black">
+          MOST POPULAR
+        </div>
+      )}
       <h3 className="text-4xl font-bebas-neue mb-2 font-bold">{title}</h3>
       <p className="text-5xl font-bebas-neue my-4 font-bold">$50</p>
       <p className="font-georgia text-lg mb-6">Everything you need to streamline your project management</p>
@@ -37,12 +43,9 @@ export const PricingCard = ({ title, description, note, onSignUp }: PricingCardP
         </li>
       </ul>
       
-      <Button 
-        onClick={onSignUp}
-        className="w-full bg-[#fbbc05] hover:bg-[#fbbc05]/90 text-black font-bold text-lg py-6 rounded-none border-black border-4 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-1"
-      >
+      <CallToAction onClick={onSignUp} className="w-full">
         Get Started
-      </Button>
+      </CallToAction>
     </div>
   );
 };

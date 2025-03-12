@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
+import { CallToAction } from './components/CallToAction';
 
 export const Navigation = () => {
   const navigate = useNavigate();
@@ -14,20 +14,18 @@ export const Navigation = () => {
   };
   
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-white border-b-4 border-black">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-white border-b-4 border-black backdrop-blur-sm bg-opacity-95">
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-        <h1 className="text-3xl font-bold tracking-tighter">Project Notes</h1>
-        <div className="flex space-x-6 items-center">
-          <Link to="/learn-more" className="text-black hover:text-[#fbbc05] font-bold">Learn More</Link>
-          <Link to="/about" className="text-black hover:text-[#fbbc05] font-bold">About</Link>
-          <Link to="/contact" className="text-black hover:text-[#fbbc05] font-bold">Contact</Link>
-          <Button 
-            onClick={handleSignUp}
-            variant="outline" 
-            className="ml-4 flex items-center gap-1 text-black font-bold bg-yellow-400 hover:bg-yellow-500 border-2 border-black hover:border-black"
-          >
+        <Link to="/" className="text-3xl font-bebas-neue font-bold tracking-tight flex items-center">
+          <span className="text-[#fbbc05] mr-1">P</span>roject <span className="text-[#fbbc05] mr-1">N</span>otes
+        </Link>
+        <div className="flex space-x-8 items-center">
+          <Link to="/features" className="text-black hover:text-[#fbbc05] font-bold transition-colors">Features</Link>
+          <Link to="/pricing" className="text-black hover:text-[#fbbc05] font-bold transition-colors">Pricing</Link>
+          <Link to="/about" className="text-black hover:text-[#fbbc05] font-bold transition-colors">About</Link>
+          <CallToAction onClick={handleSignUp} className="ml-4">
             Get Started
-          </Button>
+          </CallToAction>
         </div>
       </div>
     </nav>
