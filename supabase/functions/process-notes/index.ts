@@ -68,9 +68,33 @@ serve(async (req) => {
 // Extract potential names from text
 function extractNamesFromText(text) {
   // Look for patterns like "Name will..." which typically indicate a task assignment
-  const namePattern = /(\b[A-Z][a-z]*\b)\s+will\b/g;
-  const matches = [...text.matchAll(namePattern)];
-  return [...new Set(matches.map(match => match[1]))]; // Use Set to get unique names
+  const namePatterns = [
+    /(\b[A-Z][a-z]*\b)\s+will\b/g,           // "Name will..."
+    /(\b[A-Z][a-z]*\b)\s+(?:should|needs to|has to|must)\b/g,  // "Name should/needs to/has to/must..."
+    /\bassign(?:ed)?\s+to\s+(\b[A-Z][a-z]*\b)/gi,  // "assigned to Name"
+    /(\b[A-Z][a-z]*\b)'s\s+(?:task|responsibility|job)/g,  // "Name's task/responsibility/job"
+    /(\b[A-Z][a-z]*\b)\s+is\s+(?:responsible|assigned)/g,  // "Name is responsible/assigned"
+  ];
+  
+  let allNames = [];
+  
+  // Apply each pattern and collect names
+  for (const pattern of namePatterns) {
+    const matches = [...text.matchAll(pattern)];
+    const names = matches.map(match => match[1]);
+    allNames = [...allNames, ...names];
+  }
+  
+  // Manual check for specific names that might be missed
+  const specificNames = ["Matt", "Matthew"];
+  for (const name of specificNames) {
+    if (text.includes(name) && !allNames.includes(name)) {
+      allNames.push(name);
+    }
+  }
+  
+  // Return unique names
+  return [...new Set(allNames)];
 }
 
 // Check if names in the text exist in the Motion users
@@ -79,31 +103,43 @@ function findUnrecognizedNames(extractedNames, motionUsers) {
     return []; // Can't verify without user list
   }
   
+  console.log('Checking names against Motion users:', extractedNames);
+  console.log('Available Motion users:', motionUsers.map(u => u.name));
+  
   const userNames = motionUsers.map(user => {
-    return user.name ? user.name.split(' ')[0].toLowerCase() : ''; // Get first name in lowercase
-  }).filter(name => name); // Remove empty names
+    // Get both full name and first name
+    const fullName = user.name || '';
+    const firstName = fullName.split(' ')[0].toLowerCase();
+    return { fullName: fullName.toLowerCase(), firstName };
+  }).filter(name => name.firstName); // Remove empty names
   
   return extractedNames.filter(name => {
     const nameLower = name.toLowerCase();
     
-    // Check direct match
-    if (userNames.includes(nameLower)) {
+    // Check direct match with first names
+    if (userNames.some(user => user.firstName === nameLower)) {
+      return false; // Name is recognized
+    }
+    
+    // Check full name match
+    if (userNames.some(user => user.fullName.includes(nameLower))) {
       return false; // Name is recognized
     }
     
     // Check partial matches (e.g., "Dan" could match "Daniel")
     for (const userName of userNames) {
       // Check if name is contained in username or vice versa
-      if (userName.includes(nameLower) || nameLower.includes(userName)) {
+      if (userName.firstName.includes(nameLower) || nameLower.includes(userName.firstName)) {
         return false; // Name is potentially recognized
       }
       
       // Check common nicknames (simple approach)
-      if ((nameLower === 'dan' && userName.includes('daniel')) ||
-          (nameLower === 'mat' && userName.includes('matthew')) ||
-          (nameLower === 'dn' && (userName.includes('dan') || userName.includes('daniel'))) ||
-          (nameLower === 'dave' && userName.includes('david')) ||
-          (nameLower === 'jim' && userName.includes('james'))) {
+      if ((nameLower === 'dan' && userName.firstName.includes('daniel')) ||
+          (nameLower === 'mat' && userName.firstName.includes('matthew')) ||
+          (nameLower === 'matt' && userName.firstName.includes('matthew')) ||
+          (nameLower === 'dn' && (userName.firstName.includes('dan') || userName.firstName.includes('daniel'))) ||
+          (nameLower === 'dave' && userName.firstName.includes('david')) ||
+          (nameLower === 'jim' && userName.firstName.includes('james'))) {
         return false; // Name is potentially a nickname
       }
     }
