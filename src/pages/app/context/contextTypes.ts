@@ -19,7 +19,7 @@ export interface AppContextType {
   handleParseText: (
     text: string, 
     providedProjectName: string | null, 
-    setUnrecognizedNames?: ((names: string[]) => void)
+    setUnrecognizedNames?: ((names: string[]) => void) | Record<string, string | null>
   ) => void;
   handleAddToMotion: (tasks: Task[], projectName: string | null, unassignedCount?: number) => void;
   handleStartOver: () => void;
