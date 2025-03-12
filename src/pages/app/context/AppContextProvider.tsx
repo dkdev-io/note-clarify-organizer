@@ -4,9 +4,16 @@ import { AppContextType } from './contextTypes';
 import { ApiProps, Step } from '../types';
 import { Task } from '@/utils/parser';
 import { useToast } from "@/hooks/use-toast";
-import { storeApiKey } from '@/utils/keyStorage';
-import { processNotes } from './noteProcessing';
-import { parseTextIntoTasks } from '@/utils/parser';
+import { 
+  handleApiConnect as apiConnectHandler,
+  handleSkipConnect as skipConnectHandler,
+  handleStartOver as startOverHandler,
+  handleReconnect as reconnectHandler
+} from './handlers/apiHandlers';
+import {
+  handleParseText as parseTextHandler,
+  handleAddToMotion as addToMotionHandler
+} from './handlers/taskHandlers';
 
 // Create the context with a default value
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -40,147 +47,39 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
   
-  // Handle API connection
+  // Handler functions - now using the extracted handlers
   const handleApiConnect = (apiKey: string, fetchedWorkspaces: any[], workspaceId?: string, project?: string) => {
-    // Store the API key in the app context
-    if (apiKey !== 'proxy_mode') {
-      // We'll store in localStorage in the MotionApiConnect component
-      // But we still update our application state
-      storeApiKey(apiKey);
-    }
-    
-    // Just update API key and workspaces but move to workspace selection step instead
-    setApiProps({
-      apiKey,
-      workspaces: fetchedWorkspaces,
-      selectedWorkspaceId: workspaceId,
-      selectedProject: project,
-      isConnected: true,
-    });
-    
-    // If connected via proxy mode with default workspace, skip to input
-    if (apiKey === 'proxy_mode' && workspaceId) {
-      setProjectName(project || null);
-      setStep('input');
-    } else {
-      // Otherwise go to workspace selection step
-      setStep('workspace');
-    }
+    apiConnectHandler(apiKey, fetchedWorkspaces, workspaceId, project, setApiProps, setProjectName, setStep);
   };
 
-  // Handle skipping API connection
   const handleSkipConnect = () => {
-    updateApiProps({ isConnected: false });
-    setStep('input');
+    skipConnectHandler(setStep, updateApiProps);
   };
 
-  // Handle moving from note input to task extraction
   const handleParseText = async (text: string, providedProjectName: string | null) => {
-    try {
-      if (!text || text.trim() === '') {
-        toast({
-          title: "Empty notes",
-          description: "Please enter some notes to extract tasks from.",
-          variant: "destructive"
-        });
-        return;
-      }
-      
-      console.log(`Parsing text with length: ${text.length} and project name: ${providedProjectName || 'none'}`);
-      setNoteText(text);
-      setIsProcessing(true);
-      
-      // Use the selected project from Motion API if available, otherwise use provided name
-      const effectiveProjectName = apiProps.selectedProject || providedProjectName;
-      console.log(`Effective project name: ${effectiveProjectName || 'none'}`);
-      
-      const { tasks, usedFallback } = await processNotes(text, effectiveProjectName, toast);
-      
-      // If we still have no tasks, show an error
-      if (tasks.length === 0) {
-        toast({
-          title: "No tasks found",
-          description: "Couldn't extract any tasks from your notes. Try adding more detailed text.",
-          variant: "destructive"
-        });
-        setIsProcessing(false);
-        return;
-      }
-      
-      // Extract project name from tasks if not provided
-      const extractedProjectName = tasks.find(task => task.project)?.project || effectiveProjectName || null;
-      console.log(`Extracted project name: ${extractedProjectName || 'none'}`);
-      setProjectName(extractedProjectName);
-      
-      // If connected to API, enhance tasks with workspace IDs
-      if (apiProps.isConnected && apiProps.selectedWorkspaceId) {
-        const tasksWithWorkspace = tasks.map(task => ({
-          ...task,
-          workspace_id: apiProps.selectedWorkspaceId,
-          project: extractedProjectName || task.project
-        }));
-        setExtractedTasks(tasksWithWorkspace);
-      } else {
-        setExtractedTasks(tasks);
-      }
-      
-      console.log(`Moving to tasks step with ${tasks.length} tasks`);
-      setStep('tasks');
-    } catch (error) {
-      console.error("Error parsing text:", error);
-      toast({
-        title: "Error processing notes",
-        description: error instanceof Error ? error.message : "An unknown error occurred",
-        variant: "destructive"
-      });
-      
-      // Use fallback parsing as a last resort
-      try {
-        const fallbackTasks = parseTextIntoTasks(text, projectName);
-        if (fallbackTasks.length > 0) {
-          setExtractedTasks(fallbackTasks);
-          setStep('tasks');
-          toast({
-            title: "Recovered with basic parsing",
-            description: `Extracted ${fallbackTasks.length} tasks using simple parsing.`,
-          });
-        }
-      } catch (e) {
-        console.error("Even fallback parsing failed:", e);
-      }
-    } finally {
-      setIsProcessing(false);
-    }
+    await parseTextHandler(
+      text, 
+      providedProjectName, 
+      setNoteText, 
+      setIsProcessing, 
+      apiProps, 
+      setProjectName, 
+      setExtractedTasks, 
+      setStep, 
+      toast
+    );
   };
 
-  // Handle adding tasks to Motion
   const handleAddToMotion = (tasks: Task[], updatedProjectName: string | null) => {
-    if (updatedProjectName) {
-      setProjectName(updatedProjectName);
-    }
-    
-    setStep('complete');
-    toast({
-      title: "Success!",
-      description: `${tasks.length} tasks have been added to Motion${updatedProjectName ? ` under project '${updatedProjectName}'` : ''}.`,
-    });
+    addToMotionHandler(tasks, updatedProjectName, setProjectName, setStep, toast);
   };
 
-  // Handle starting over
   const handleStartOver = () => {
-    setNoteText('');
-    setExtractedTasks([]);
-    // Keep project and workspace if connected to API
-    if (!apiProps.isConnected) {
-      setProjectName(null);
-    }
-    // Keep API connection but return to input step
-    setStep('input');
+    startOverHandler(setNoteText, setExtractedTasks, setProjectName, apiProps, setStep);
   };
 
-  // Reconnect to Motion API
   const handleReconnect = () => {
-    setStep('connect');
+    reconnectHandler(setStep);
   };
   
   // Create the context value

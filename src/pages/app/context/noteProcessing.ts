@@ -38,7 +38,7 @@ export async function processNotes(
         
         toast({
           title: "AI Processing Complete",
-          description: `Successfully extracted ${tasks.length} tasks from your notes.`,
+          description: `Successfully extracted ${tasks.length} tasks from your notes.`
         });
       } else {
         console.log('LLM processor returned no tasks, using fallback parser results');
@@ -53,7 +53,7 @@ export async function processNotes(
   if (usedFallback) {
     toast({
       title: "Using basic task parser",
-      description: `Extracted ${tasks.length} tasks using simple parsing.`,
+      description: `Extracted ${tasks.length} tasks using simple parsing.`
     });
   }
   
