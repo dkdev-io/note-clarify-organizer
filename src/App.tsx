@@ -53,7 +53,7 @@ const App = () => {
         <ErrorBoundary>
           <BrowserRouter>
             <Routes>
-              {/* Public routes - root path shows landing */}
+              {/* Default route - explicitly redirect to landing */}
               <Route path="/" element={<Landing />} />
               <Route path="/landing" element={<Navigate to="/" replace />} />
               <Route path="/login" element={<Login />} />

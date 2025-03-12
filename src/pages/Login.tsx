@@ -24,17 +24,7 @@ const Login = () => {
     // This ensures the proper auth flow is followed
     sessionStorage.removeItem('skip_auth');
     
-    // Also clear any existing session to force a clean login
-    const clearSession = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (data.session) {
-        // If there's an active session, sign out
-        await supabase.auth.signOut();
-        console.log('Existing session cleared for clean login');
-      }
-    };
-    
-    clearSession();
+    // Don't clear the session here, let the user decide to log out
     console.log('Login page loaded, signup param:', signupParam);
   }, [signupParam]);
 
@@ -46,8 +36,6 @@ const Login = () => {
         navigate('/app');
       }
     });
-
-    // Don't check for skip parameter here, let the AuthForm and ProtectedRoute handle it
 
     return () => {
       subscription.unsubscribe();

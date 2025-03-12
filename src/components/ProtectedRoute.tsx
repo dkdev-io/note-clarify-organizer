@@ -108,8 +108,8 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     return <>{children}</>;
   }
 
-  // Redirect to landing if not authenticated
-  return <Navigate to="/login" />;
+  // Redirect to login if not authenticated
+  return <Navigate to="/login" state={{ from: location }} />;
 };
 
 export default ProtectedRoute;
