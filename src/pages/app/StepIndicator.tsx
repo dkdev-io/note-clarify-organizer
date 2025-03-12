@@ -1,7 +1,8 @@
 
 import React from 'react';
 import { Step } from './types';
-import { CheckIcon, ClipboardIcon, LinkIcon, FolderIcon } from 'lucide-react';
+import { CheckCircle, CircleDashed, ArrowRight } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface StepIndicatorProps {
   currentStep: Step;
@@ -9,65 +10,93 @@ interface StepIndicatorProps {
 }
 
 const StepIndicator: React.FC<StepIndicatorProps> = ({ currentStep, isConnected }) => {
-  // Define steps and their properties
-  const steps: { key: Step; label: string; icon: React.ReactNode }[] = [
-    { key: 'connect', label: 'Connect API', icon: <LinkIcon className="h-4 w-4" /> },
-    { key: 'workspace', label: 'Select Workspace', icon: <FolderIcon className="h-4 w-4" /> },
-    { key: 'input', label: 'Input Notes', icon: <ClipboardIcon className="h-4 w-4" /> },
-    { key: 'tasks', label: 'Review Tasks', icon: <CheckIcon className="h-4 w-4" /> },
-  ];
+  // Define the steps based on whether Motion API is connected
+  let steps: { id: string; label: string; key: Step }[] = [];
 
-  const currentStepIndex = steps.findIndex(s => s.key === currentStep);
+  if (isConnected) {
+    steps = [
+      { id: '1', label: 'Connect', key: 'connect' },
+      { id: '2', label: 'Workspace', key: 'workspace' },
+      { id: '3', label: 'Input', key: 'input' },
+      { id: '4', label: 'Tasks', key: 'tasks' },
+    ];
+  } else {
+    steps = [
+      { id: '1', label: 'Connect', key: 'connect' },
+      { id: '2', label: 'Input', key: 'input' },
+      { id: '3', label: 'Tasks', key: 'tasks' },
+    ];
+  }
 
   return (
-    <div className="flex justify-center mb-8">
-      <div className="inline-flex items-center">
-        {steps.map((s, index) => {
-          // Always show all steps in the new workflow
-          const isCompleted = index < currentStepIndex || currentStep === 'complete';
-          const isCurrent = s.key === currentStep;
+    <div className="w-full mb-8">
+      <div className="flex items-center justify-between">
+        {steps.map((step, index) => {
+          const isCompleted = getStepState(step.key, currentStep) === 'completed';
+          const isActive = getStepState(step.key, currentStep) === 'active';
+          const isUpcoming = getStepState(step.key, currentStep) === 'upcoming';
+          
+          // Determine if this is the last step
+          const isLastStep = index === steps.length - 1;
           
           return (
-            <React.Fragment key={s.key}>
-              {index > 0 && (
+            <React.Fragment key={step.id}>
+              <div className="flex flex-col items-center">
                 <div 
-                  className={`h-[1px] w-10 mx-1 ${
-                    isCompleted ? 'bg-[#fbbc05]' : 'bg-gray-200'
-                  }`}
-                />
-              )}
-              <div 
-                className={`flex flex-col items-center ${
-                  isCurrent ? 'opacity-100' : isCompleted ? 'opacity-80' : 'opacity-40'
-                }`}
-              >
-                <div 
-                  className={`
-                    h-8 w-8 rounded-full flex items-center justify-center transition-all duration-300
-                    ${isCompleted 
-                      ? 'bg-[#fbbc05] text-white' 
-                      : isCurrent 
-                        ? 'bg-accent border border-[#fbbc05]/50 text-[#fbbc05]' 
-                        : 'bg-gray-100 text-gray-400'
-                    }
-                  `}
+                  className={cn(
+                    "flex items-center justify-center w-10 h-10 rounded-full border-2 mb-2 transition-all",
+                    isCompleted ? "border-primary bg-primary text-white" : 
+                    isActive ? "border-primary bg-white text-primary" : 
+                    "border-gray-300 bg-white text-gray-400"
+                  )}
                 >
-                  {s.icon}
+                  {isCompleted ? (
+                    <CheckCircle className="w-5 h-5" />
+                  ) : (
+                    <CircleDashed className="w-5 h-5" />
+                  )}
                 </div>
                 <span 
-                  className={`text-xs mt-1 ${
-                    isCurrent ? 'text-[#fbbc05] font-medium' : 'text-muted-foreground'
-                  }`}
+                  className={cn(
+                    "text-sm font-medium",
+                    isCompleted || isActive ? "text-gray-900" : "text-gray-500"
+                  )}
                 >
-                  {s.label}
+                  {step.label}
                 </span>
               </div>
+              
+              {!isLastStep && (
+                <div 
+                  className={cn(
+                    "flex-1 h-0.5 mx-2",
+                    isCompleted ? "bg-primary" : "bg-gray-200"
+                  )}
+                >
+                  <ArrowRight className="invisible" />
+                </div>
+              )}
             </React.Fragment>
           );
         })}
       </div>
     </div>
   );
+};
+
+// Helper function to determine the state of each step
+const getStepState = (stepKey: Step, currentStep: Step) => {
+  const stepOrder: Step[] = ['connect', 'workspace', 'input', 'tasks', 'complete'];
+  const currentIndex = stepOrder.indexOf(currentStep);
+  const stepIndex = stepOrder.indexOf(stepKey);
+  
+  if (stepIndex < currentIndex) {
+    return 'completed';
+  } else if (stepIndex === currentIndex) {
+    return 'active';
+  } else {
+    return 'upcoming';
+  }
 };
 
 export default StepIndicator;

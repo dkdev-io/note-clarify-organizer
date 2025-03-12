@@ -10,6 +10,7 @@ import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useEffect, useState } from "react";
+import { AppProvider } from "./pages/app/AppContext";
 
 const App = () => {
   const [isInitialized, setIsInitialized] = useState(false);
@@ -55,7 +56,9 @@ const App = () => {
               path="/app/*" 
               element={
                 <ProtectedRoute>
-                  <IndexRefactored />
+                  <AppProvider>
+                    <IndexRefactored />
+                  </AppProvider>
                 </ProtectedRoute>
               } 
             />

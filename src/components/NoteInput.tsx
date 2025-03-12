@@ -4,6 +4,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { FileTextIcon, SendIcon, ArrowRightIcon, PlusIcon } from 'lucide-react';
+import { useToast } from "@/components/ui/use-toast";
 
 interface ApiProps {
   isConnected: boolean;
@@ -21,16 +22,27 @@ interface NoteInputProps {
 const NoteInput: React.FC<NoteInputProps> = ({ onParseTasks, apiProps }) => {
   const [noteText, setNoteText] = useState('');
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const { toast } = useToast();
 
   const handleSubmit = () => {
-    if (noteText.trim()) {
-      setIsTransitioning(true);
-      setTimeout(() => {
-        // Pass null for project name to extract from text or use selectedProject from apiProps
-        onParseTasks(noteText, apiProps.selectedProject || null);
-        setIsTransitioning(false);
-      }, 400);
+    if (!noteText.trim()) {
+      toast({
+        title: "Empty notes",
+        description: "Please enter some notes to extract tasks from.",
+        variant: "destructive"
+      });
+      return;
     }
+    
+    setIsTransitioning(true);
+    console.log('Submitting note text:', noteText.substring(0, 50) + '...');
+    console.log('Selected project:', apiProps.selectedProject);
+    
+    setTimeout(() => {
+      // Pass null for project name to extract from text or use selectedProject from apiProps
+      onParseTasks(noteText, apiProps.selectedProject || null);
+      setIsTransitioning(false);
+    }, 400);
   };
 
   const sampleNotes = [
@@ -41,7 +53,6 @@ const NoteInput: React.FC<NoteInputProps> = ({ onParseTasks, apiProps }) => {
 
   const loadSample = (index: number) => {
     setNoteText(sampleNotes[index]);
-    // Project name will be extracted from text
   };
 
   return (

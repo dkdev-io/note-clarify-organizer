@@ -83,11 +83,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return;
       }
       
+      console.log(`Parsing text with length: ${text.length} and project name: ${providedProjectName || 'none'}`);
       setNoteText(text);
       setIsProcessing(true);
       
       // Use the selected project from Motion API if available, otherwise use provided name
       const effectiveProjectName = apiProps.selectedProject || providedProjectName;
+      console.log(`Effective project name: ${effectiveProjectName || 'none'}`);
       
       let tasks: Task[] = [];
       let usedFallback = false;
@@ -132,6 +134,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       
       // Extract project name from tasks if not provided
       const extractedProjectName = tasks.find(task => task.project)?.project || effectiveProjectName || null;
+      console.log(`Extracted project name: ${extractedProjectName || 'none'}`);
       setProjectName(extractedProjectName);
       
       // If connected to API, enhance tasks with workspace IDs
@@ -146,6 +149,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setExtractedTasks(tasks);
       }
       
+      console.log(`Moving to tasks step with ${tasks.length} tasks`);
       setStep('tasks');
     } catch (error) {
       console.error("Error parsing text:", error);
