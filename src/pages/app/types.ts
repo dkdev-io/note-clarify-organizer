@@ -1,4 +1,3 @@
-
 import { Task } from '@/utils/parser';
 
 // Define application steps
@@ -9,7 +8,7 @@ export interface ApiProps {
   isConnected: boolean;
   apiKey: string | null;
   workspaces: any[];
-  users?: any[]; // Add the users property
+  users?: any[]; // Motion users list
   selectedWorkspaceId?: string;
   selectedProject?: string;
 }

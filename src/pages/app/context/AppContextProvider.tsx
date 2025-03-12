@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext } from 'react';
 import { AppContextType } from './contextTypes';
 import { ApiProps, Step } from '../types';
@@ -34,6 +33,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     isConnected: false,
     selectedWorkspaceId: undefined,
     selectedProject: undefined,
+    users: [],
   });
 
   // Update API props
@@ -48,8 +48,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
   
   // Handler functions - now using the extracted handlers
-  const handleApiConnect = (apiKey: string, fetchedWorkspaces: any[], workspaceId?: string, project?: string) => {
-    apiConnectHandler(apiKey, fetchedWorkspaces, setApiProps, setProjectName, setStep, workspaceId, project);
+  const handleApiConnect = (apiKey: string, fetchedWorkspaces: any[], workspaceId?: string, project?: string, users?: any[]) => {
+    apiConnectHandler(apiKey, fetchedWorkspaces, setApiProps, setProjectName, setStep, workspaceId, project, users);
   };
 
   const handleSkipConnect = () => {

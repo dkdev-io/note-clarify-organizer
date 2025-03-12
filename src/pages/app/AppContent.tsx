@@ -1,12 +1,13 @@
 
-import React from 'react';
-import { useAppContext } from './AppContext';
+import React, { useEffect } from 'react';
+import { useAppContext } from './context/AppContextProvider';
 import AppLayout from './components/AppLayout';
 import ConnectStep from './components/ConnectStep';
 import WorkspaceStep from './components/WorkspaceStep';
 import InputStep from './components/InputStep';
 import TasksStep from './components/TasksStep';
 import CompleteStep from './components/CompleteStep';
+import { handleWorkspaceSelect } from './context/handlers/apiHandlers';
 
 const AppContent: React.FC = () => {
   const { 
@@ -25,8 +26,8 @@ const AppContent: React.FC = () => {
     setStep
   } = useAppContext();
   
-  const handleWorkspaceSelect = (workspaceId: string) => {
-    updateApiProps({ selectedWorkspaceId: workspaceId });
+  const handleWorkspaceSelection = (workspaceId: string) => {
+    handleWorkspaceSelect(workspaceId, apiProps.apiKey, updateApiProps);
   };
 
   const handleProjectSelect = (projectName: string, projectId?: string) => {
@@ -58,7 +59,7 @@ const AppContent: React.FC = () => {
             workspaces={apiProps.workspaces}
             selectedWorkspaceId={apiProps.selectedWorkspaceId || null}
             selectedProject={apiProps.selectedProject || null}
-            onWorkspaceSelect={handleWorkspaceSelect}
+            onWorkspaceSelect={handleWorkspaceSelection}
             onProjectSelect={handleProjectSelect}
             onContinue={handleContinueToInput}
             onBack={() => setStep('connect')}

@@ -1,7 +1,7 @@
-
 import { ApiProps } from '../../types';
 import { storeApiKey } from '@/utils/keyStorage';
 import { Step } from '../../types';
+import { fetchUsers } from '@/utils/motion';
 
 // Handle API connection
 export const handleApiConnect = (
@@ -11,7 +11,8 @@ export const handleApiConnect = (
   setProjectName: (name: string | null) => void,
   setStep: (step: Step) => void,
   workspaceId?: string, 
-  project?: string
+  project?: string,
+  users?: any[]
 ) => {
   // Store the API key in the app context
   if (apiKey !== 'proxy_mode') {
@@ -27,6 +28,7 @@ export const handleApiConnect = (
     selectedWorkspaceId: workspaceId,
     selectedProject: project,
     isConnected: true,
+    users: users || [],
   });
   
   // If connected via proxy mode with default workspace, skip to input
@@ -71,4 +73,30 @@ export const handleReconnect = (
   setStep: (step: Step) => void
 ) => {
   setStep('connect');
+};
+
+// Add function to fetch and update users for a workspace
+export const handleWorkspaceSelect = async (
+  workspaceId: string,
+  apiKey: string | null,
+  updateApiProps: (props: Partial<ApiProps>) => void
+) => {
+  if (workspaceId && apiKey) {
+    try {
+      const users = await fetchUsers(workspaceId, apiKey);
+      updateApiProps({ 
+        selectedWorkspaceId: workspaceId,
+        users: users 
+      });
+    } catch (error) {
+      console.error('Failed to fetch users for workspace:', error);
+      // Still update selected workspace even if users fetch fails
+      updateApiProps({ 
+        selectedWorkspaceId: workspaceId,
+        users: [] 
+      });
+    }
+  } else {
+    updateApiProps({ selectedWorkspaceId: workspaceId });
+  }
 };
