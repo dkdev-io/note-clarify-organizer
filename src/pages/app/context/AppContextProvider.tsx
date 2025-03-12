@@ -1,10 +1,12 @@
+
 import React, { createContext, useState, useContext } from 'react';
 import { AppContextType } from './contextTypes';
 import { ApiProps, Step } from '../types';
 import { Task } from '@/utils/parser';
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { storeApiKey } from '@/utils/keyStorage';
 import { processNotes } from './noteProcessing';
+import { parseTextIntoTasks } from '@/utils/parser';
 
 // Create the context with a default value
 const AppContext = createContext<AppContextType | undefined>(undefined);

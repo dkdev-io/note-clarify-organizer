@@ -1,5 +1,5 @@
 
-import { Toast as ToastType } from "@/hooks/use-toast";
+import { ToastProps } from "@/components/ui/toast";
 
 // Export toast type for use in other files
-export type ToastType = (props: ToastType) => void;
+export type ToastType = (props: ToastProps) => void;
