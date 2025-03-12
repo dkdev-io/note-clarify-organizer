@@ -12,11 +12,11 @@ export async function processNotesWithLLM(text: string, projectName: string | nu
   try {
     console.log(`Sending ${text.length} characters to process-notes function${projectName ? ` for project '${projectName}'` : ''}`);
     
-    // Call the Supabase edge function
+    // Call the Supabase edge function with a timeout
     const { data, error } = await supabase.functions.invoke('process-notes', {
       body: { text, projectName },
-      // Add a longer timeout to allow for OpenAI processing time
-      options: { timeout: 25000 } // 25 seconds timeout
+      // Set timeout directly in the FunctionInvokeOptions object
+      timeout: 25000 // 25 seconds timeout
     });
 
     if (error) {
