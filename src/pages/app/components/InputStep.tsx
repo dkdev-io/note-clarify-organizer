@@ -148,6 +148,7 @@ const InputStep: React.FC<InputStepProps> = ({
             <DialogDescription>
               We found some names in your notes that don't match your Motion users.
               Please select the correct user for each name or choose "No Assignment" to create unassigned tasks.
+              <p className="mt-2 text-amber-600">If you select no user, their tasks will appear in your project as unassigned.</p>
             </DialogDescription>
           </DialogHeader>
           

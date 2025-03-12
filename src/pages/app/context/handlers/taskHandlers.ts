@@ -1,4 +1,3 @@
-
 import { Task } from '@/utils/parser';
 import { ToastType } from '../providers';
 import { Step } from '../../types';
@@ -56,16 +55,10 @@ export const handleParseText = async (
           setUnrecognizedNames(unmatchedNames);
           // Don't set processing=true here so we don't show a loading spinner during name selection
           return;
-        } else {
-          toast({
-            title: "Unrecognized users in notes",
-            description: `We can't match user${unmatchedNames.length > 1 ? 's' : ''}: ${unmatchedNames.join(', ')}. Please confirm that they're Motion users or add them to your account.`,
-            variant: "destructive"
-          });
-          
-          setIsProcessing(false);
-          return;
         }
+        
+        // Continue processing with the text as is
+        // No early return, so we proceed with processing
       }
     }
     
