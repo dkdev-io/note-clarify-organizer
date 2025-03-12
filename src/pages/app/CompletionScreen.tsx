@@ -46,25 +46,17 @@ const CompletionScreen: React.FC<CompletionScreenProps> = ({
           </Badge>
         )}
       </div>
-      <div className="mt-8 space-y-3">
-        <div className="flex justify-center space-x-4">
+      <div className="mt-8 flex justify-center space-y-3">
+        {isConnected && onAddMore && (
           <Button 
-            onClick={onStartOver}
-            className="px-6 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors"
+            onClick={onAddMore}
+            variant="outline"
+            className="bg-[#FEF7CD] hover:bg-[#FEF7CD]/90 text-black border-yellow-300 font-bold flex items-center gap-1"
           >
-            Start Over
+            <PlusIcon className="h-4 w-4" />
+            Add More?
           </Button>
-          {isConnected && onAddMore && (
-            <Button 
-              onClick={onAddMore}
-              variant="outline"
-              className="flex items-center gap-1"
-            >
-              <PlusIcon className="h-4 w-4" />
-              Add More?
-            </Button>
-          )}
-        </div>
+        )}
         
         {!isConnected && (
           <Button 
