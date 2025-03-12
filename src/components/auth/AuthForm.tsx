@@ -35,8 +35,8 @@ export const AuthForm: React.FC<AuthFormProps> = ({
   const handleSkip = () => {
     // Set skip flag in sessionStorage
     sessionStorage.setItem('skip_auth', 'true');
-    // Navigate directly to app
-    window.location.href = '/app';
+    // Use navigate directly instead of changing window.location
+    navigate('/app');
   };
 
   return (

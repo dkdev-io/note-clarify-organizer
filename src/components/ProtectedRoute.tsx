@@ -21,9 +21,10 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const isSkipping = sessionStorage.getItem('skip_auth') === 'true';
 
   useEffect(() => {
-    // Only apply skip_auth when explicitly on protected routes
-    // This prevents it from affecting the landing and login pages
-    if (isSkipping && location.pathname.startsWith('/app')) {
+    console.log('ProtectedRoute - checking auth, skip_auth:', isSkipping);
+    
+    // If skipping auth, immediately set authenticated to true
+    if (isSkipping) {
       console.log('Skipping authentication check due to skip_auth flag');
       setAuthenticated(true);
       setLoading(false);
@@ -64,7 +65,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
         authListener.subscription.unsubscribe();
       }
     };
-  }, [isSkipping, location.pathname]);
+  }, [isSkipping]);
 
   // Show loading spinner or placeholder while checking auth
   if (loading) {
@@ -102,13 +103,13 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     );
   }
 
-  // Redirect to landing if not authenticated
-  if (!authenticated) {
-    return <Navigate to="/" />;
+  // Render children if authenticated or skipping auth
+  if (authenticated) {
+    return <>{children}</>;
   }
 
-  // Render children if authenticated
-  return <>{children}</>;
+  // Redirect to landing if not authenticated
+  return <Navigate to="/login" />;
 };
 
 export default ProtectedRoute;
