@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardDescription, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -50,10 +49,8 @@ const TasksReview: React.FC<TasksReviewProps> = ({
   const { toast } = useToast();
 
   useEffect(() => {
-    // Initialize tasks
     setEditedTasks([...initialTasks]);
     
-    // Simulate loading for better UX
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 1000);
@@ -92,13 +89,11 @@ const TasksReview: React.FC<TasksReviewProps> = ({
     setIsProcessing(true);
 
     try {
-      // Update project name for all tasks
       const tasksWithProject = editedTasks.map(task => ({
         ...task,
         project: editedProjectName || task.project
       }));
 
-      // If API is connected, try to add tasks to Motion directly
       if (apiProps.isConnected && apiProps.selectedWorkspaceId) {
         const result = await addTasksToMotion(
           tasksWithProject, 
@@ -121,7 +116,6 @@ const TasksReview: React.FC<TasksReviewProps> = ({
           console.error("Failed to add tasks:", result.errors);
         }
       } else {
-        // If not connected, just pass the tasks to the parent component
         onAddToMotion(tasksWithProject, editedProjectName);
       }
     } catch (error) {
@@ -141,6 +135,22 @@ const TasksReview: React.FC<TasksReviewProps> = ({
     setTimeout(() => {
       onBack();
     }, 400);
+  };
+
+  const renderAssigneeBadge = (assignee: string | null | undefined) => {
+    if (!assignee || assignee.trim() === '') {
+      return (
+        <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200 text-[10px]">
+          Not Assigned
+        </Badge>
+      );
+    }
+    
+    return (
+      <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 text-[10px]">
+        Assignee: {assignee}
+      </Badge>
+    );
   };
 
   return (
@@ -334,11 +344,7 @@ const TasksReview: React.FC<TasksReviewProps> = ({
                                 {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)} Priority
                               </Badge>
                             )}
-                            {task.assignee && (
-                              <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 text-[10px]">
-                                Assignee: {task.assignee}
-                              </Badge>
-                            )}
+                            {renderAssigneeBadge(task.assignee)}
                           </div>
                         </div>
                         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">

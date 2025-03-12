@@ -12,6 +12,7 @@ interface CompletionScreenProps {
   onStartOver: () => void;
   onReconnect: () => void;
   onAddMore?: () => void;
+  unassignedCount?: number;
 }
 
 const CompletionScreen: React.FC<CompletionScreenProps> = ({
@@ -20,7 +21,8 @@ const CompletionScreen: React.FC<CompletionScreenProps> = ({
   isConnected,
   onStartOver,
   onReconnect,
-  onAddMore
+  onAddMore,
+  unassignedCount = 0
 }) => {
   return (
     <div className="w-full max-w-md mx-auto text-center animate-fade-in">
@@ -32,7 +34,7 @@ const CompletionScreen: React.FC<CompletionScreenProps> = ({
         Your tasks have been successfully added to Motion
         {projectName && <span className="font-medium"> under project '{projectName}'</span>}.
       </p>
-      <div className="flex justify-center gap-3">
+      <div className="flex justify-center gap-3 flex-wrap">
         <Badge 
           className="px-3 py-1 bg-blue-50 text-blue-700 border-blue-200"
         >
@@ -45,8 +47,15 @@ const CompletionScreen: React.FC<CompletionScreenProps> = ({
             Project: {projectName}
           </Badge>
         )}
+        {unassignedCount > 0 && (
+          <Badge 
+            className="px-3 py-1 bg-gray-50 text-gray-700 border-gray-200"
+          >
+            {unassignedCount} Unassigned
+          </Badge>
+        )}
       </div>
-      <div className="mt-8 flex justify-center space-y-3">
+      <div className="mt-8 flex justify-center gap-3">
         {isConnected && onAddMore && (
           <Button 
             onClick={onAddMore}
