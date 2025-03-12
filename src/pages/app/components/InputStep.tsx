@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import NoteInput from '@/components/NoteInput';
 import { ApiProps } from '../types';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, RefreshCw, User } from 'lucide-react';
+import { AlertCircle, RefreshCw, User, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAppContext } from '../context/AppContextProvider';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
