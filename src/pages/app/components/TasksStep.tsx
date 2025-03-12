@@ -1,6 +1,6 @@
 
 import React from 'react';
-import TasksReview from '@/components/TasksReview';
+import { TasksReview } from '@/components/task-review';
 import { Task } from '@/utils/parser';
 import { ApiProps } from '../types';
 
