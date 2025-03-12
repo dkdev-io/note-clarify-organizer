@@ -11,7 +11,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 
 interface InputStepProps {
-  onParseTasks: (text: string, providedProjectName: string | null, unrecognizedUserMappings?: Record<string, string | null>) => void;
+  onParseTasks: (
+    text: string, 
+    providedProjectName: string | null, 
+    unrecognizedUserMappings?: ((names: string[]) => void) | Record<string, string | null>
+  ) => void;
   apiProps: ApiProps;
 }
 
@@ -62,7 +66,6 @@ const InputStep: React.FC<InputStepProps> = ({
     }
     
     // Check for unrecognized names
-    tempSetUnrecognizedNames([]);
     onParseTasks(text, providedProjectName, tempSetUnrecognizedNames);
   };
   

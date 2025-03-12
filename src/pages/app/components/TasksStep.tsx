@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import TasksReview from '@/components/TasksReview';
 import { Task } from '@/utils/parser';
 import { ApiProps } from '../types';
@@ -40,7 +40,6 @@ const TasksStep: React.FC<TasksStepProps> = ({
       onBack={onBack}
       onAddToMotion={handleAddToMotion}
       apiProps={apiProps}
-      unrecognizedUserMappings={unrecognizedUserMappings}
     />
   );
 };

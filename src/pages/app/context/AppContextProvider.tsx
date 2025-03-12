@@ -56,7 +56,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     skipConnectHandler(setStep, updateApiProps);
   };
 
-  const handleParseText = async (text: string, providedProjectName: string | null) => {
+  const handleParseText = async (text: string, providedProjectName: string | null, setUnrecognizedNames?: (names: string[]) => void) => {
     await parseTextHandler(
       text, 
       providedProjectName, 
@@ -66,12 +66,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setProjectName, 
       setExtractedTasks, 
       setStep, 
-      toast
+      toast,
+      setUnrecognizedNames
     );
   };
 
-  const handleAddToMotion = (tasks: Task[], updatedProjectName: string | null) => {
-    addToMotionHandler(tasks, updatedProjectName, setProjectName, setStep, toast);
+  const handleAddToMotion = (tasks: Task[], updatedProjectName: string | null, unassignedCount: number = 0) => {
+    addToMotionHandler(tasks, updatedProjectName, setProjectName, setStep, toast, unassignedCount);
   };
 
   const handleStartOver = () => {

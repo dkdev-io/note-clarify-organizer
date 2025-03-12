@@ -8,6 +8,7 @@ import InputStep from './components/InputStep';
 import TasksStep from './components/TasksStep';
 import CompleteStep from './components/CompleteStep';
 import { handleWorkspaceSelect } from './context/handlers/apiHandlers';
+import { Task } from '@/utils/parser';
 
 const AppContent: React.FC = () => {
   const { 
@@ -45,7 +46,7 @@ const AppContent: React.FC = () => {
     setStep('workspace');
   };
   
-  const handleTaskParse = (text: string, providedProjectName: string | null, setUnrecognizedNames?: (names: string[]) => void | Record<string, string | null>) => {
+  const handleTaskParse = (text: string, providedProjectName: string | null, setUnrecognizedNames?: ((names: string[]) => void) | Record<string, string | null>) => {
     // If we received user mappings, store them
     if (typeof setUnrecognizedNames === 'object') {
       setUnrecognizedUserMappings(setUnrecognizedNames);
