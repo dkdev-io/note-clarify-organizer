@@ -25,7 +25,14 @@ const Login = () => {
     sessionStorage.removeItem('skip_auth');
     
     console.log('Login page loaded, signup param:', signupParam);
-  }, [signupParam]);
+    
+    // Check if the user is directly accessing the login page without being redirected
+    const from = location.state?.from;
+    if (!from && !location.search) {
+      // If user directly typed /login in the URL, redirect to landing page
+      navigate('/', { replace: true });
+    }
+  }, [signupParam, location, navigate]);
 
   // Set up an auth state listener
   useEffect(() => {
