@@ -44,6 +44,7 @@ const UserMappingDialog: React.FC<UserMappingDialogProps> = ({
   const { toast } = useToast();
 
   const handleUpdateMapping = (name: string, userId: string | null) => {
+    console.log(`Updating mapping for ${name} to userId: ${userId}`);
     setUserMappings({
       ...userMappings,
       [name]: userId

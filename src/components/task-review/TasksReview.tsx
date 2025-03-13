@@ -30,13 +30,25 @@ const TasksReview: React.FC<TasksReviewProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [editedTasks, setEditedTasks] = useState<Task[]>([]);
-  const [editedProjectName, setEditedProjectName] = useState<string | null>(projectName);
+  const [editedProjectName, setEditedProjectName] = useState<string | null>(
+    // If apiProps has a selectedProject, use that, otherwise use the provided projectName
+    apiProps.selectedProject || projectName
+  );
   const [isTransitioning, setIsTransitioning] = useState(false);
   const { toast } = useToast();
+
+  // Update editedProjectName whenever apiProps.selectedProject changes
+  useEffect(() => {
+    if (apiProps.selectedProject) {
+      setEditedProjectName(apiProps.selectedProject);
+    }
+  }, [apiProps.selectedProject]);
 
   useEffect(() => {
     const tasksWithCorrectAssignees = initialTasks.map(task => ({
       ...task,
+      // If we have a selectedProject from Motion API, make sure it's set on all tasks
+      project: apiProps.selectedProject || task.project || projectName,
       assignee: task.assignee || null
     }));
     
@@ -47,7 +59,7 @@ const TasksReview: React.FC<TasksReviewProps> = ({
     }, 1000);
     
     return () => clearTimeout(timer);
-  }, [initialTasks]);
+  }, [initialTasks, apiProps.selectedProject, projectName]);
 
   const handleEditTask = (taskId: string) => {
     setEditingTaskId(taskId);
@@ -80,9 +92,11 @@ const TasksReview: React.FC<TasksReviewProps> = ({
     setIsProcessing(true);
 
     try {
+      console.log("Adding tasks to Motion with project name:", editedProjectName || apiProps.selectedProject);
+      
       const result = await addTasksToMotionService(
         editedTasks,
-        editedProjectName,
+        editedProjectName || apiProps.selectedProject, // Use the edited project name or the selected Motion project
         apiProps
       );
       
