@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
@@ -34,7 +33,7 @@ const Login = () => {
       const { data } = await supabase.auth.getSession();
       if (data.session) {
         navigate(from, { replace: true });
-      } else if (location.pathname === '/login' && !location.search && !location.state) {
+      } else if (location.pathname === '/login' && !signupParam && !location.state?.from) {
         // If user directly accessed /login without parameters or state, redirect to landing
         navigate('/', { replace: true });
       }
@@ -54,7 +53,7 @@ const Login = () => {
         authListener.subscription.unsubscribe();
       }
     };
-  }, [navigate, from, location]);
+  }, [navigate, from, location, signupParam]);
 
   const handleSubmit = async (email: string, password: string) => {
     setIsLoading(true);
