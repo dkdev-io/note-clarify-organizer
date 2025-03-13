@@ -42,11 +42,16 @@ const TasksStep: React.FC<TasksStepProps> = ({
         }
       }
       
-      return task;
+      // Make sure the project name is set correctly
+      return {
+        ...task,
+        project: projectName || task.project
+      };
     });
     
+    console.log('Processed tasks with project name:', projectName, updatedTasks);
     setProcessedTasks(updatedTasks);
-  }, [initialTasks, unrecognizedUserMappings]);
+  }, [initialTasks, unrecognizedUserMappings, projectName]);
 
   // Count unassigned tasks (those with null assignments in mappings)
   const countUnassignedTasks = () => {
@@ -54,7 +59,14 @@ const TasksStep: React.FC<TasksStepProps> = ({
   };
 
   const handleAddToMotion = (tasks: Task[], updatedProjectName: string | null) => {
-    onAddToMotion(tasks, updatedProjectName, countUnassignedTasks());
+    // Ensure all tasks have the correct project name set
+    const tasksWithProject = tasks.map(task => ({
+      ...task,
+      project: updatedProjectName || task.project || projectName
+    }));
+    
+    console.log('Adding tasks with project name:', updatedProjectName, tasksWithProject);
+    onAddToMotion(tasksWithProject, updatedProjectName, countUnassignedTasks());
   };
 
   return (

@@ -1,4 +1,3 @@
-
 /**
  * Utility functions for matching names in text to Motion users
  */
@@ -121,32 +120,72 @@ export function calculateSimilarity(str1: string, str2: string): number {
  * @param threshold Similarity threshold (0-1)
  * @returns Array of potential matching users
  */
-export function findUserMatches(name: string, users: any[], threshold = 0.5): any[] {
-  if (!name || !users || users.length === 0) {
-    return [];
-  }
+export function findUserMatches(name: string, users: any[], threshold: number = 0.6): any[] {
+  if (!name || !users || users.length === 0) return [];
   
-  const nameLower = name.toLowerCase().trim();
+  // Normalize the name for comparison (lowercase)
+  const normalizedName = name.toLowerCase();
   
-  return users.filter(user => {
-    // Skip users without names
+  // First do an exact match with first name or full name
+  const exactMatches = users.filter(user => {
     if (!user.name) return false;
     
     const userName = user.name.toLowerCase();
+    const firstNameOnly = userName.split(' ')[0]; // Get just the first name
     
-    // Check exact match
-    if (userName === nameLower) return true;
-    
-    // Check if name is part of the username
-    if (userName.includes(nameLower) || nameLower.includes(userName)) return true;
-    
-    // Check for nickname matches
-    if (isNicknameOrShortened(nameLower, userName)) return true;
-    
-    // Calculate similarity score
-    const similarity = calculateSimilarity(nameLower, userName);
-    return similarity >= threshold;
+    return userName === normalizedName || 
+           firstNameOnly === normalizedName ||
+           userName.includes(normalizedName) ||
+           normalizedName.includes(firstNameOnly);
   });
+  
+  if (exactMatches.length > 0) {
+    console.log(`Found exact matches for ${name}:`, exactMatches.map(u => u.name));
+    return exactMatches;
+  }
+  
+  // Special case handling for common nicknames
+  const nicknames: Record<string, string[]> = {
+    'matt': ['matthew'],
+    'matthew': ['matt'],
+    'dan': ['daniel'],
+    'daniel': ['dan'],
+    'dave': ['david'],
+    'jim': ['james'],
+    'bob': ['robert'],
+    'rob': ['robert'],
+    'mike': ['michael'],
+    'joe': ['joseph'],
+    'alex': ['alexander'],
+    'will': ['william']
+  };
+  
+  // Check for nickname matches
+  const normalizedNameLower = normalizedName.toLowerCase();
+  
+  for (const user of users) {
+    if (!user.name) continue;
+    
+    const userName = user.name.toLowerCase();
+    const firstNameOnly = userName.split(' ')[0];
+    
+    // Check if this is a nickname match
+    if (nicknames[normalizedNameLower] && 
+        nicknames[normalizedNameLower].some(nick => firstNameOnly.includes(nick))) {
+      console.log(`Found nickname match: ${name} matches ${user.name}`);
+      return [user];
+    }
+    
+    if (nicknames[firstNameOnly] && 
+        nicknames[firstNameOnly].some(nick => normalizedNameLower.includes(nick))) {
+      console.log(`Found nickname match: ${user.name} matches ${name}`);
+      return [user];
+    }
+  }
+  
+  // If we didn't find any exact or nickname matches, return empty array
+  console.log(`No matches found for ${name}`);
+  return [];
 }
 
 /**

@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 
@@ -348,6 +347,7 @@ function processApiResponse(responseText, projectName, corsHeaders) {
       ...task,
       project: task.project || projectName
     }));
+    console.log(`Applied project name "${projectName}" to tasks:`, tasks);
   }
   
   // Add id field to each task and map response fields to Task interface fields
@@ -358,7 +358,7 @@ function processApiResponse(responseText, projectName, corsHeaders) {
     dueDate: task.due_date || null,
     priority: task.priority || null,
     status: task.status || 'todo',
-    assignee: null,
+    assignee: task.assignee || null,
     workspace_id: null,
     isRecurring: false,
     frequency: null,

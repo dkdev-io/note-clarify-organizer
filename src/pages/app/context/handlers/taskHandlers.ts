@@ -1,3 +1,4 @@
+
 import { Task } from '@/utils/parser';
 import { ToastType } from '../providers';
 import { Step } from '../../types';
@@ -40,6 +41,7 @@ export const handleParseText = async (
     if (apiProps.isConnected && apiProps.users && apiProps.users.length > 0) {
       const potentialNames = extractPotentialNames(text);
       console.log('Potential assignee names found in text:', potentialNames);
+      console.log('Available Motion users:', apiProps.users);
       
       // Check each potential name against Motion users
       const unmatchedNames = potentialNames.filter(name => {
@@ -95,6 +97,7 @@ export const handleParseText = async (
         workspace_id: apiProps.selectedWorkspaceId,
         project: extractedProjectName || task.project
       }));
+      console.log('Setting tasks with workspace and project:', tasksWithWorkspace);
       setExtractedTasks(tasksWithWorkspace);
     } else {
       setExtractedTasks(tasks);
@@ -142,6 +145,7 @@ export const handleAddToMotion = (
     setProjectName(updatedProjectName);
   }
   
+  console.log('Adding to Motion with project name:', updatedProjectName, tasks);
   setStep('complete');
   
   let message = `${tasks.length} tasks have been added to Motion${updatedProjectName ? ` under project '${updatedProjectName}'` : ''}.`;
