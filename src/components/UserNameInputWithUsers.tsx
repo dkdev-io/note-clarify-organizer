@@ -15,11 +15,17 @@ const UserNameInputWithUsers: React.FC<UserNameInputWithUsersProps> = ({
   onChange, 
   disabled 
 }) => {
+  // The UserNameInput component needs workspaceId, apiKey and onUserSelected props
+  // Let's create a wrapper function to adapt the onChange to the expected format
+  const handleUserSelected = (userId: string, userName: string) => {
+    onChange(userName);
+  };
+
   return (
     <UserNameInput
-      value={value}
-      onChange={onChange}
-      disabled={disabled}
+      workspaceId={users[0]?.workspaceId || ''}
+      apiKey={undefined}
+      onUserSelected={handleUserSelected}
     />
   );
 };

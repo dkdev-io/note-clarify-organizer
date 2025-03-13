@@ -12,57 +12,46 @@ import { Button } from "@/components/ui/button";
 import UserNameInputWithUsers from "@/components/UserNameInputWithUsers";
 import { useToast } from "@/components/ui/use-toast";
 
+// Define proper type for user mappings
 interface UserMapping {
-  id: string;
-  noteRef: string;
-  motionUser: string;
+  name: string;
+  mappedUserId: string | null;
 }
 
 interface UserMappingDialogProps {
-  userMappings: UserMapping[];
-  users: any[];
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSave: (mappings: UserMapping[]) => void;
+  showUserDialog: boolean;
+  unrecognizedNames: string[];
+  userMappings: Record<string, string | null>;
+  setUserMappings: (mappings: Record<string, string | null>) => void;
+  handleOpenChange: (open: boolean) => void;
+  handleCloseDialog: () => void;
+  handleConfirmUserMapping: () => void;
+  isProcessingNames: boolean;
+  apiProps: any;
 }
 
 const UserMappingDialog: React.FC<UserMappingDialogProps> = ({
+  showUserDialog,
+  unrecognizedNames,
   userMappings,
-  users,
-  open,
-  onOpenChange,
-  onSave,
+  setUserMappings,
+  handleOpenChange,
+  handleCloseDialog,
+  handleConfirmUserMapping,
+  isProcessingNames,
+  apiProps
 }) => {
-  const [mappings, setMappings] = useState<UserMapping[]>(userMappings);
-  const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
 
-  const handleUpdateMapping = (id: string, motionUser: string) => {
-    setMappings(
-      mappings.map((mapping) =>
-        mapping.id === id ? { ...mapping, motionUser } : mapping
-      )
-    );
-  };
-
-  const handleSave = () => {
-    setIsSaving(true);
-    
-    // Simulate saving process
-    setTimeout(() => {
-      onSave(mappings);
-      setIsSaving(false);
-      onOpenChange(false);
-      
-      toast({
-        title: "User mappings saved",
-        description: "Your user mappings have been updated successfully.",
-      });
-    }, 500);
+  const handleUpdateMapping = (name: string, userId: string | null) => {
+    setUserMappings({
+      ...userMappings,
+      [name]: userId
+    });
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={showUserDialog} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Map Users</DialogTitle>
@@ -73,17 +62,17 @@ const UserMappingDialog: React.FC<UserMappingDialogProps> = ({
 
         <div className="py-4">
           <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-2">
-            {mappings.map((mapping) => (
-              <div key={mapping.id} className="flex items-center space-x-4">
+            {unrecognizedNames.map((name) => (
+              <div key={name} className="flex items-center space-x-4">
                 <div className="flex-1">
-                  <p className="text-sm font-medium">{mapping.noteRef}</p>
+                  <p className="text-sm font-medium">{name}</p>
                 </div>
                 <div className="flex-1">
                   <UserNameInputWithUsers
-                    users={users}
-                    value={mapping.motionUser}
-                    onChange={(value) => handleUpdateMapping(mapping.id, value)}
-                    disabled={isSaving}
+                    users={apiProps.users || []}
+                    value={userMappings[name] || ''}
+                    onChange={(value) => handleUpdateMapping(name, value)}
+                    disabled={isProcessingNames}
                   />
                 </div>
               </div>
@@ -92,17 +81,17 @@ const UserMappingDialog: React.FC<UserMappingDialogProps> = ({
         </div>
 
         <DialogFooter className="flex justify-between">
-          <Button variant="outline" onClick={() => onOpenChange(false)} type="button">
+          <Button variant="outline" onClick={handleCloseDialog} type="button">
             Cancel
           </Button>
-          <Button onClick={handleSave} disabled={isSaving}>
-            {isSaving ? (
+          <Button onClick={handleConfirmUserMapping} disabled={isProcessingNames}>
+            {isProcessingNames ? (
               <>
-                <span className="mr-2">Saving</span>
+                <span className="mr-2">Processing</span>
                 <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
               </>
             ) : (
-              "Save Mappings"
+              "Confirm Mappings"
             )}
           </Button>
         </DialogFooter>
