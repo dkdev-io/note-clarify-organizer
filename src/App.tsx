@@ -9,6 +9,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { Toaster } from './components/ui/toaster';
 import IndexRefactored from './pages/app/IndexRefactored';
+import Landing from './pages/landing';
 
 function App() {
   return (
@@ -16,7 +17,14 @@ function App() {
       <ErrorBoundary>
         <Routes>
           {/* Landing page as the default route */}
-          <Route path="/" element={<Index />} />
+          <Route path="/" element={<Landing />} />
+          
+          {/* Legacy task converter page (now protected) */}
+          <Route path="/converter" element={
+            <ProtectedRoute>
+              <Index />
+            </ProtectedRoute>
+          } />
           
           {/* Login page */}
           <Route path="/login" element={<Login />} />

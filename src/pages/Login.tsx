@@ -33,8 +33,8 @@ const Login = () => {
       const { data } = await supabase.auth.getSession();
       if (data.session) {
         navigate(from, { replace: true });
-      } else if (location.pathname === '/login' && !signupParam && !location.state?.from) {
-        // If user directly accessed /login without parameters or state, redirect to landing
+      } else if (location.pathname === '/login' && !location.state?.from) {
+        // If user directly accessed /login without state, redirect to landing
         navigate('/', { replace: true });
       }
     };
@@ -53,7 +53,7 @@ const Login = () => {
         authListener.subscription.unsubscribe();
       }
     };
-  }, [navigate, from, location, signupParam]);
+  }, [navigate, from, location]);
 
   const handleSubmit = async (email: string, password: string) => {
     setIsLoading(true);

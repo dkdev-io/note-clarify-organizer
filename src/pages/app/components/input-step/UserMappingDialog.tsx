@@ -1,11 +1,17 @@
 
 import React from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
-import { X, User } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { X as XIcon, AlertCircle } from 'lucide-react';
 import { ApiProps } from '../../types';
+import UserNameInput from '@/components/UserNameInput';
 
 interface UserMappingDialogProps {
   showUserDialog: boolean;
@@ -30,75 +36,73 @@ const UserMappingDialog: React.FC<UserMappingDialogProps> = ({
   isProcessingNames,
   apiProps
 }) => {
+  const handleNameMapping = (originalName: string, motionUserName: string | null) => {
+    setUserMappings(prev => ({
+      ...prev,
+      [originalName]: motionUserName
+    }));
+  };
+  
   return (
     <Dialog open={showUserDialog} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-md" onInteractOutside={(e) => {
-        if (isProcessingNames) {
-          e.preventDefault();
-        }
-      }}>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Unrecognized Users</DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle>Assign Users</DialogTitle>
+            <Button
+              type="button"
+              variant="ghost"
+              className="h-8 w-8 p-0" 
+              onClick={handleCloseDialog}
+              disabled={isProcessingNames}
+            >
+              <XIcon className="h-4 w-4" />
+              <span className="sr-only">Close</span>
+            </Button>
+          </div>
           <DialogDescription>
-            We found some names in your notes that don't match your Motion users.
-            Please select the correct user for each name or choose "No Assignment" to create unassigned tasks.
-            <p className="mt-2 text-amber-600">If you select no user, their tasks will appear in your project as unassigned.</p>
+            Map these names to Motion users or leave them unassigned
           </DialogDescription>
         </DialogHeader>
         
-        <div className="grid gap-4 py-4">
-          {unrecognizedNames.map((name) => (
-            <div key={name} className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor={`user-${name}`} className="text-right">
-                {name}:
-              </Label>
-              <div className="col-span-3">
-                <Select
-                  value={userMappings[name] || ""}
-                  onValueChange={(value) => setUserMappings(prev => ({
-                    ...prev, 
-                    [name]: value === "none" ? null : value
-                  }))}
-                >
-                  <SelectTrigger id={`user-${name}`}>
-                    <SelectValue placeholder="Select user or none" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">
-                      <span className="flex items-center">
-                        <User className="mr-2 h-4 w-4 opacity-50" />
-                        No Assignment
-                      </span>
-                    </SelectItem>
-                    {apiProps.users?.map(user => (
-                      <SelectItem key={user.id} value={user.id}>
-                        {user.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+        <div className="space-y-4 max-h-[60vh] overflow-y-auto py-4">
+          {unrecognizedNames.length === 0 ? (
+            <div className="flex items-center justify-center py-4">
+              <AlertCircle className="mr-2 h-5 w-5 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">No unrecognized names found</p>
             </div>
-          ))}
+          ) : (
+            unrecognizedNames.map(name => (
+              <div key={name} className="space-y-1.5">
+                <p className="text-sm font-medium">"{name}" maps to:</p>
+                <UserNameInput
+                  users={apiProps.users || []}
+                  value={userMappings[name]}
+                  onChange={(value) => handleNameMapping(name, value)}
+                  disabled={isProcessingNames}
+                />
+              </div>
+            ))
+          )}
         </div>
         
-        <DialogFooter>
-          <Button type="submit" onClick={handleConfirmUserMapping}>
-            Continue with Selected Users
+        <DialogFooter className="flex justify-end space-x-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleCloseDialog}
+            disabled={isProcessingNames}
+          >
+            Skip Mapping
+          </Button>
+          <Button
+            type="button"
+            onClick={handleConfirmUserMapping}
+            disabled={isProcessingNames}
+          >
+            {isProcessingNames ? 'Processing...' : 'Confirm Mapping'}
           </Button>
         </DialogFooter>
-        
-        <Button
-          className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
-          onClick={handleCloseDialog}
-          disabled={isProcessingNames}
-          variant="ghost"
-          size="icon"
-          type="button"
-        >
-          <X className="h-4 w-4" />
-          <span className="sr-only">Close</span>
-        </Button>
       </DialogContent>
     </Dialog>
   );
