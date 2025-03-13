@@ -11,15 +11,19 @@ import UserVerifier from './UserVerifier';
 interface UserNameInputProps {
   workspaceId: string;
   apiKey?: string;
+  value?: string; // Make value optional
   onUserSelected: (userId: string, userName: string) => void;
+  disabled?: boolean; // Make disabled optional
 }
 
 const UserNameInput: React.FC<UserNameInputProps> = ({
   workspaceId,
   apiKey,
-  onUserSelected
+  value = '', // Default value
+  onUserSelected,
+  disabled = false // Default value
 }) => {
-  const [name, setName] = useState('');
+  const [name, setName] = useState(value);
   const [nameStatus, setNameStatus] = useState<'idle' | 'checking' | 'invalid' | 'valid'>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const {
@@ -29,6 +33,13 @@ const UserNameInput: React.FC<UserNameInputProps> = ({
     completeVerification,
     checkNameMatch
   } = useUserVerification({ workspaceId, apiKey });
+
+  // Update name when value prop changes
+  React.useEffect(() => {
+    if (value !== name) {
+      setName(value);
+    }
+  }, [value]);
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setName(e.target.value);
@@ -87,6 +98,7 @@ const UserNameInput: React.FC<UserNameInputProps> = ({
               placeholder="Enter user name"
               value={name}
               onChange={handleNameChange}
+              disabled={disabled}
               className={nameStatus === 'valid' ? 'pr-10 border-green-500' : ''}
             />
             {nameStatus === 'valid' && (
@@ -97,7 +109,7 @@ const UserNameInput: React.FC<UserNameInputProps> = ({
           </div>
           <Button 
             onClick={handleCheck} 
-            disabled={nameStatus === 'checking' || !name.trim()}
+            disabled={disabled || nameStatus === 'checking' || !name.trim()}
           >
             <User className="mr-2 h-4 w-4" />
             Verify
