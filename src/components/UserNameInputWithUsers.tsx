@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { UserNameInput } from './UserNameInput';
+import UserNameInput from './UserNameInput';
 
 interface UserNameInputWithUsersProps {
   users: any[];

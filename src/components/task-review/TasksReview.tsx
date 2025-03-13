@@ -1,21 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardFooter, CardHeader, CardDescription, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Task } from '@/utils/parser';
-import { CheckIcon, ArrowRightIcon, ArrowLeftIcon, LoaderIcon, ExternalLinkIcon } from 'lucide-react';
-import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
-import { addTasksToMotion } from '@/utils/motion';
-import TasksList from './TasksList';
-import ProjectNameInput from './ProjectNameInput';
 
-interface ApiProps {
-  isConnected: boolean;
-  apiKey: string | null;
-  workspaces: any[];
-  selectedWorkspaceId?: string;
-  selectedProject?: string;
-}
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent } from "@/components/ui/card";
+import { Task } from '@/utils/parser';
+import { useToast } from "@/hooks/use-toast";
+import TasksList from './TasksList';
+import TaskReviewHeader from './TaskReviewHeader';
+import TaskReviewFooter from './TaskReviewFooter';
+import { ApiProps } from '@/pages/converter/types';
+import { addTasksToMotionService } from './task-review-service';
 
 interface TasksReviewProps {
   rawText: string;
@@ -88,35 +80,25 @@ const TasksReview: React.FC<TasksReviewProps> = ({
     setIsProcessing(true);
 
     try {
-      const tasksWithProject = editedTasks.map(task => ({
-        ...task,
-        project: editedProjectName || task.project,
-        assignee: task.assignee || null
-      }));
-
-      if (apiProps.isConnected && apiProps.selectedWorkspaceId) {
-        const result = await addTasksToMotion(
-          tasksWithProject, 
-          apiProps.selectedWorkspaceId, 
-          apiProps.apiKey || undefined
-        );
-        
-        if (result.success) {
-          toast({
-            title: "Success!",
-            description: result.message,
-          });
-          onAddToMotion(tasksWithProject, editedProjectName);
-        } else {
-          toast({
-            title: "Error",
-            description: result.message,
-            variant: "destructive"
-          });
-          console.error("Failed to add tasks:", result.errors);
-        }
+      const result = await addTasksToMotionService(
+        editedTasks,
+        editedProjectName,
+        apiProps
+      );
+      
+      if (result.success) {
+        toast({
+          title: "Success!",
+          description: result.message,
+        });
+        onAddToMotion(editedTasks, editedProjectName);
       } else {
-        onAddToMotion(tasksWithProject, editedProjectName);
+        toast({
+          title: "Error",
+          description: result.message,
+          variant: "destructive"
+        });
+        console.error("Failed to add tasks:", result.errors);
       }
     } catch (error) {
       console.error("Error adding tasks to Motion:", error);
@@ -144,24 +126,11 @@ const TasksReview: React.FC<TasksReviewProps> = ({
   return (
     <div className={`w-full max-w-2xl mx-auto transition-all duration-500 ${isTransitioning ? 'opacity-0 translate-x-10' : 'opacity-100 translate-x-0'}`}>
       <Card className="bg-white bg-opacity-80 backdrop-blur-sm border border-gray-100 shadow-card overflow-hidden">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-2xl font-medium text-gray-900">
-              <CheckIcon className="inline-block mr-2 h-6 w-6 text-primary" />
-              Review Tasks
-            </CardTitle>
-            <Badge variant="outline" className="font-normal">
-              {editedTasks.length} Tasks
-            </Badge>
-          </div>
-          <CardDescription>
-            Review and edit tasks before adding them to Motion
-          </CardDescription>
-          <ProjectNameInput 
-            projectName={editedProjectName} 
-            onChange={handleProjectNameChange} 
-          />
-        </CardHeader>
+        <TaskReviewHeader 
+          tasksCount={editedTasks.length}
+          projectName={editedProjectName}
+          onProjectNameChange={handleProjectNameChange}
+        />
         
         <CardContent className="pb-0">
           <TasksList 
@@ -176,33 +145,15 @@ const TasksReview: React.FC<TasksReviewProps> = ({
           />
         </CardContent>
         
-        <CardFooter className="flex justify-between py-4 mt-4">
-          <Button 
-            variant="outline" 
-            onClick={handleBack}
-            disabled={isLoading || isProcessing || isTransitioning}
-          >
-            <ArrowLeftIcon className="mr-2 h-4 w-4" />
-            Back
-          </Button>
-          <Button 
-            onClick={handleAddToMotion}
-            disabled={editedTasks.length === 0 || isLoading || isProcessing || isTransitioning || editingTaskId !== null}
-            className="transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"
-          >
-            {isProcessing ? (
-              <>
-                <LoaderIcon className="mr-2 h-4 w-4 animate-spin" />
-                Processing
-              </>
-            ) : (
-              <>
-                Add to Motion
-                <ExternalLinkIcon className="ml-2 h-4 w-4" />
-              </>
-            )}
-          </Button>
-        </CardFooter>
+        <TaskReviewFooter 
+          onBack={handleBack}
+          onAddToMotion={handleAddToMotion}
+          isLoading={isLoading}
+          isProcessing={isProcessing}
+          isTransitioning={isTransitioning}
+          editingTaskId={editingTaskId}
+          tasksLength={editedTasks.length}
+        />
       </Card>
     </div>
   );
