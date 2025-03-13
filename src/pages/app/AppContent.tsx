@@ -3,7 +3,7 @@ import { useAppContext } from './context/AppContextProvider';
 import AppLayout from './components/AppLayout';
 import ConnectStep from './components/ConnectStep';
 import WorkspaceStep from './components/WorkspaceStep';
-import InputStep from './components/InputStep';
+import InputStep from './components/input-step';
 import TasksStep from './components/TasksStep';
 import CompleteStep from './components/CompleteStep';
 import { handleWorkspaceSelect } from './context/handlers/apiHandlers';
