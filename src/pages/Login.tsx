@@ -55,12 +55,20 @@ const Login = () => {
     }
   };
 
+  // Handle back to home navigation
+  const handleBackToHome = () => {
+    navigate('/');
+  };
+
   return (
     <div className="min-h-screen bg-[#fbbc05] flex flex-col items-center justify-center p-4 font-georgia">
-      <Link to="/" className="absolute top-4 left-4 flex items-center text-black hover:text-gray-800">
+      <button 
+        onClick={handleBackToHome}
+        className="absolute top-4 left-4 flex items-center text-black hover:text-gray-800 bg-transparent border-none cursor-pointer"
+      >
         <ArrowLeft className="h-4 w-4 mr-1" />
         Back to Home
-      </Link>
+      </button>
       <AuthForm
         onSubmit={handleAuth}
         isLoading={isLoading}

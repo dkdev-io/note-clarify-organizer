@@ -6,7 +6,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, RefreshCw, User, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAppContext } from '../context/AppContextProvider';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 
@@ -89,7 +89,7 @@ const InputStep: React.FC<InputStepProps> = ({
     }
   };
   
-  // Specific handler for the close button
+  // Fixed handler for the close button
   const handleCloseDialog = () => {
     if (!isProcessingNames) {
       setShowUserDialog(false);
@@ -136,7 +136,7 @@ const InputStep: React.FC<InputStepProps> = ({
         </p>
       </div>
       
-      {/* Dialog for unrecognized users - updated with close button functionality */}
+      {/* Updated Dialog for unrecognized users with fixed close button */}
       <Dialog open={showUserDialog} onOpenChange={handleOpenChange}>
         <DialogContent className="sm:max-w-md" onInteractOutside={(e) => {
           if (isProcessingNames) {
@@ -194,15 +194,17 @@ const InputStep: React.FC<InputStepProps> = ({
             </Button>
           </DialogFooter>
           
-          {/* The DialogClose component should be a child of DialogContent, not DialogPrimitive.Close */}
-          <DialogClose 
+          {/* Fixed close button - now using Button instead of DialogClose for better control */}
+          <Button
             className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
             onClick={handleCloseDialog}
             disabled={isProcessingNames}
+            variant="ghost"
+            size="icon"
           >
             <X className="h-4 w-4" />
             <span className="sr-only">Close</span>
-          </DialogClose>
+          </Button>
         </DialogContent>
       </Dialog>
     </div>

@@ -49,7 +49,7 @@ const App = () => {
         <ErrorBoundary>
           <BrowserRouter>
             <Routes>
-              {/* Landing page as the root route */}
+              {/* Always have landing page as the root route */}
               <Route path="/" element={<Landing />} />
               
               {/* Login page */}
