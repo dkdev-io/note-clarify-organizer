@@ -1,83 +1,100 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/hooks/useAuth';
 import { AuthForm } from '@/components/auth/AuthForm';
-import { ArrowLeft } from 'lucide-react';
 
 const Login = () => {
-  const location = useLocation();
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const location = useLocation();
   
-  // Check for signup parameter in the URL
+  // Check if the user was redirected from another page
+  const from = location.state?.from?.pathname || '/app';
+  
+  // Get the signup parameter from the URL
   const urlParams = new URLSearchParams(location.search);
   const signupParam = urlParams.get('signup');
   
-  // Default to signup view when coming from landing page with signup=true
-  const [isSignUp, setIsSignUp] = useState(signupParam === 'true');
-  const { signIn, signUp, isLoading, authError, setAuthError } = useAuth();
+  console.log('Login page loaded, signup param:', signupParam);
 
-  // Clear skip_auth when on the login page
-  useEffect(() => {
-    // Remove the skip_auth flag when visiting login page
-    // This ensures the proper auth flow is followed
-    sessionStorage.removeItem('skip_auth');
-    
-    console.log('Login page loaded, signup param:', signupParam);
-    
-    // Check if the user is directly accessing the login page without being redirected
-    const from = location.state?.from;
-    if (!from && !location.search) {
-      // If user directly typed /login in the URL, redirect to landing page
-      navigate('/', { replace: true });
-    }
-  }, [signupParam, location, navigate]);
-
-  // Set up an auth state listener
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('Auth state changed:', event, session ? 'Session exists' : 'No session');
-      if (event === 'SIGNED_IN' && session) {
-        navigate('/app');
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [navigate]);
-
-  // Additional effect specifically for the signup parameter
+  // Set signup mode based on URL parameter
   useEffect(() => {
     console.log('URL signup parameter changed:', signupParam);
-    setIsSignUp(signupParam === 'true');
+    if (signupParam === 'true') {
+      setIsSignUp(true);
+    }
   }, [signupParam]);
 
-  const handleAuth = async (email: string, password: string) => {
-    if (isSignUp) {
-      await signUp(email, password);
-    } else {
-      await signIn(email, password);
-    }
-  };
+  // Check if user is already authenticated, redirect to app if they are
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session) {
+        navigate(from, { replace: true });
+      } else if (location.pathname === '/login' && !location.search && !location.state) {
+        // If user directly accessed /login without parameters or state, redirect to landing
+        navigate('/', { replace: true });
+      }
+    };
+    
+    checkSession();
+    
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth state changed:', event, session ? 'Has session' : 'No session');
+      if (session) {
+        navigate(from, { replace: true });
+      }
+    });
+    
+    return () => {
+      if (authListener?.subscription) {
+        authListener.subscription.unsubscribe();
+      }
+    };
+  }, [navigate, from, location]);
 
-  // Handle back to home navigation
-  const handleBackToHome = () => {
-    navigate('/');
+  const handleSubmit = async (email: string, password: string) => {
+    setIsLoading(true);
+    setAuthError(null);
+    
+    try {
+      if (isSignUp) {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+        });
+        
+        if (error) throw error;
+        
+        // Show success message for sign up
+        setAuthError('Check your email for the confirmation link.');
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        
+        if (error) throw error;
+      }
+    } catch (error: any) {
+      setAuthError(error.message || 'An unexpected error occurred');
+      console.error('Auth error:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-[#fbbc05] flex flex-col items-center justify-center p-4 font-georgia">
-      <button 
-        onClick={handleBackToHome}
-        className="absolute top-4 left-4 flex items-center text-black hover:text-gray-800 bg-transparent border-none cursor-pointer"
-      >
-        <ArrowLeft className="h-4 w-4 mr-1" />
-        Back to Home
-      </button>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-[#f8f9fa] p-4">
+      <Link to="/" className="mb-8 text-lg font-bold flex items-center">
+        <span className="mr-2">🚀</span> Back to Home
+      </Link>
+      
       <AuthForm
-        onSubmit={handleAuth}
+        onSubmit={handleSubmit}
         isLoading={isLoading}
         authError={authError}
         isSignUp={isSignUp}

@@ -94,6 +94,7 @@ const UserMappingDialog: React.FC<UserMappingDialogProps> = ({
           disabled={isProcessingNames}
           variant="ghost"
           size="icon"
+          type="button"
         >
           <X className="h-4 w-4" />
           <span className="sr-only">Close</span>
