@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -9,98 +9,101 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { X as XIcon, AlertCircle } from 'lucide-react';
-import { ApiProps } from '../../types';
-import UserNameInput from '@/components/UserNameInput';
+import UserNameInputWithUsers from "@/components/UserNameInputWithUsers";
+import { useToast } from "@/components/ui/use-toast";
+
+interface UserMapping {
+  id: string;
+  noteRef: string;
+  motionUser: string;
+}
 
 interface UserMappingDialogProps {
-  showUserDialog: boolean;
-  unrecognizedNames: string[];
-  userMappings: Record<string, string | null>;
-  setUserMappings: React.Dispatch<React.SetStateAction<Record<string, string | null>>>;
-  handleOpenChange: (open: boolean) => void;
-  handleCloseDialog: () => void;
-  handleConfirmUserMapping: () => void;
-  isProcessingNames: boolean;
-  apiProps: ApiProps;
+  userMappings: UserMapping[];
+  users: any[];
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSave: (mappings: UserMapping[]) => void;
 }
 
 const UserMappingDialog: React.FC<UserMappingDialogProps> = ({
-  showUserDialog,
-  unrecognizedNames,
   userMappings,
-  setUserMappings,
-  handleOpenChange,
-  handleCloseDialog,
-  handleConfirmUserMapping,
-  isProcessingNames,
-  apiProps
+  users,
+  open,
+  onOpenChange,
+  onSave,
 }) => {
-  const handleNameMapping = (originalName: string, motionUserName: string | null) => {
-    setUserMappings(prev => ({
-      ...prev,
-      [originalName]: motionUserName
-    }));
+  const [mappings, setMappings] = useState<UserMapping[]>(userMappings);
+  const [isSaving, setIsSaving] = useState(false);
+  const { toast } = useToast();
+
+  const handleUpdateMapping = (id: string, motionUser: string) => {
+    setMappings(
+      mappings.map((mapping) =>
+        mapping.id === id ? { ...mapping, motionUser } : mapping
+      )
+    );
   };
-  
+
+  const handleSave = () => {
+    setIsSaving(true);
+    
+    // Simulate saving process
+    setTimeout(() => {
+      onSave(mappings);
+      setIsSaving(false);
+      onOpenChange(false);
+      
+      toast({
+        title: "User mappings saved",
+        description: "Your user mappings have been updated successfully.",
+      });
+    }, 500);
+  };
+
   return (
-    <Dialog open={showUserDialog} onOpenChange={handleOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <DialogTitle>Assign Users</DialogTitle>
-            <Button
-              type="button"
-              variant="ghost"
-              className="h-8 w-8 p-0" 
-              onClick={handleCloseDialog}
-              disabled={isProcessingNames}
-            >
-              <XIcon className="h-4 w-4" />
-              <span className="sr-only">Close</span>
-            </Button>
-          </div>
+          <DialogTitle>Map Users</DialogTitle>
           <DialogDescription>
-            Map these names to Motion users or leave them unassigned
+            Match names in your notes to Motion users for accurate task assignment.
           </DialogDescription>
         </DialogHeader>
-        
-        <div className="space-y-4 max-h-[60vh] overflow-y-auto py-4">
-          {unrecognizedNames.length === 0 ? (
-            <div className="flex items-center justify-center py-4">
-              <AlertCircle className="mr-2 h-5 w-5 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">No unrecognized names found</p>
-            </div>
-          ) : (
-            unrecognizedNames.map(name => (
-              <div key={name} className="space-y-1.5">
-                <p className="text-sm font-medium">"{name}" maps to:</p>
-                <UserNameInput
-                  users={apiProps.users || []}
-                  value={userMappings[name]}
-                  onChange={(value) => handleNameMapping(name, value)}
-                  disabled={isProcessingNames}
-                />
+
+        <div className="py-4">
+          <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-2">
+            {mappings.map((mapping) => (
+              <div key={mapping.id} className="flex items-center space-x-4">
+                <div className="flex-1">
+                  <p className="text-sm font-medium">{mapping.noteRef}</p>
+                </div>
+                <div className="flex-1">
+                  <UserNameInputWithUsers
+                    users={users}
+                    value={mapping.motionUser}
+                    onChange={(value) => handleUpdateMapping(mapping.id, value)}
+                    disabled={isSaving}
+                  />
+                </div>
               </div>
-            ))
-          )}
+            ))}
+          </div>
         </div>
-        
-        <DialogFooter className="flex justify-end space-x-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleCloseDialog}
-            disabled={isProcessingNames}
-          >
-            Skip Mapping
+
+        <DialogFooter className="flex justify-between">
+          <Button variant="outline" onClick={() => onOpenChange(false)} type="button">
+            Cancel
           </Button>
-          <Button
-            type="button"
-            onClick={handleConfirmUserMapping}
-            disabled={isProcessingNames}
-          >
-            {isProcessingNames ? 'Processing...' : 'Confirm Mapping'}
+          <Button onClick={handleSave} disabled={isSaving}>
+            {isSaving ? (
+              <>
+                <span className="mr-2">Saving</span>
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+              </>
+            ) : (
+              "Save Mappings"
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>
