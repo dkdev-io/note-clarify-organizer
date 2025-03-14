@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { FileTextIcon, SendIcon, ArrowRightIcon, PlusIcon, InfoIcon } from 'lucide-react';
+import { FileTextIcon, SendIcon, ArrowRightIcon, PlusIcon, InfoIcon, LinkIcon, VideoIcon, FileAudioIcon, MailIcon } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -104,7 +104,27 @@ const NoteInput: React.FC<NoteInputProps> = ({ onParseTasks, apiProps }) => {
 
   return (
     <div className={`w-full max-w-2xl mx-auto transition-all duration-500 ${isTransitioning ? 'opacity-0 translate-x-10' : 'opacity-100 translate-x-0'}`}>
-      <h2 className="text-xl font-medium text-center mb-4">Connect your notetaking app</h2>
+      <h2 className="text-xl font-bold text-left mb-4 flex items-center">
+        <LinkIcon className="inline-block mr-2 h-5 w-5 text-primary" />
+        Connect Your Note Taking App or Paste Your Notes Below
+      </h2>
+      
+      {/* Integration icons */}
+      <div className="mb-4 rounded-lg bg-white p-4 border border-gray-100 shadow-sm flex items-center justify-start space-x-6">
+        <div className="flex flex-col items-center">
+          <VideoIcon className="h-8 w-8 text-blue-600" />
+          <span className="text-xs mt-1">Zoom</span>
+        </div>
+        <div className="flex flex-col items-center">
+          <FileAudioIcon className="h-8 w-8 text-purple-600" />
+          <span className="text-xs mt-1">Otter AI</span>
+        </div>
+        <div className="flex flex-col items-center">
+          <MailIcon className="h-8 w-8 text-red-500" />
+          <span className="text-xs mt-1">Google</span>
+        </div>
+      </div>
+      
       <Card className="bg-white bg-opacity-80 backdrop-blur-sm border border-gray-100 shadow-card">
         <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
