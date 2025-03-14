@@ -18,7 +18,7 @@ export const TestimonialSection = () => {
           <p>And you don't quite remember who was responsible for what.</p>
         </div>
         <p className="font-georgia text-2xl mt-8 font-bold text-[#fbbc05]">
-          Project Notes changes that.
+          Projectize changes that.
         </p>
       </div>
     </section>
