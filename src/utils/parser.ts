@@ -5,7 +5,7 @@
  */
 
 // Re-export the type using 'export type' syntax to fix TS1205 error
-export type { Task } from './task-parser';
+export type { Task } from './task-parser/types';
 
 // Re-export the functions
 export {
