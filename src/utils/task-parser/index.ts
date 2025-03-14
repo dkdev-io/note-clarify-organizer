@@ -144,9 +144,11 @@ export const parseTextIntoTasks = (text: string, defaultProjectName: string | nu
   return tasks;
 };
 
-// Re-export all the utility functions and types for use in other modules
+// Re-export the type using 'export type' syntax to fix TS1205 error
+export type { Task };
+
+// Re-export all the utility functions for use in other modules
 export { 
-  Task,
   validateTask, 
   validateTasks,
   refineTask,
