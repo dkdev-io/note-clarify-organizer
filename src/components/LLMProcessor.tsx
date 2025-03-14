@@ -6,7 +6,8 @@ import { Task } from '@/utils/parser';
 import { BrainIcon, ArrowRightIcon, ArrowLeftIcon, LoaderIcon } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from '@/lib/supabase';
 
 interface ApiProps {
   isConnected: boolean;
@@ -14,6 +15,7 @@ interface ApiProps {
   workspaces: any[];
   selectedWorkspaceId?: string;
   selectedProject?: string;
+  users?: any[];
 }
 
 interface LLMProcessorProps {
@@ -42,72 +44,84 @@ const LLMProcessor: React.FC<LLMProcessorProps> = ({
         // Make a copy of the tasks first
         const tasksCopy = JSON.parse(JSON.stringify(selectedTasks));
         
-        // For each task, we'll make an API call to process it
-        // In a real implementation, you might want to batch these calls
-        const processedTasks = await Promise.all(
-          tasksCopy.map(async (task: Task) => {
-            try {
-              // Call Supabase Edge Function to process the task with OpenAI
-              const response = await fetch('/api/process-task', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  task,
-                  projectName
-                }),
-              });
-              
-              if (!response.ok) {
-                console.error('Error processing task:', await response.text());
-                return task; // Return original task if processing fails
+        // Process tasks in batches to improve reliability
+        const processTasks = async (tasks: Task[]) => {
+          try {
+            const response = await supabase.functions.invoke('process-task-batch', {
+              body: {
+                tasks,
+                projectName
               }
-              
-              const processedTask = await response.json();
-              return processedTask;
-            } catch (error) {
-              console.error('Error processing task:', error);
-              return task; // Return original task if processing fails
+            });
+            
+            if (response.error) {
+              console.error('Error processing tasks batch:', response.error);
+              return tasks; // Return original tasks if processing fails
             }
-          })
-        );
+            
+            if (!response.data || !response.data.tasks) {
+              console.error('Invalid response from process-task-batch:', response.data);
+              return tasks; // Return original tasks if invalid response
+            }
+            
+            return response.data.tasks;
+          } catch (error) {
+            console.error('Error processing tasks batch:', error);
+            return tasks; // Return original tasks if processing fails
+          }
+        };
+        
+        // Try to use the real API
+        let processedTasks: Task[];
+        
+        try {
+          processedTasks = await processTasks(tasksCopy);
+          console.log('Tasks processed with LLM:', processedTasks);
+        } catch (error) {
+          console.error('Failed to process tasks with LLM:', error);
+          
+          // If real API fails, fall back to simple enhancement
+          processedTasks = enhanceTasksLocally(tasksCopy);
+          
+          toast({
+            description: "Using fallback task enhancement",
+            variant: "default"
+          });
+        }
         
         setEnhancedTasks(processedTasks);
       } catch (error) {
         console.error('Error in LLM processing:', error);
         toast({
           title: "Processing error",
-          description: "Could not process tasks with LLM. Using original tasks instead.",
+          description: "Using original tasks instead",
           variant: "destructive"
         });
+        
+        // Ensure we have tasks to show even if everything fails
         setEnhancedTasks(selectedTasks);
       } finally {
-        // Simulate a delay for better UX
+        // Short delay for better UX
         setTimeout(() => {
           setIsProcessing(false);
-        }, 1000);
+        }, 800);
       }
     };
 
-    // Mock implementation for LLM processing while Supabase Edge Function is being set up
-    const mockProcessTasks = () => {
-      const enhancedTasksCopy = selectedTasks.map(task => {
+    // Fallback function to enhance tasks locally
+    const enhanceTasksLocally = (tasks: Task[]): Task[] => {
+      console.log('Using local task enhancement as fallback');
+      
+      return tasks.map(task => {
         // Create a deep copy of the task
         const improved = { ...task };
         
-        // Enhance the title with more clarity if needed
-        if (improved.title.length < 20) {
-          improved.title = improved.title.includes('Enhance') 
-            ? improved.title 
-            : `${improved.title} - Enhanced with AI`;
-        }
-        
         // Add or improve descriptions
         if (!improved.description) {
-          improved.description = `This task requires attention and should be broken down into smaller subtasks. Consider creating a plan before executing.`;
+          improved.description = `This task requires attention to complete properly.`;
         } else if (improved.description.length < 30) {
-          improved.description = `${improved.description} Additional context: This task is important for project progress and should be prioritized accordingly.`;
+          const additionalNotes = "Additional context: This task is important for project progress.";
+          improved.description = `${improved.description} ${additionalNotes}`;
         }
         
         // Set priority based on content if not already set
@@ -115,8 +129,7 @@ const LLMProcessor: React.FC<LLMProcessorProps> = ({
           if (
             improved.title.toLowerCase().includes('urgent') || 
             improved.title.toLowerCase().includes('asap') ||
-            improved.title.toLowerCase().includes('critical') ||
-            improved.title.toLowerCase().includes('immediately')
+            improved.title.toLowerCase().includes('critical')
           ) {
             improved.priority = 'high';
           } else if (
@@ -131,8 +144,8 @@ const LLMProcessor: React.FC<LLMProcessorProps> = ({
         
         // Suggest a due date if none exists
         if (!improved.dueDate) {
-          // Set a random due date within the next 1-14 days
-          const daysToAdd = Math.floor(Math.random() * 14) + 1;
+          // Set a due date within the next 7 days
+          const daysToAdd = Math.floor(Math.random() * 7) + 1;
           const dueDate = new Date();
           dueDate.setDate(dueDate.getDate() + daysToAdd);
           improved.dueDate = dueDate.toISOString().split('T')[0];
@@ -140,19 +153,10 @@ const LLMProcessor: React.FC<LLMProcessorProps> = ({
         
         return improved;
       });
-      
-      // Simulate processing delay for better UX
-      setTimeout(() => {
-        setEnhancedTasks(enhancedTasksCopy);
-        setIsProcessing(false);
-      }, 2000);
     };
-
-    // Use mock implementation instead of actual API calls until Supabase is ready
-    mockProcessTasks();
     
-    // Uncomment the line below once Supabase Edge Function is properly set up
-    // processTasksWithLLM();
+    // Start processing
+    processTasksWithLLM();
   }, [selectedTasks, projectName, toast]);
 
   const handleContinue = () => {
@@ -293,6 +297,6 @@ const LLMProcessor: React.FC<LLMProcessorProps> = ({
       </Card>
     </div>
   );
-};
+}
 
 export default LLMProcessor;

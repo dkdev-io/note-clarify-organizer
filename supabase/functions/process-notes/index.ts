@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 
@@ -44,13 +45,53 @@ serve(async (req) => {
     console.log(`Processing notes: ${text.length} characters${projectName ? ` for project '${projectName}'` : ''}`);
     console.log(`Available Motion users: ${motionUsers ? motionUsers.length : 0}`);
 
-    // Try to use OpenAI first, then fall back to free alternative
+    // Check for unrecognized names if motionUsers provided
+    if (motionUsers && Array.isArray(motionUsers) && motionUsers.length > 0) {
+      const extractedNames = extractNamesFromText(text);
+      console.log('Extracted potential names from text:', extractedNames);
+      
+      const unrecognizedNames = findUnrecognizedNames(extractedNames, motionUsers);
+      
+      if (unrecognizedNames.length > 0) {
+        console.warn('Found unrecognized names:', unrecognizedNames);
+        return new Response(
+          JSON.stringify({ 
+            unrecognizedNames, 
+            tasks: [] 
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
+    // Try to use OpenAI, with simplified error handling and retry logic
     try {
-      return await processWithOpenAI(text, projectName, motionUsers, corsHeaders);
+      console.log('Attempting to process with OpenAI...');
+      const openaiResult = await processWithOpenAI(text, projectName);
+      console.log('Successfully processed with OpenAI');
+      return openaiResult;
     } catch (openAiError) {
-      console.error('OpenAI processing failed, trying alternative API:', openAiError);
-      // Try the free alternative API
-      return await processWithHuggingFace(text, projectName, motionUsers, corsHeaders);
+      console.error('OpenAI processing failed:', openAiError);
+      
+      // If OpenAI fails with a quota error, try Hugging Face
+      if (openAiError.message && (
+          openAiError.message.includes('quota') || 
+          openAiError.message.includes('rate limit') ||
+          openAiError.message.includes('API key')
+        )) {
+        try {
+          console.log('Attempting fallback to Hugging Face...');
+          const huggingFaceResult = await processWithHuggingFace(text, projectName);
+          console.log('Successfully processed with Hugging Face');
+          return huggingFaceResult;
+        } catch (hfError) {
+          console.error('Hugging Face processing also failed:', hfError);
+          throw new Error('All AI processing methods failed');
+        }
+      } else {
+        // For other errors, just throw the original error
+        throw openAiError;
+      }
     }
   } catch (error) {
     console.error('Error in process-notes function:', error);
@@ -68,11 +109,11 @@ serve(async (req) => {
 function extractNamesFromText(text) {
   // Look for patterns like "Name will..." which typically indicate a task assignment
   const namePatterns = [
-    /(\b[A-Z][a-z]*\b)\s+will\b/g,           // "Name will..."
-    /(\b[A-Z][a-z]*\b)\s+(?:should|needs to|has to|must)\b/g,  // "Name should/needs to/has to/must..."
-    /\bassign(?:ed)?\s+to\s+(\b[A-Z][a-z]*\b)/gi,  // "assigned to Name"
-    /(\b[A-Z][a-z]*\b)'s\s+(?:task|responsibility|job)/g,  // "Name's task/responsibility/job"
-    /(\b[A-Z][a-z]*\b)\s+is\s+(?:responsible|assigned)/g,  // "Name is responsible/assigned"
+    /(\b[A-Z][a-z]+\b)\s+will\b/g,           // "Name will..."
+    /(\b[A-Z][a-z]+\b)\s+(?:should|needs to|has to|must)\b/g,  // "Name should/needs to/has to/must..."
+    /\bassign(?:ed)?\s+to\s+(\b[A-Z][a-z]+\b)/gi,  // "assigned to Name"
+    /(\b[A-Z][a-z]+\b)'s\s+(?:task|responsibility|job)/g,  // "Name's task/responsibility/job"
+    /(\b[A-Z][a-z]+\b)\s+is\s+(?:responsible|assigned)/g,  // "Name is responsible/assigned"
   ];
   
   let allNames = [];
@@ -82,14 +123,6 @@ function extractNamesFromText(text) {
     const matches = [...text.matchAll(pattern)];
     const names = matches.map(match => match[1]);
     allNames = [...allNames, ...names];
-  }
-  
-  // Manual check for specific names that might be missed
-  const specificNames = ["Matt", "Matthew"];
-  for (const name of specificNames) {
-    if (text.includes(name) && !allNames.includes(name)) {
-      allNames.push(name);
-    }
   }
   
   // Return unique names
@@ -103,7 +136,6 @@ function findUnrecognizedNames(extractedNames, motionUsers) {
   }
   
   console.log('Checking names against Motion users:', extractedNames);
-  console.log('Available Motion users:', motionUsers.map(u => u.name));
   
   const userNames = motionUsers.map(user => {
     // Get both full name and first name
@@ -129,17 +161,9 @@ function findUnrecognizedNames(extractedNames, motionUsers) {
     for (const userName of userNames) {
       // Check if name is contained in username or vice versa
       if (userName.firstName.includes(nameLower) || nameLower.includes(userName.firstName)) {
-        return false; // Name is potentially recognized
-      }
-      
-      // Check common nicknames (simple approach)
-      if ((nameLower === 'dan' && userName.firstName.includes('daniel')) ||
-          (nameLower === 'mat' && userName.firstName.includes('matthew')) ||
-          (nameLower === 'matt' && userName.firstName.includes('matthew')) ||
-          (nameLower === 'dn' && (userName.firstName.includes('dan') || userName.firstName.includes('daniel'))) ||
-          (nameLower === 'dave' && userName.firstName.includes('david')) ||
-          (nameLower === 'jim' && userName.firstName.includes('james'))) {
-        return false; // Name is potentially a nickname
+        if (nameLower.length > 2) { // Avoid matching single letters
+          return false; // Name is potentially recognized
+        }
       }
     }
     
@@ -147,31 +171,13 @@ function findUnrecognizedNames(extractedNames, motionUsers) {
   });
 }
 
-// Process notes with OpenAI
-async function processWithOpenAI(text, projectName, motionUsers, corsHeaders) {
+// Process notes with OpenAI with improved error handling
+async function processWithOpenAI(text, projectName) {
   // Get OpenAI API key from environment variable
   const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
   if (!openAIApiKey) {
     console.error('OpenAI API key not found in environment variables');
     throw new Error('OpenAI API key not configured');
-  }
-
-  // Check for unrecognized names before processing
-  const extractedNames = extractNamesFromText(text);
-  console.log('Extracted potential names from text:', extractedNames);
-  
-  const unrecognizedNames = findUnrecognizedNames(extractedNames, motionUsers);
-  
-  if (unrecognizedNames.length > 0) {
-    console.warn('Found unrecognized names:', unrecognizedNames);
-    return new Response(
-      JSON.stringify({ 
-        error: `Unrecognized users in notes: ${unrecognizedNames.join(', ')}`,
-        unrecognizedNames, 
-        tasks: [] 
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
   }
 
   // Prepare the system prompt for task extraction
@@ -183,6 +189,7 @@ Format each task as a JSON object with the following properties:
 - project: Project name if specified (optional)
 - status: Status if specified (optional, default to "todo")
 - priority: Priority if specified (optional, values can be "low", "medium", "high")
+- assignee: Person assigned to the task if specified (optional)
 
 Return ONLY a JSON array of task objects, nothing else.`;
 
@@ -191,61 +198,57 @@ Return ONLY a JSON array of task objects, nothing else.`;
 
   console.log('Calling OpenAI API...');
   
-  // Use OpenAI
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${openAIApiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'gpt-4o-mini', // Use gpt-4o-mini for reliability
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt }
-      ],
-      temperature: 0.1, // Lower temperature for more deterministic outputs
-      max_tokens: 1500, // Ensure enough space for response
-    }),
-  });
+  // Use OpenAI with timeout to avoid hanging
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10-second timeout
   
-  if (!response.ok) {
-    const errorData = await response.json();
-    console.error(`OpenAI API error (${response.status}):`, errorData);
-    throw new Error(`OpenAI API error: ${errorData.error?.message || `Status ${response.status}`}`);
+  try {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openAIApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini', // Use gpt-4o-mini for reliability
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ],
+        temperature: 0.1, // Lower temperature for more deterministic outputs
+        max_tokens: 1500, // Ensure enough space for response
+      }),
+      signal: controller.signal,
+    });
+    
+    clearTimeout(timeoutId);
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error(`OpenAI API error (${response.status}):`, errorData);
+      throw new Error(`OpenAI API error: ${errorData.error?.message || `Status ${response.status}`}`);
+    }
+    
+    const data = await response.json();
+    
+    if (!data.choices || !data.choices[0]?.message?.content) {
+      console.error('Invalid response from OpenAI:', data);
+      throw new Error('Invalid response format from OpenAI API');
+    }
+    
+    const tasksContent = data.choices[0].message.content;
+    return processApiResponse(tasksContent, projectName, corsHeaders);
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error.name === 'AbortError') {
+      throw new Error('OpenAI API request timed out');
+    }
+    throw error;
   }
-  
-  const data = await response.json();
-  
-  if (!data.choices || !data.choices[0]?.message?.content) {
-    console.error('Invalid response from OpenAI:', data);
-    throw new Error('Invalid response format from OpenAI API');
-  }
-  
-  const tasksContent = data.choices[0].message.content;
-  return processApiResponse(tasksContent, projectName, corsHeaders);
 }
 
-// Process notes with Hugging Face (free alternative)
-async function processWithHuggingFace(text, projectName, motionUsers, corsHeaders) {
-  // Check for unrecognized names before processing
-  const extractedNames = extractNamesFromText(text);
-  console.log('Extracted potential names from text:', extractedNames);
-  
-  const unrecognizedNames = findUnrecognizedNames(extractedNames, motionUsers);
-  
-  if (unrecognizedNames.length > 0) {
-    console.warn('Found unrecognized names:', unrecognizedNames);
-    return new Response(
-      JSON.stringify({ 
-        error: `Unrecognized users in notes: ${unrecognizedNames.join(', ')}`,
-        unrecognizedNames, 
-        tasks: [] 
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-  }
-
+// Process notes with Hugging Face (simplified)
+async function processWithHuggingFace(text, projectName) {
   // Get Hugging Face API token from environment variable
   const huggingFaceToken = Deno.env.get('HUGGINGFACE_API_KEY');
   if (!huggingFaceToken) {
@@ -253,7 +256,7 @@ async function processWithHuggingFace(text, projectName, motionUsers, corsHeader
     throw new Error('Hugging Face API token not configured');
   }
 
-  console.log('Falling back to Hugging Face API...');
+  console.log('Using Hugging Face API...');
   
   // Create a prompt specifically for the Hugging Face model
   const prompt = `
@@ -268,46 +271,60 @@ Format your answer as a JSON array of task objects with these properties:
 - project: project name if specified (optional)
 - status: task status (optional, default: "todo")
 - priority: priority if specified (optional: "low", "medium", "high")
+- assignee: person assigned to the task if specified (optional)
 
 ONLY return the JSON array, nothing else.
 `;
 
-  // Call Hugging Face's inference API with a suitable open model
-  const response = await fetch("https://api-inference.huggingface.co/models/meta-llama/Meta-Llama-3-8B-Instruct", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${huggingFaceToken}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      inputs: prompt,
-      parameters: {
-        max_new_tokens: 1024,
-        temperature: 0.1,
-        return_full_text: false
-      }
-    }),
-  });
+  // Use timeout to avoid hanging requests
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 8000); // 8-second timeout
+  
+  try {
+    // Call Hugging Face's inference API with a suitable open model
+    const response = await fetch("https://api-inference.huggingface.co/models/meta-llama/Meta-Llama-3-8B-Instruct", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${huggingFaceToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        inputs: prompt,
+        parameters: {
+          max_new_tokens: 1024,
+          temperature: 0.1,
+          return_full_text: false
+        }
+      }),
+      signal: controller.signal,
+    });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error(`Hugging Face API error (${response.status}):`, errorText);
-    throw new Error(`Hugging Face API error: ${response.status}`);
+    clearTimeout(timeoutId);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Hugging Face API error (${response.status}):`, errorText);
+      throw new Error(`Hugging Face API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    // Extract the generated text
+    const generatedText = Array.isArray(data) ? data[0].generated_text : data.generated_text;
+    
+    if (!generatedText) {
+      console.error('Invalid response from Hugging Face:', data);
+      throw new Error('Invalid response from Hugging Face API');
+    }
+
+    return processApiResponse(generatedText, projectName, corsHeaders);
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error.name === 'AbortError') {
+      throw new Error('Hugging Face API request timed out');
+    }
+    throw error;
   }
-
-  const data = await response.json();
-  
-  // Extract the generated text
-  const generatedText = Array.isArray(data) ? data[0].generated_text : data.generated_text;
-  
-  if (!generatedText) {
-    console.error('Invalid response from Hugging Face:', data);
-    throw new Error('Invalid response from Hugging Face API');
-  }
-
-  console.log('Received response from Hugging Face:', generatedText.substring(0, 100) + '...');
-  
-  return processApiResponse(generatedText, projectName, corsHeaders);
 }
 
 // Process and format the API response into tasks
@@ -347,7 +364,6 @@ function processApiResponse(responseText, projectName, corsHeaders) {
       ...task,
       project: task.project || projectName
     }));
-    console.log(`Applied project name "${projectName}" to tasks:`, tasks);
   }
   
   // Add id field to each task and map response fields to Task interface fields

@@ -3,7 +3,6 @@ import { Task } from '@/utils/parser';
 import { parseTextIntoTasks } from '@/utils/parser';
 import { processNotesWithLLM } from '@/utils/llm';
 import { ToastType } from './providers';
-import { extractPotentialNames } from '@/utils/nameMatching';
 
 // Process notes with both LLM and fallback parser
 export async function processNotes(
@@ -11,19 +10,16 @@ export async function processNotes(
   effectiveProjectName: string | null,
   toast: ToastType,
   motionUsers: any[] = []
-): Promise<{ tasks: Task[], usedFallback: boolean }> {
+): Promise<{ tasks: Task[], usedFallback: boolean, unrecognizedNames?: string[] }> {
   // Always start with the fallback parser to ensure we have results
   const fallbackTasks = parseTextIntoTasks(text, effectiveProjectName);
   console.log(`Fallback parser extracted ${fallbackTasks.length} tasks`);
   
   let tasks: Task[] = fallbackTasks;
   let usedFallback = true;
+  let unrecognizedNames: string[] | undefined = undefined;
   
   try {
-    // Check for potential name issues before sending to API
-    const potentialNames = extractPotentialNames(text);
-    console.log('Potential names found in text:', potentialNames);
-    
     // Attempt to use the LLM processor if we have more than simple task text
     if (text.length > 50) {
       console.log('Attempting to use LLM processor...');
@@ -33,27 +29,53 @@ export async function processNotes(
         description: "This might take a few seconds..."
       });
       
-      const llmPromise = processNotesWithLLM(text, effectiveProjectName);
-      
       // Add a timeout for the entire LLM processing
-      const timeoutPromise = new Promise<Task[]>((_, reject) => {
+      const timeoutPromise = new Promise<never>((_, reject) => {
         setTimeout(() => reject(new Error('AI processing timed out after 15 seconds')), 15000);
       });
       
-      // Race the LLM promise against the timeout
-      const llmTasks = await Promise.race([llmPromise, timeoutPromise]);
-      
-      if (llmTasks && llmTasks.length > 0) {
-        console.log(`LLM processor extracted ${llmTasks.length} tasks`);
-        tasks = llmTasks;
-        usedFallback = false;
+      // Process notes with LLM
+      try {
+        const llmResult = await Promise.race([
+          processNotesWithLLM(text, effectiveProjectName, motionUsers),
+          timeoutPromise
+        ]);
         
-        toast({
-          title: "AI Processing Complete",
-          description: `Successfully extracted ${tasks.length} tasks from your notes.`
-        });
-      } else {
-        console.log('LLM processor returned no tasks, using fallback parser results');
+        // Check if we have unrecognized names
+        if (llmResult.unrecognizedNames && llmResult.unrecognizedNames.length > 0) {
+          console.log('Detected unrecognized names:', llmResult.unrecognizedNames);
+          unrecognizedNames = llmResult.unrecognizedNames;
+          // Return the fallback tasks along with unrecognized names
+          return { tasks: fallbackTasks, usedFallback: true, unrecognizedNames };
+        }
+        
+        // If we have tasks from LLM, use them
+        if (llmResult.tasks && llmResult.tasks.length > 0) {
+          console.log(`LLM processor extracted ${llmResult.tasks.length} tasks`);
+          tasks = llmResult.tasks;
+          usedFallback = false;
+          
+          toast({
+            title: "AI Processing Complete",
+            description: `Successfully extracted ${tasks.length} tasks from your notes.`
+          });
+        } else {
+          console.log('LLM processor returned no tasks, using fallback parser results');
+        }
+      } catch (error) {
+        // Handle specific error for timeout
+        if (error.message && error.message.includes('timed out')) {
+          console.error('LLM processing timed out:', error);
+          toast({
+            title: "AI processing timed out",
+            description: "Using basic parser instead. Try again with shorter text.",
+            variant: "destructive"
+          });
+        } else {
+          // General error handling
+          console.error('Error in LLM processing:', error);
+          throw error; // Re-throw to be caught by outer catch
+        }
       }
     } else {
       console.log('Text too short, skipping LLM processing');
@@ -96,5 +118,5 @@ export async function processNotes(
     });
   }
   
-  return { tasks, usedFallback };
+  return { tasks, usedFallback, unrecognizedNames };
 }

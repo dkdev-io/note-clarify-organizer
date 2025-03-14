@@ -1,1 +1,16 @@
+
 project_id = "fvxfmlhvxmpmbtouarcp"
+[api]
+enabled = true
+[db]
+enabled = true
+[realtime]
+enabled = true
+[storage]
+enabled = true
+[edge_functions]
+enabled = true
+[functions.process-notes]
+verify_jwt = false
+[functions.process-task-batch]
+verify_jwt = false
