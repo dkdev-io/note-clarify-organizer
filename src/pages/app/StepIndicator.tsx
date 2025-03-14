@@ -43,10 +43,10 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({ currentStep, isConnected 
               <div className="flex flex-col items-center">
                 <div 
                   className={cn(
-                    "flex items-center justify-center w-10 h-10 rounded-full border-2 mb-2 transition-all",
-                    isCompleted ? "border-primary bg-primary text-white" : 
-                    isActive ? "border-primary bg-white text-primary" : 
-                    "border-gray-300 bg-white text-gray-400"
+                    "flex items-center justify-center w-10 h-10 rounded-full transition-all",
+                    isCompleted ? "bg-[#fbbc05] text-white" : 
+                    isActive ? "border-2 border-[#fbbc05] bg-white text-[#fbbc05]" : 
+                    "border-2 border-gray-200 bg-white text-gray-400"
                   )}
                 >
                   {isCompleted ? (
@@ -57,7 +57,7 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({ currentStep, isConnected 
                 </div>
                 <span 
                   className={cn(
-                    "text-sm font-medium",
+                    "text-sm font-medium mt-2",
                     isCompleted || isActive ? "text-gray-900" : "text-gray-500"
                   )}
                 >
@@ -68,8 +68,8 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({ currentStep, isConnected 
               {!isLastStep && (
                 <div 
                   className={cn(
-                    "flex-1 h-0.5 mx-2",
-                    isCompleted ? "bg-primary" : "bg-gray-200"
+                    "flex-1 h-1 mx-2 rounded-full",
+                    isCompleted ? "bg-[#fbbc05]" : "bg-gray-200"
                   )}
                 />
               )}

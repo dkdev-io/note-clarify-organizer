@@ -5,17 +5,18 @@ import { FileText, Zap, RefreshCw } from 'lucide-react';
 
 export const FeaturesSection = () => {
   return (
-    <section className="bg-[#fbbc05] py-24 border-y-4 border-black relative overflow-hidden">
-      <div className="absolute top-1/4 right-0 w-96 h-96 bg-[#e9af00] rounded-full opacity-30 translate-x-1/3 blur-3xl"></div>
-      <div className="absolute bottom-1/4 left-0 w-64 h-64 bg-[#e9af00] rounded-full opacity-40 -translate-x-1/3 blur-3xl"></div>
+    <section id="features" className="py-24 bg-gradient-to-b from-white to-gray-50 relative overflow-hidden">
+      <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-white to-transparent"></div>
+      <div className="absolute -top-24 right-0 w-96 h-96 bg-[#fbbc05]/10 rounded-full blur-3xl"></div>
+      <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#fbbc05]/10 rounded-full blur-3xl"></div>
       
-      <div className="container mx-auto px-4 text-center relative z-10">
-        <h2 className="text-5xl font-bebas-neue mb-4 font-bold tracking-tight">How It Works</h2>
-        <p className="font-georgia text-xl max-w-2xl mx-auto mb-16 text-black">
+      <div className="container mx-auto px-6 text-center relative z-10">
+        <h2 className="text-4xl md:text-5xl font-bebas-neue mb-4 font-bold tracking-tight">How It Works</h2>
+        <p className="font-georgia text-xl max-w-2xl mx-auto mb-16 text-gray-600">
           Our simple three-step process transforms your meeting notes into structured tasks in seconds.
         </p>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 max-w-4xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
           <FeatureCard
             icon={<FileText size={48} strokeWidth={1.5} />}
             title="1. Connect or Paste"

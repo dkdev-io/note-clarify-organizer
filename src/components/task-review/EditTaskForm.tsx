@@ -10,7 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { TrashIcon, User2Icon } from 'lucide-react';
+import { CalendarIcon, TrashIcon, User2Icon } from 'lucide-react';
 
 interface EditTaskFormProps {
   task: Task;
@@ -24,7 +24,7 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({ task, onSave, onUpdateTask 
   };
 
   return (
-    <div className="space-y-4 bg-accent/30 p-3 rounded-md -mx-3">
+    <div className="space-y-4 bg-gray-50 p-4 rounded-lg -mx-3">
       <div>
         <Label htmlFor={`title-${task.id}`} className="text-sm font-medium mb-1 block">
           Task Title
@@ -111,6 +111,7 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({ task, onSave, onUpdateTask 
                   !task.dueDate && "text-muted-foreground"
                 )}
               >
+                <CalendarIcon className="mr-2 h-4 w-4" />
                 {task.dueDate ? format(new Date(task.dueDate), "PPP") : "Select date"}
               </Button>
             </PopoverTrigger>
@@ -120,6 +121,7 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({ task, onSave, onUpdateTask 
                 selected={task.dueDate ? new Date(task.dueDate) : undefined}
                 onSelect={(date) => onUpdateTask(task.id, 'dueDate', date?.toISOString() || null)}
                 initialFocus
+                className={cn("p-3 pointer-events-auto")}
               />
             </PopoverContent>
           </Popover>
@@ -127,9 +129,9 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({ task, onSave, onUpdateTask 
           {task.dueDate && (
             <Button 
               variant="ghost" 
-              size="sm"
+              size="icon"
               onClick={() => onUpdateTask(task.id, 'dueDate', null)}
-              className="h-8 px-2"
+              className="h-10 w-10"
             >
               <TrashIcon className="h-4 w-4 text-muted-foreground" />
             </Button>
@@ -138,7 +140,10 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({ task, onSave, onUpdateTask 
       </div>
       
       <div className="flex justify-end pt-2">
-        <Button onClick={onSave}>
+        <Button 
+          onClick={onSave}
+          className="bg-[#fbbc05] hover:bg-[#fbbc05]/90 text-black"
+        >
           Save Changes
         </Button>
       </div>

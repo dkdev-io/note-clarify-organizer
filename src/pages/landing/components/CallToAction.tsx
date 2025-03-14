@@ -22,8 +22,8 @@ export const CallToAction = ({
     <Button 
       onClick={onClick}
       className={cn(
-        "bg-[#fbbc05] hover:bg-[#fbbc05]/90 text-black font-bold rounded-none border-black border-4 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-1",
-        size === 'large' ? "text-lg px-10 py-7" : "px-6 py-5",
+        "bg-[#fbbc05] hover:bg-[#fbbc05]/90 text-black font-medium rounded-full transition-all",
+        size === 'large' ? "text-lg px-10 py-6" : "px-6 py-2",
         className
       )}
     >

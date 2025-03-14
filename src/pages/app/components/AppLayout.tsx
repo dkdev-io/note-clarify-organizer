@@ -22,7 +22,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
   selectedProject
 }) => {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex flex-col px-4 py-12">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white flex flex-col px-6 py-12">
       <div className="container mx-auto max-w-3xl">
         <AppHeader 
           isConnected={isConnected}

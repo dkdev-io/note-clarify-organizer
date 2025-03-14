@@ -40,19 +40,19 @@ export const AuthForm: React.FC<AuthFormProps> = ({
   };
 
   return (
-    <Card className="w-full max-w-md border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-      <CardHeader>
-        <CardTitle className="text-4xl font-bebas-neue">{isSignUp ? 'CREATE ACCOUNT' : 'LOGIN'}</CardTitle>
-        <CardDescription className="font-georgia">
+    <Card className="w-full max-w-md border border-gray-200 shadow-lg rounded-xl overflow-hidden">
+      <CardHeader className="bg-gradient-to-r from-gray-50 to-white pb-8">
+        <CardTitle className="text-3xl font-bold">{isSignUp ? 'Create Account' : 'Login'}</CardTitle>
+        <CardDescription>
           {isSignUp 
             ? 'Enter your details to create a new account' 
             : 'Enter your credentials to access your account'}
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 pt-6">
           {authError && (
-            <Alert variant="destructive" className="border-4 border-black bg-red-100">
+            <Alert variant="destructive" className="border border-red-200 bg-red-50">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Authentication Error</AlertTitle>
               <AlertDescription>{authError}</AlertDescription>
@@ -60,7 +60,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
           )}
           
           <div className="space-y-2">
-            <Label htmlFor="email" className="font-georgia">Email</Label>
+            <Label htmlFor="email">Email</Label>
             <Input 
               id="email" 
               type="email" 
@@ -68,11 +68,11 @@ export const AuthForm: React.FC<AuthFormProps> = ({
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="border-2 border-black focus-visible:ring-[#fbbc05]"
+              className="border border-gray-300 focus-visible:ring-[#fbbc05]"
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password" className="font-georgia">Password</Label>
+            <Label htmlFor="password">Password</Label>
             <Input 
               id="password" 
               type="password" 
@@ -80,7 +80,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="border-2 border-black focus-visible:ring-[#fbbc05]"
+              className="border border-gray-300 focus-visible:ring-[#fbbc05]"
             />
             <p className="text-xs text-gray-500 mt-1">Password must be at least 6 characters</p>
           </div>
@@ -88,7 +88,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
         <CardFooter className="flex flex-col gap-4">
           <Button 
             type="submit" 
-            className="w-full bg-black hover:bg-black/90 text-white font-bold text-lg py-6 rounded-none transition-transform hover:-translate-y-1"
+            className="w-full bg-[#fbbc05] hover:bg-[#fbbc05]/90 text-black font-medium text-base py-6 rounded-lg transition-all"
             disabled={isLoading}
           >
             {isLoading ? 'Processing...' : isSignUp ? 'Sign Up' : 'Login'}
@@ -96,7 +96,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
           <Button 
             type="button" 
             variant="link" 
-            className="font-georgia text-black"
+            className="text-gray-600"
             onClick={() => setIsSignUp(!isSignUp)}
           >
             {isSignUp ? 'Already have an account? Login' : 'Need an account? Sign Up'}
@@ -104,7 +104,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
           <Button 
             type="button" 
             variant="outline" 
-            className="w-full border-2 border-gray-400 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium mt-2 flex items-center justify-center gap-2"
+            className="w-full border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 font-medium mt-2 flex items-center justify-center gap-2 rounded-lg"
             onClick={handleSkip}
           >
             <SkipForward className="h-4 w-4" />

@@ -24,10 +24,10 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, onEdit, onDelete }) => {
   const priorityColor = task.priority ? priorityColors[task.priority as keyof typeof priorityColors] : priorityColors.normal;
   
   return (
-    <div className="py-3 group">
+    <div className="py-4 group border-b border-gray-100 last:border-none">
       <div className="flex items-start gap-3">
         <div className="pt-0.5">
-          <Checkbox className="opacity-50" />
+          <Checkbox className="mt-1" />
         </div>
         
         <div className="flex-1 min-w-0">
@@ -41,7 +41,7 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, onEdit, onDelete }) => {
                 </p>
               )}
               
-              <div className="flex flex-wrap gap-2 mt-2">
+              <div className="flex flex-wrap gap-2 mt-3">
                 {task.priority && (
                   <Badge variant="outline" className={`${priorityColor} capitalize`}>
                     {task.priority}
@@ -73,7 +73,7 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, onEdit, onDelete }) => {
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="h-8 w-8 text-gray-500 hover:text-gray-700"
+                className="h-8 w-8 text-gray-500 hover:text-gray-700 rounded-full"
                 onClick={() => onEdit(task.id)}
               >
                 <PencilIcon className="h-4 w-4" />
@@ -81,7 +81,7 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, onEdit, onDelete }) => {
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="h-8 w-8 text-gray-500 hover:text-red-600"
+                className="h-8 w-8 text-gray-500 hover:text-red-600 rounded-full"
                 onClick={() => onDelete(task.id)}
               >
                 <TrashIcon className="h-4 w-4" />
