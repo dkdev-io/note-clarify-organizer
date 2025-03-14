@@ -8,5 +8,5 @@ export interface ApiProps {
   users: any[] | null;
   selectedWorkspaceId: string | null;
   selectedProject: string | null;
-  selectedProjectId?: string | null; // Add project ID
+  selectedProjectId: string | null;
 }
