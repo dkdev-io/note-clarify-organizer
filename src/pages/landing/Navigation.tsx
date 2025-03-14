@@ -17,12 +17,12 @@ export const Navigation = () => {
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md shadow-sm">
       <div className="container mx-auto px-6 py-4 flex justify-between items-center">
         <Link to="/" className="text-3xl font-bebas-neue font-bold tracking-tight flex items-center">
-          <span className="text-[#fbbc05] mr-1">P</span>rojectize
+          <span className="text-black">Project</span><span className="text-[#fbbc05]">ize</span>
         </Link>
         <div className="flex space-x-8 items-center">
-          <Link to="/features" className="text-gray-700 hover:text-[#fbbc05] font-medium transition-colors">Features</Link>
-          <Link to="/pricing" className="text-gray-700 hover:text-[#fbbc05] font-medium transition-colors">Pricing</Link>
-          <Link to="/about" className="text-gray-700 hover:text-[#fbbc05] font-medium transition-colors">About</Link>
+          <Link to="/features" className="text-gray-700 hover:text-[#fbbc05] font-bold transition-colors">Features</Link>
+          <Link to="/pricing" className="text-gray-700 hover:text-[#fbbc05] font-bold transition-colors">Pricing</Link>
+          <Link to="/about" className="text-gray-700 hover:text-[#fbbc05] font-bold transition-colors">About</Link>
           <CallToAction onClick={handleSignUp}>
             <span className="font-bold">Get Started</span>
           </CallToAction>
