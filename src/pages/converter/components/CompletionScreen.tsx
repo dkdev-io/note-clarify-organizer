@@ -1,7 +1,8 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { CheckIcon } from 'lucide-react';
 import { Task } from '@/utils/parser';
 
@@ -11,6 +12,7 @@ interface CompletionScreenProps {
   isConnected: boolean;
   onStartOver: () => void;
   onReconnect: () => void;
+  onTimeEstimateUpdate?: (timeEstimate: string) => void;
 }
 
 const CompletionScreen: React.FC<CompletionScreenProps> = ({
@@ -18,8 +20,19 @@ const CompletionScreen: React.FC<CompletionScreenProps> = ({
   projectName,
   isConnected,
   onStartOver,
-  onReconnect
+  onReconnect,
+  onTimeEstimateUpdate
 }) => {
+  const [timeEstimate, setTimeEstimate] = useState<string>('');
+
+  const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setTimeEstimate(value);
+    if (onTimeEstimateUpdate) {
+      onTimeEstimateUpdate(value);
+    }
+  };
+
   return (
     <div className="w-full max-w-md mx-auto text-center animate-fade-in">
       <div className="bg-green-50 rounded-full h-20 w-20 flex items-center justify-center mx-auto mb-6">
@@ -44,6 +57,24 @@ const CompletionScreen: React.FC<CompletionScreenProps> = ({
           </Badge>
         )}
       </div>
+      
+      {isConnected && (
+        <div className="mt-6 mb-6">
+          <label htmlFor="timeEstimate" className="block text-sm font-medium text-gray-700 mb-2">
+            Estimated Time (minutes)
+          </label>
+          <Input
+            id="timeEstimate"
+            type="number"
+            min="0"
+            placeholder="Enter time estimate"
+            value={timeEstimate}
+            onChange={handleTimeChange}
+            className="max-w-xs mx-auto"
+          />
+        </div>
+      )}
+      
       <div className="mt-8 space-x-4">
         <Button 
           onClick={onStartOver}

@@ -11,7 +11,8 @@ export const addTasksToMotion = async (
   tasks: Task[], 
   workspaceId: string | null, 
   apiKey?: string,
-  projectId?: string
+  projectId?: string,
+  timeEstimate?: string
 ): Promise<{ success: boolean; message: string; errors?: any[] }> => {
   // If we're in proxy mode, simulate successful task creation
   if (apiKey === 'proxy_mode' || isUsingProxyMode()) {
@@ -60,6 +61,15 @@ export const addTasksToMotion = async (
           // Format the date as ISO string (YYYY-MM-DD)
           taskData.dueDate = new Date(task.dueDate).toISOString().split('T')[0];
           console.log(`Task due date: ${taskData.dueDate}`);
+        }
+        
+        // Add time estimate if available
+        if (timeEstimate) {
+          taskData.timeEstimate = parseInt(timeEstimate, 10);
+          console.log(`Task time estimate: ${taskData.timeEstimate} minutes`);
+        } else if (task.timeEstimate) {
+          taskData.timeEstimate = task.timeEstimate;
+          console.log(`Task time estimate from task: ${taskData.timeEstimate} minutes`);
         }
         
         console.log("Sending task to Motion:", taskData);

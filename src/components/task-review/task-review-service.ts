@@ -12,7 +12,8 @@ export interface AddToMotionResult {
 export const addTasksToMotionService = async (
   tasks: Task[], 
   projectName: string | null,
-  apiProps: ApiProps
+  apiProps: ApiProps,
+  timeEstimate?: string
 ): Promise<AddToMotionResult> => {
   try {
     if (!apiProps.isConnected || !apiProps.selectedWorkspaceId) {
@@ -66,7 +67,9 @@ export const addTasksToMotionService = async (
       assignee: task.assignee || null,
       workspace_id: apiProps.selectedWorkspaceId,
       // Ensure due date is properly formatted for the API
-      dueDate: task.dueDate 
+      dueDate: task.dueDate,
+      // Add the time estimate if provided
+      timeEstimate: timeEstimate ? parseInt(timeEstimate, 10) : undefined
     }));
 
     console.log("Sending tasks to Motion with the following data:", {
@@ -76,14 +79,16 @@ export const addTasksToMotionService = async (
       workspaceId: apiProps.selectedWorkspaceId,
       firstTaskProject: tasksWithProject[0]?.project,
       firstTaskProjectId: tasksWithProject[0]?.projectId,
-      firstTaskDueDate: tasksWithProject[0]?.dueDate
+      firstTaskDueDate: tasksWithProject[0]?.dueDate,
+      timeEstimate: timeEstimate
     });
     
     const result = await addTasksToMotion(
       tasksWithProject, 
       apiProps.selectedWorkspaceId, 
       apiProps.apiKey || undefined,
-      projectId
+      projectId,
+      timeEstimate
     );
     
     return result;

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import CompletionScreen from '../CompletionScreen';
 import { Task } from '@/utils/parser';
 
@@ -9,6 +9,7 @@ interface CompleteStepProps {
   isConnected: boolean;
   onReconnect: () => void;
   onAddMore?: () => void;
+  onTimeEstimateUpdate?: (timeEstimate: string) => void;
 }
 
 const CompleteStep: React.FC<CompleteStepProps> = ({
@@ -16,7 +17,8 @@ const CompleteStep: React.FC<CompleteStepProps> = ({
   projectName,
   isConnected,
   onReconnect,
-  onAddMore
+  onAddMore,
+  onTimeEstimateUpdate
 }) => {
   return (
     <CompletionScreen 
@@ -26,6 +28,7 @@ const CompleteStep: React.FC<CompleteStepProps> = ({
       onStartOver={() => {}} // Not used anymore
       onReconnect={onReconnect}
       onAddMore={onAddMore}
+      onTimeEstimateUpdate={onTimeEstimateUpdate}
     />
   );
 };
