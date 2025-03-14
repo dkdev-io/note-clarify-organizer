@@ -65,6 +65,7 @@ export const PricingCard = ({
           <Progress 
             value={(statusBar.current / statusBar.max) * 100} 
             className="h-2 bg-gray-200"
+            indicatorClassName={statusBar.current === statusBar.max ? "bg-[#fbbc05]" : ""}
           />
         </div>
       )}

@@ -27,7 +27,7 @@ export const CallToAction = ({
         className
       )}
     >
-      <span className="flex items-center gap-2">
+      <span className="flex items-center gap-2 font-bold">
         {children}
         {icon && <span>{icon}</span>}
       </span>

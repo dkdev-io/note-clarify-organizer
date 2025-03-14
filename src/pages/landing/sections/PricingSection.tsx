@@ -34,7 +34,7 @@ export const PricingSection = () => {
             onSignUp={handleSignUp}
             statusBar={{
               max: 10,
-              current: 0,
+              current: 10,
               label: "Available spots"
             }}
           />
