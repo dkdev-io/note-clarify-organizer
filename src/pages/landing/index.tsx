@@ -5,7 +5,6 @@ import { HeroSection } from './sections/HeroSection';
 import { FeaturesSection } from './sections/FeaturesSection';
 import { TestimonialSection } from './sections/TestimonialSection';
 import { PricingSection } from './sections/PricingSection';
-import { Footer } from './sections/Footer';
 
 const Landing = () => {
   return (
@@ -14,7 +13,6 @@ const Landing = () => {
       <FeaturesSection />
       <TestimonialSection />
       <PricingSection />
-      <Footer />
     </LandingLayout>
   );
 };
