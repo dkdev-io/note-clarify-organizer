@@ -104,12 +104,13 @@ const NoteInput: React.FC<NoteInputProps> = ({ onParseTasks, apiProps }) => {
 
   return (
     <div className={`w-full max-w-2xl mx-auto transition-all duration-500 ${isTransitioning ? 'opacity-0 translate-x-10' : 'opacity-100 translate-x-0'}`}>
+      <h2 className="text-xl font-medium text-center mb-4">Connect your notetaking app</h2>
       <Card className="bg-white bg-opacity-80 backdrop-blur-sm border border-gray-100 shadow-card">
         <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
             <CardTitle className="text-2xl font-medium text-gray-900">
               <FileTextIcon className="inline-block mr-2 h-6 w-6 text-primary" />
-              Meeting Notes
+              Paste your notes below
             </CardTitle>
             
             <TooltipProvider>

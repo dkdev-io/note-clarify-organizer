@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { AuthForm } from '@/components/auth/AuthForm';
 
@@ -11,7 +12,7 @@ const Login = () => {
   const location = useLocation();
   
   // Check if the user was redirected from another page
-  const from = location.state?.from?.pathname || '/app';
+  const from = location.state?.from?.pathname || '/app/converter';
   
   // Get the signup parameter from the URL
   const urlParams = new URLSearchParams(location.search);
@@ -33,9 +34,6 @@ const Login = () => {
       const { data } = await supabase.auth.getSession();
       if (data.session) {
         navigate(from, { replace: true });
-      } else if (location.pathname === '/login' && !location.state?.from) {
-        // If user directly accessed /login without state, redirect to landing
-        navigate('/', { replace: true });
       }
     };
     
@@ -88,10 +86,6 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#f8f9fa] p-4">
-      <Link to="/" className="mb-8 text-lg font-bold flex items-center">
-        <span className="mr-2">🚀</span> Back to Home
-      </Link>
-      
       <AuthForm
         onSubmit={handleSubmit}
         isLoading={isLoading}
