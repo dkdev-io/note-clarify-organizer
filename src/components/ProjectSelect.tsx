@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -60,8 +61,17 @@ const ProjectSelect: React.FC<ProjectSelectProps> = ({
       setProjects(projectOptions);
       
       if (projectOptions.length > 0 && !selectedProject) {
+        // Pass both project name and ID
         onProjectSelect(projectOptions[0].label, projectOptions[0].value);
         setSelectedProjectId(projectOptions[0].value);
+      } else if (selectedProject && projectOptions.length > 0) {
+        // Find the ID for the selected project name
+        const matchingProject = projectOptions.find(p => p.label === selectedProject);
+        if (matchingProject) {
+          setSelectedProjectId(matchingProject.value);
+          // Make sure ID is passed along with name
+          onProjectSelect(matchingProject.label, matchingProject.value);
+        }
       } else if (projectOptions.length === 0) {
         onProjectSelect('', undefined);
         setSelectedProjectId(null);
@@ -140,6 +150,7 @@ const ProjectSelect: React.FC<ProjectSelectProps> = ({
   const handleSelectProject = (projectId: string) => {
     const project = projects.find(p => p.value === projectId);
     if (project) {
+      // Pass both name and ID
       onProjectSelect(project.label, project.value);
       setSelectedProjectId(projectId);
     }

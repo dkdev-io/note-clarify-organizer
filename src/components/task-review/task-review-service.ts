@@ -23,9 +23,9 @@ export const addTasksToMotionService = async (
       };
     }
 
-    // Get the actual project ID that corresponds to the selected project name
+    // Find project ID that corresponds to the selected project name
     const findProjectId = (): string | undefined => {
-      if (apiProps.workspaces && apiProps.selectedWorkspaceId && apiProps.selectedProject) {
+      if (apiProps.workspaces && apiProps.selectedWorkspaceId) {
         console.log("Looking for project ID for:", apiProps.selectedProject);
         
         const selectedWorkspace = apiProps.workspaces.find(
@@ -33,6 +33,7 @@ export const addTasksToMotionService = async (
         );
         
         if (selectedWorkspace && selectedWorkspace.projects) {
+          // Find project by name
           const project = selectedWorkspace.projects.find(
             (p: any) => p.name === apiProps.selectedProject
           );
@@ -46,7 +47,7 @@ export const addTasksToMotionService = async (
       return undefined;
     };
 
-    // Use the project ID from API props if available, otherwise use the project name from tasks
+    // Get the project ID
     const projectId = findProjectId();
     console.log("Using project ID for Motion API:", projectId);
     
@@ -55,7 +56,9 @@ export const addTasksToMotionService = async (
       project: projectName || apiProps.selectedProject || task.project,
       projectId: projectId, // Add the project ID explicitly
       assignee: task.assignee || null,
-      workspace_id: apiProps.selectedWorkspaceId
+      workspace_id: apiProps.selectedWorkspaceId,
+      // Ensure due date is properly formatted for the API
+      dueDate: task.dueDate 
     }));
 
     console.log("Sending tasks to Motion with the following data:", {
@@ -64,7 +67,8 @@ export const addTasksToMotionService = async (
       projectId: projectId,
       workspaceId: apiProps.selectedWorkspaceId,
       firstTaskProject: tasksWithProject[0]?.project,
-      firstTaskProjectId: tasksWithProject[0]?.projectId
+      firstTaskProjectId: tasksWithProject[0]?.projectId,
+      firstTaskDueDate: tasksWithProject[0]?.dueDate
     });
     
     const result = await addTasksToMotion(

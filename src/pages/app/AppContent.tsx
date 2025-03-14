@@ -34,7 +34,11 @@ const AppContent: React.FC = () => {
   };
 
   const handleProjectSelect = (projectName: string, projectId?: string) => {
-    updateApiProps({ selectedProject: projectName });
+    // Store both project name and ID
+    updateApiProps({ 
+      selectedProject: projectName,
+      selectedProjectId: projectId
+    });
   };
 
   const handleContinueToInput = () => {

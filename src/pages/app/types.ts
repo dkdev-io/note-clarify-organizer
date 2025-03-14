@@ -1,40 +1,12 @@
 
-import { Task } from '@/utils/parser';
-
-// Define application steps
 export type Step = 'connect' | 'workspace' | 'input' | 'tasks' | 'complete';
 
-// Define interface for API props that will be passed to components
 export interface ApiProps {
   isConnected: boolean;
   apiKey: string | null;
-  workspaces: any[];
-  users?: any[]; // Motion users list
-  selectedWorkspaceId?: string;
-  selectedProject?: string;
-}
-
-// Define interface for the App context
-export interface AppContextType {
-  step: Step;
-  setStep: (step: Step) => void;
-  noteText: string;
-  setNoteText: (text: string) => void;
-  extractedTasks: Task[];
-  setExtractedTasks: (tasks: Task[]) => void;
-  projectName: string | null;
-  setProjectName: (name: string | null) => void;
-  apiProps: ApiProps;
-  updateApiProps: (props: Partial<ApiProps>) => void;
-  handleApiConnect: (apiKey: string, fetchedWorkspaces: any[], workspaceId?: string, project?: string) => void;
-  handleSkipConnect: () => void;
-  handleParseText: (
-    text: string, 
-    providedProjectName: string | null, 
-    setUnrecognizedNames?: ((names: string[]) => void)
-  ) => void;
-  handleAddToMotion: (tasks: Task[], projectName: string | null, unassignedCount?: number) => void;
-  handleStartOver: () => void;
-  handleReconnect: () => void;
-  isProcessing: boolean;
+  workspaces: any[] | null;
+  users: any[] | null;
+  selectedWorkspaceId: string | null;
+  selectedProject: string | null;
+  selectedProjectId?: string | null; // Add project ID
 }
