@@ -19,7 +19,7 @@ export const FeaturesSection = () => {
           <FeatureCard
             icon={<FileText size={48} strokeWidth={1.5} />}
             title="1. Connect or Paste"
-            description="Connect your favorite notetaking tool or paste your meeting notes directly into Project Notes."
+            description="Connect your favorite notetaking tool or paste your meeting notes directly into Projectize."
           />
           
           <FeatureCard

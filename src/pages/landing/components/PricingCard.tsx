@@ -20,7 +20,7 @@ export const PricingCard = ({ title, description, note, onSignUp, featured = fal
         </div>
       )}
       <h3 className="text-4xl font-bebas-neue mb-2 font-bold">{title}</h3>
-      <p className="text-5xl font-bebas-neue my-4 font-bold">$50</p>
+      <p className="text-5xl font-bebas-neue my-4 font-bold">$45.25</p>
       <p className="font-georgia text-lg mb-6">Everything you need to streamline your project management</p>
       
       <div className="text-left mb-8">

@@ -15,7 +15,7 @@ export const HeroSection = () => {
             </h1>
             <p className="mx-auto max-w-[700px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
               Our AI-powered tool extracts tasks from your meeting notes and seamlessly integrates them with Motion. 
-              Get organized and stay productive with minimal effort.
+              Get organized and stay productive with just three clicks.
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-4">
