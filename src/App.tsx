@@ -32,10 +32,10 @@ function App() {
           <Route path="/app/*" element={
             <ProtectedRoute>
               <Routes>
-                {/* App landing page */}
-                <Route path="/" element={<Landing />} />
+                {/* Default app route redirects to converter */}
+                <Route path="/" element={<Navigate to="/app/converter" replace />} />
                 
-                {/* Task converter moved to specific route */}
+                {/* Task converter routes */}
                 <Route path="converter" element={<IndexRefactored />} />
                 <Route path="converter/legacy" element={<ConverterPage />} />
                 
@@ -45,8 +45,8 @@ function App() {
                 <Route path="issues/:id" element={<IssueDetailPage />} />
                 <Route path="issues/edit/:id" element={<IssueEditPage />} />
                 
-                {/* Default redirect for unknown /app routes */}
-                <Route path="*" element={<Navigate to="/app" replace />} />
+                {/* Catch-all for unknown /app routes */}
+                <Route path="*" element={<Navigate to="/app/converter" replace />} />
               </Routes>
             </ProtectedRoute>
           } />
