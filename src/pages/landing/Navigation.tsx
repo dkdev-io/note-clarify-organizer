@@ -23,6 +23,7 @@ export const Navigation = () => {
           <Link to="/features" className="text-black hover:text-[#fbbc05] font-bold transition-colors">Features</Link>
           <Link to="/pricing" className="text-black hover:text-[#fbbc05] font-bold transition-colors">Pricing</Link>
           <Link to="/about" className="text-black hover:text-[#fbbc05] font-bold transition-colors">About</Link>
+          <Link to="/app/converter" className="text-black hover:text-[#fbbc05] font-bold transition-colors">Note Converter</Link>
           <CallToAction onClick={handleSignUp} className="ml-4">
             Get Started
           </CallToAction>

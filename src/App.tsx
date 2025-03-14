@@ -25,21 +25,19 @@ function App() {
           {/* Landing page as the default route */}
           <Route path="/" element={<Landing />} />
           
-          {/* Legacy task converter page (now protected) */}
-          <Route path="/converter" element={
-            <ProtectedRoute>
-              <ConverterPage />
-            </ProtectedRoute>
-          } />
-          
           {/* Login page */}
           <Route path="/login" element={<Login />} />
           
-          {/* Protected app route */}
+          {/* Protected app routes */}
           <Route path="/app/*" element={
             <ProtectedRoute>
               <Routes>
-                <Route path="/" element={<IndexRefactored />} />
+                {/* App landing page */}
+                <Route path="/" element={<Landing />} />
+                
+                {/* Task converter moved to specific route */}
+                <Route path="converter" element={<IndexRefactored />} />
+                <Route path="converter/legacy" element={<ConverterPage />} />
                 
                 {/* Issue tracking routes */}
                 <Route path="issues" element={<IssuesListPage />} />
