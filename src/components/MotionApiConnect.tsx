@@ -1,15 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { AlertCircle, CheckIcon, LoaderIcon, InfoIcon, Trash as TrashIcon } from 'lucide-react';
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { validateMotionApiKey, fetchWorkspaces, setMotionApiKey } from '@/utils/motion';
 import { useToast } from "@/components/ui/use-toast";
+import { validateMotionApiKey, fetchWorkspaces, setMotionApiKey } from '@/utils/motion';
 import { storeApiKey, retrieveApiKey, clearStoredApiKey } from '@/utils/keyStorage';
-import { Switch } from "@/components/ui/switch";
+import { ApiKeyInput, ConnectionFeatures, ConnectionActions } from './motion-connect';
 
 interface MotionApiConnectProps {
   onConnect: (apiKey: string, workspaces: any[], selectedWorkspace?: string, selectedProject?: string) => void;
@@ -128,14 +123,6 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
     }
   };
 
-  const handleMotionDocsClick = () => {
-    window.open('https://docs.usemotion.com/docs/api/authentication', '_blank');
-  };
-
-  const handleMotionSettingsClick = () => {
-    window.open('https://app.usemotion.com/settings/developers/api-keys', '_blank');
-  };
-
   const handleClearApiKey = () => {
     setApiKey('');
     setIsKeyValid(null);
@@ -165,98 +152,27 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
         </CardHeader>
         <CardContent>
           <div className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="apiKey">Motion API Key</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="apiKey"
-                  type="password"
-                  placeholder="Enter your Motion API key"
-                  value={apiKey}
-                  onChange={(e) => {
-                    setApiKey(e.target.value);
-                    setIsKeyValid(null);
-                    setErrorMessage(null);
-                  }}
-                  className={`flex-1 ${isKeyValid === true ? 'border-green-500 focus:border-green-500 focus:ring-green-500/20' : 
-                    isKeyValid === false ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : ''}`}
-                />
-                <div className="flex gap-1">
-                  {apiKey && (
-                    <Button 
-                      variant="outline" 
-                      size="icon" 
-                      onClick={handleClearApiKey}
-                      title="Clear API Key"
-                    >
-                      <TrashIcon className="h-4 w-4 text-red-500" />
-                    </Button>
-                  )}
-                </div>
-              </div>
-              
-              <div className="flex items-center space-x-2 mt-2">
-                <Switch 
-                  id="remember-key" 
-                  checked={rememberKey} 
-                  onCheckedChange={setRememberKey} 
-                />
-                <Label htmlFor="remember-key" className="text-sm cursor-pointer">
-                  Remember API key for future sessions
-                </Label>
-              </div>
-              
-              {errorMessage && (
-                <Alert variant="destructive" className="mt-2">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{errorMessage}</AlertDescription>
-                </Alert>
-              )}
-              
-              <Alert variant="default" className="mt-2 bg-blue-50 text-blue-800 border-blue-200">
-                <InfoIcon className="h-4 w-4 text-blue-500" />
-                <AlertDescription className="text-xs">
-                  A valid Motion API key with read/write access is required to connect your account.
-                </AlertDescription>
-              </Alert>
-            </div>
+            <ApiKeyInput 
+              apiKey={apiKey}
+              setApiKey={setApiKey}
+              isKeyValid={isKeyValid}
+              errorMessage={errorMessage}
+              rememberKey={rememberKey}
+              setRememberKey={setRememberKey}
+              handleClearApiKey={handleClearApiKey}
+            />
             
-            <div className="text-sm text-muted-foreground border-t pt-4">
-              <p>Connecting to Motion API allows us to:</p>
-              <ul className="list-disc list-inside mt-2 space-y-1">
-                <li>Validate assignee names against existing Motion users</li>
-                <li>Check if projects already exist or need to be created</li>
-                <li>Load your actual workspaces</li>
-              </ul>
-            </div>
+            <ConnectionFeatures />
           </div>
         </CardContent>
-        <CardFooter className="flex justify-between pt-2 pb-4 px-6">
-          <Button 
-            variant="outline" 
-            onClick={onSkip}
-          >
-            Skip for now
-          </Button>
-          <Button 
-            onClick={validateKey}
-            disabled={!apiKey.trim() || isValidating || isKeyValid === true}
-            className="transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"
-          >
-            {isValidating ? (
-              <>
-                <LoaderIcon className="mr-2 h-4 w-4 animate-spin" />
-                Connecting to Motion API...
-              </>
-            ) : isKeyValid === true ? (
-              <>
-                <CheckIcon className="mr-2 h-4 w-4 text-green-500" />
-                Connected
-              </>
-            ) : (
-              "Connect to Motion API"
-            )}
-          </Button>
+        <CardFooter>
+          <ConnectionActions 
+            apiKey={apiKey}
+            isValidating={isValidating}
+            isKeyValid={isKeyValid}
+            onSkip={onSkip}
+            onValidate={validateKey}
+          />
         </CardFooter>
       </Card>
     </div>
