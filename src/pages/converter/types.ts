@@ -1,5 +1,5 @@
 
-export type Step = 'connect' | 'workspace' | 'input' | 'extract' | 'process' | 'review' | 'preview';
+export type Step = 'connect' | 'workspace' | 'input' | 'extract' | 'process' | 'review' | 'preview' | 'complete';
 
 export interface ApiProps {
   isConnected: boolean;

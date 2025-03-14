@@ -31,8 +31,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     apiKey: null,
     workspaces: [],
     isConnected: false,
-    selectedWorkspaceId: undefined,
-    selectedProject: undefined,
+    selectedWorkspaceId: null,
+    selectedProject: null,
+    selectedProjectId: null,
     users: [],
   });
 
@@ -41,7 +42,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setApiProps(prev => {
       // If workspace is changing, clear the selected project
       if (props.selectedWorkspaceId && props.selectedWorkspaceId !== prev.selectedWorkspaceId) {
-        return { ...prev, ...props, selectedProject: undefined };
+        return { ...prev, ...props, selectedProject: null, selectedProjectId: null };
       }
       return { ...prev, ...props };
     });

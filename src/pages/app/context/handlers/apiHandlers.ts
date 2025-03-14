@@ -25,8 +25,9 @@ export const handleApiConnect = (
   setApiProps({
     apiKey,
     workspaces: fetchedWorkspaces,
-    selectedWorkspaceId: workspaceId,
-    selectedProject: project,
+    selectedWorkspaceId: workspaceId || null,
+    selectedProject: project || null,
+    selectedProjectId: null, // Initialize with null
     isConnected: true,
     users: users || [],
   });

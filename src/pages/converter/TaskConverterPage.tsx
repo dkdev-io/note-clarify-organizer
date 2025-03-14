@@ -21,8 +21,10 @@ const TaskConverterPage = () => {
   const [motionApiKey, setMotionApiKey] = useState<string | null>(null);
   const [workspaces, setWorkspaces] = useState<any[]>([]);
   const [isConnected, setIsConnected] = useState(false);
-  const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | undefined>(undefined);
-  const [selectedProject, setSelectedProject] = useState<string | undefined>(undefined);
+  const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | null>(null);
+  const [selectedProject, setSelectedProject] = useState<string | null>(null);
+  const [users, setUsers] = useState<any[]>([]);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   
   // Handle API connection
   const handleApiConnect = (apiKey: string, fetchedWorkspaces: any[], workspaceId?: string, project?: string) => {
@@ -99,7 +101,7 @@ const TaskConverterPage = () => {
 
   // Handle completion of the workflow
   const handleComplete = () => {
-    setStep('complete');
+    setStep('complete' as Step);
     toast({
       title: "Success!",
       description: `${reviewedTasks.length} tasks have been added to Motion${projectName ? ` under project '${projectName}'` : ''}.`,
@@ -131,8 +133,10 @@ const TaskConverterPage = () => {
     isConnected,
     apiKey: motionApiKey,
     workspaces,
+    users,
     selectedWorkspaceId,
-    selectedProject
+    selectedProject,
+    selectedProjectId
   };
 
   return (
