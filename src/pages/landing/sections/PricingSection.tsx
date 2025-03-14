@@ -32,6 +32,11 @@ export const PricingSection = () => {
             description="One month of earliest access (May-June), with slack group and weekly feedback session with founder."
             note="First customers get 2026 access at First year prices"
             onSignUp={handleSignUp}
+            statusBar={{
+              max: 10,
+              current: 0,
+              label: "Available spots"
+            }}
           />
           
           <PricingCard 
@@ -40,6 +45,11 @@ export const PricingSection = () => {
             note="First customers get 2026 access at First year prices"
             onSignUp={handleSignUp}
             featured={true}
+            statusBar={{
+              max: 100,
+              current: 100,
+              label: "Available spots"
+            }}
           />
           
           <PricingCard 

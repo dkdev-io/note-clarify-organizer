@@ -2,6 +2,7 @@
 import React from 'react';
 import { CheckCircle } from 'lucide-react';
 import { CallToAction } from './CallToAction';
+import { Progress } from '@/components/ui/progress';
 
 interface PricingCardProps {
   title: string;
@@ -9,9 +10,21 @@ interface PricingCardProps {
   note: string;
   onSignUp: () => void;
   featured?: boolean;
+  statusBar?: {
+    max: number;
+    current: number;
+    label: string;
+  };
 }
 
-export const PricingCard = ({ title, description, note, onSignUp, featured = false }: PricingCardProps) => {
+export const PricingCard = ({ 
+  title, 
+  description, 
+  note, 
+  onSignUp, 
+  featured = false,
+  statusBar 
+}: PricingCardProps) => {
   return (
     <div className={`bg-white p-8 rounded-xl shadow-lg ${featured ? 'ring-2 ring-[#fbbc05] transform -translate-y-4' : ''} transition-all hover:shadow-xl`}>
       {featured && (
@@ -42,6 +55,19 @@ export const PricingCard = ({ title, description, note, onSignUp, featured = fal
           <span className="text-gray-600">Advanced AI task extraction</span>
         </li>
       </ul>
+      
+      {statusBar && (
+        <div className="mb-6">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-sm font-medium text-gray-600">{statusBar.label}</span>
+            <span className="text-sm font-medium text-gray-600">{statusBar.current}/{statusBar.max}</span>
+          </div>
+          <Progress 
+            value={(statusBar.current / statusBar.max) * 100} 
+            className="h-2 bg-gray-200"
+          />
+        </div>
+      )}
       
       <CallToAction onClick={onSignUp} className="w-full">
         Get Started
