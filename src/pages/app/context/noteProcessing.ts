@@ -1,6 +1,6 @@
 
-import { Task } from '@/utils/parser';
-import { parseTextIntoTasks } from '@/utils/parser';
+import { Task } from '@/utils/task-parser/types';
+import { parseTextIntoTasks } from '@/utils/task-parser';
 import { processNotesWithLLM } from '@/utils/llm';
 import { ToastType } from './providers';
 

@@ -1,5 +1,5 @@
 
-import { Task } from '@/utils/parser';
+import { Task } from '@/utils/task-parser/types';
 import { addTasksToMotion } from '@/utils/motion';
 import { ApiProps } from '@/pages/converter/types';
 

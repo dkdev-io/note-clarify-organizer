@@ -1,10 +1,10 @@
 
-import { Task } from '@/utils/parser';
+import { Task } from '@/utils/task-parser/types';
 import { ToastType } from '../providers';
 import { Step } from '../../types';
 import { ApiProps } from '../../types';
 import { processNotes } from '../noteProcessing';
-import { parseTextIntoTasks } from '@/utils/parser';
+import { parseTextIntoTasks } from '@/utils/task-parser';
 import { extractPotentialNames, findUserMatches } from '@/utils/nameMatching';
 
 // Handle moving from note input to task extraction
