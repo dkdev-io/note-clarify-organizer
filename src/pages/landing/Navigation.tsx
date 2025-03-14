@@ -24,7 +24,7 @@ export const Navigation = () => {
           <Link to="/pricing" className="text-gray-700 hover:text-[#fbbc05] font-medium transition-colors">Pricing</Link>
           <Link to="/about" className="text-gray-700 hover:text-[#fbbc05] font-medium transition-colors">About</Link>
           <CallToAction onClick={handleSignUp}>
-            Get Started
+            <span className="font-bold">Get Started</span>
           </CallToAction>
         </div>
       </div>

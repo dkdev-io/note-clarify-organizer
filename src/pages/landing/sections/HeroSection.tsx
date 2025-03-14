@@ -18,18 +18,13 @@ export const HeroSection = () => {
               Get organized and stay productive with just three clicks.
             </p>
           </div>
-          <div className="flex flex-col sm:flex-row gap-4">
+          <div>
             <Link to="/app">
-              <Button size="lg" className="h-12 px-8 text-base font-medium rounded-full bg-[#fbbc05] hover:bg-[#fbbc05]/90 text-black">
+              <Button size="lg" className="h-12 px-8 text-base font-bold rounded-full bg-[#fbbc05] hover:bg-[#fbbc05]/90 text-black">
                 Get Started
                 <ArrowRightIcon className="ml-2 h-5 w-5" />
               </Button>
             </Link>
-            <a href="#features">
-              <Button variant="outline" size="lg" className="h-12 px-8 text-base font-medium rounded-full">
-                Learn More
-              </Button>
-            </a>
           </div>
         </div>
       </div>
