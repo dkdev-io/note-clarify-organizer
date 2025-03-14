@@ -1,16 +1,34 @@
 
+# Reference: https://supabase.com/docs/guides/functions/local-development
+
 project_id = "fvxfmlhvxmpmbtouarcp"
+
 [api]
-enabled = true
+port = 54321
+schemes = ["http", "https"]
+host = "127.0.0.1"
+
 [db]
-enabled = true
-[realtime]
-enabled = true
+port = 54322
+
+[studio]
+port = 54323
+
+[inbucket]
+port = 54324
+
 [storage]
-enabled = true
-[edge_functions]
-enabled = true
-[functions.process-notes]
+file_size_limit = "50MiB"
+
+[auth]
+site_url = "http://localhost:8080"
+additional_redirect_urls = ["https://localhost:8080"]
+auto_confirm_new_users = true
+
+[[functions]]
+name = "process-notes"
 verify_jwt = false
-[functions.process-task-batch]
+
+[[functions]]
+name = "process-task-batch"
 verify_jwt = false
