@@ -293,45 +293,12 @@ export const fetchProjects = async (workspaceId: string, apiKey?: string): Promi
         throw new Error("Authentication failed: Your API key doesn't have permission to access projects. Check your API key permissions in Motion settings.");
       } else {
         console.error(`Failed to fetch projects with status: ${response.status}`);
-        const errorData = await response.text();
-        console.error('Error response:', errorData);
-        
-        // If we're still getting errors, try to manually construct project data
-        // This is a fallback for testing/development
-        console.log('Falling back to manual project construction for testing');
-        return [
-          {
-            id: `project-${workspaceId}-1`,
-            name: 'Default Project'
-          },
-          {
-            id: `project-${workspaceId}-2`,
-            name: 'Marketing'
-          },
-          {
-            id: `project-${workspaceId}-3`,
-            name: 'Development'
-          }
-        ];
+        throw new Error(`Failed to fetch projects with status: ${response.status}`);
       }
     }
   } catch (error) {
     console.error('Exception during projects fetch:', error);
-    // Provide fallback data for testing
-    return [
-      {
-        id: `project-${workspaceId}-1`,
-        name: 'Default Project'
-      },
-      {
-        id: `project-${workspaceId}-2`,
-        name: 'Marketing'
-      },
-      {
-        id: `project-${workspaceId}-3`,
-        name: 'Development'
-      }
-    ];
+    throw error;
   }
 };
 
@@ -504,18 +471,23 @@ export const addTasksToMotion = async (
           workspaceId: workspaceId,
         };
         
-        // Only add projectId if it's defined
+        // Add projectId if provided either directly or from the task
         if (projectId) {
           taskData.projectId = projectId;
           console.log(`Adding task "${task.title}" to project ID: ${projectId}`);
+        } else if (task.projectId) {
+          taskData.projectId = task.projectId;
+          console.log(`Adding task "${task.title}" to task's project ID: ${task.projectId}`);
         } else {
           console.log(`Adding task "${task.title}" without project ID`);
         }
         
-        // We'll re-add dueDate later once we confirm the API is working
-        // if (task.dueDate) {
-        //   taskData.dueDate = task.dueDate;
-        // }
+        // Add due date if available
+        if (task.dueDate) {
+          // Format the date as ISO string (YYYY-MM-DD)
+          taskData.dueDate = new Date(task.dueDate).toISOString().split('T')[0];
+          console.log(`Task due date: ${taskData.dueDate}`);
+        }
         
         console.log("Sending task to Motion:", taskData);
         

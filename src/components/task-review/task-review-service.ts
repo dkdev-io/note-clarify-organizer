@@ -26,16 +26,17 @@ export const addTasksToMotionService = async (
     // Find project ID that corresponds to the selected project name
     const findProjectId = (): string | undefined => {
       if (apiProps.workspaces && apiProps.selectedWorkspaceId) {
-        console.log("Looking for project ID for:", apiProps.selectedProject);
+        console.log("Looking for project ID for:", projectName || apiProps.selectedProject);
         
         const selectedWorkspace = apiProps.workspaces.find(
           workspace => workspace.id === apiProps.selectedWorkspaceId
         );
         
         if (selectedWorkspace && selectedWorkspace.projects) {
-          // Find project by name
+          // Find project by name (either from provided projectName or from apiProps.selectedProject)
+          const effectiveProjectName = projectName || apiProps.selectedProject;
           const project = selectedWorkspace.projects.find(
-            (p: any) => p.name === apiProps.selectedProject
+            (p: any) => p.name === effectiveProjectName
           );
           
           if (project) {
@@ -44,6 +45,13 @@ export const addTasksToMotionService = async (
           }
         }
       }
+      
+      // If we couldn't find a project ID, try using the selectedProjectId directly
+      if (apiProps.selectedProjectId) {
+        console.log("Using selectedProjectId directly:", apiProps.selectedProjectId);
+        return apiProps.selectedProjectId;
+      }
+      
       return undefined;
     };
 

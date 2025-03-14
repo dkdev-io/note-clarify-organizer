@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AlertCircle, CheckIcon, LoaderIcon, InfoIcon, LinkIcon, RefreshCwIcon, ShieldIcon, SaveIcon, TrashIcon } from 'lucide-react';
+import { AlertCircle, CheckIcon, LoaderIcon, InfoIcon } from 'lucide-react';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { validateMotionApiKey, fetchWorkspaces, setMotionApiKey } from '@/utils/motion';
 import { useToast } from "@/components/ui/use-toast";
@@ -40,10 +39,8 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
         description: "You're connected to Motion via the application proxy. No API key required.",
       });
       
-      // Directly connect with proxy settings
       onConnect('proxy_mode', defaultWorkspaces, 'proxy-workspace-1');
     } else {
-      // Try to load stored API key
       const storedKey = retrieveApiKey();
       if (storedKey) {
         setApiKey(storedKey);
@@ -103,7 +100,6 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
           description: "Your Motion API key is valid. Continue to select workspace and project.",
         });
         
-        // Pass the API key and workspaces to the parent component
         onConnect(trimmedKey, fetchedWorkspaces);
       }
     } catch (error) {
@@ -151,7 +147,6 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
     });
   };
 
-  // If we're in proxy mode, this component won't be shown as we'll skip directly to workspace selection
   if (isProxyMode) {
     return null;
   }
@@ -220,28 +215,7 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
               <Alert variant="default" className="mt-2 bg-blue-50 text-blue-800 border-blue-200">
                 <InfoIcon className="h-4 w-4 text-blue-500" />
                 <AlertDescription className="text-xs">
-                  Motion API keys can be found in your Motion account under Settings → API Keys. 
-                  Make sure to create a new API key with read/write access.
-                  <div className="flex flex-col sm:flex-row gap-2 mt-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-blue-700 border-blue-200 bg-blue-50 hover:bg-blue-100"
-                      onClick={handleMotionSettingsClick}
-                    >
-                      <ShieldIcon className="mr-1 h-3 w-3" />
-                      Generate API Key
-                    </Button>
-                    <Button
-                      variant="link"
-                      size="sm"
-                      className="p-0 h-auto text-blue-600 underline-offset-2 font-normal flex items-center"
-                      onClick={handleMotionDocsClick}
-                    >
-                      <LinkIcon className="h-3 w-3 mr-1" />
-                      View Motion API docs
-                    </Button>
-                  </div>
+                  A valid Motion API key with read/write access is required to connect your account.
                 </AlertDescription>
               </Alert>
             </div>
