@@ -10,6 +10,12 @@ import { Toaster } from './components/ui/toaster';
 import IndexRefactored from './pages/app/IndexRefactored';
 import Landing from './pages/landing';
 import ConverterPage from './pages/converter';
+import { 
+  IssuesListPage, 
+  IssueCreatePage, 
+  IssueEditPage, 
+  IssueDetailPage 
+} from './pages/issues';
 
 function App() {
   return (
@@ -32,7 +38,18 @@ function App() {
           {/* Protected app route */}
           <Route path="/app/*" element={
             <ProtectedRoute>
-              <IndexRefactored />
+              <Routes>
+                <Route path="/" element={<IndexRefactored />} />
+                
+                {/* Issue tracking routes */}
+                <Route path="issues" element={<IssuesListPage />} />
+                <Route path="issues/new" element={<IssueCreatePage />} />
+                <Route path="issues/:id" element={<IssueDetailPage />} />
+                <Route path="issues/edit/:id" element={<IssueEditPage />} />
+                
+                {/* Default redirect for unknown /app routes */}
+                <Route path="*" element={<Navigate to="/app" replace />} />
+              </Routes>
             </ProtectedRoute>
           } />
           
