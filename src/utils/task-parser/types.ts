@@ -15,7 +15,7 @@ export interface Task {
   isRecurring: boolean;
   frequency: string | null;
   project: string | null;
-  projectId?: string | null; // Add projectId field 
+  projectId?: string | null; // Add projectId field
   duration?: string | null;
   timeEstimate?: number | null; // Add timeEstimate field
 }

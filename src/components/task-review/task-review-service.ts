@@ -1,5 +1,5 @@
 
-import { Task } from '@/utils/task-parser/types';
+import { Task } from '@/utils/task-parser/types'; // Ensure we're importing from the correct path
 import { addTasksToMotion } from '@/utils/motion';
 import { ApiProps } from '@/pages/converter/types';
 
