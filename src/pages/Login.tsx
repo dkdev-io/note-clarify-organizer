@@ -62,6 +62,9 @@ const Login = () => {
         const { error } = await supabase.auth.signUp({
           email,
           password,
+          options: {
+            emailRedirectTo: 'https://projectize.lovable.app/app/converter'
+          }
         });
         
         if (error) throw error;

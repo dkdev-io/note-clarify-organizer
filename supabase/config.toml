@@ -21,8 +21,8 @@ port = 54324
 file_size_limit = "50MiB"
 
 [auth]
-site_url = "https://project.lovable.app"
-additional_redirect_urls = ["https://project.lovable.app"]
+site_url = "https://projectize.lovable.app"
+additional_redirect_urls = ["https://projectize.lovable.app"]
 auto_confirm_new_users = true
 
 [[functions]]
