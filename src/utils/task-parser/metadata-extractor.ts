@@ -6,3 +6,6 @@
 
 // Re-export all metadata extractors
 export * from './metadata/index';
+
+// Export the new duration extractor
+export * from './metadata/duration-extractor';

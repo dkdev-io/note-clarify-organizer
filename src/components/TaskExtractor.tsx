@@ -174,6 +174,11 @@ const TaskExtractor: React.FC<TaskExtractorProps> = ({
                               Project: {task.project}
                             </Badge>
                           )}
+                          {task.duration && (
+                            <Badge variant="outline" className="bg-teal-50 text-teal-700 border-teal-200 text-[10px]">
+                              {task.duration}
+                            </Badge>
+                          )}
                         </div>
                       </div>
                     </div>

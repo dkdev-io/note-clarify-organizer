@@ -1,4 +1,3 @@
-
 /**
  * Functions to process and cleanup task text
  */
@@ -156,8 +155,13 @@ export const splitIntoSubtasks = (text: string): string[] => {
   return [text];
 };
 
-// Function to clean up task titles by removing names, dates, etc.
-export const cleanupTaskTitle = (title: string, assignee: string | null, dueDate: string | null): string => {
+// Function to clean up task titles by removing names, dates, durations, etc.
+export const cleanupTaskTitle = (
+  title: string, 
+  assignee: string | null, 
+  dueDate: string | null, 
+  duration: string | null = null
+): string => {
   let cleanTitle = title;
   
   // Remove assignee name from title if present
@@ -193,6 +197,22 @@ export const cleanupTaskTitle = (title: string, assignee: string | null, dueDate
     ];
     
     for (const pattern of datePatterns) {
+      cleanTitle = cleanTitle.replace(pattern, '').trim();
+    }
+  }
+  
+  // Clean duration mentions from title
+  if (duration) {
+    const durationPatterns = [
+      /\b(?:this|it)\s+will\s+take\s+([a-zA-Z0-9\s-]+)(?:\s+(?:hours?|hrs?|minutes?|mins?|days?))\b/gi,
+      /\b([a-zA-Z0-9\s-]+)(?:\s+(?:hours?|hrs?|minutes?|mins?|days?))\s+to\s+(?:complete|finish|do)\b/gi,
+      /\bestimated\s+time:?\s+([a-zA-Z0-9\s-]+)(?:\s+(?:hours?|hrs?|minutes?|mins?|days?))\b/gi,
+      /\bduration:?\s+([a-zA-Z0-9\s-]+)(?:\s+(?:hours?|hrs?|minutes?|mins?|days?))\b/gi,
+      /\btakes\s+([a-zA-Z0-9\s-]+)(?:\s+(?:hours?|hrs?|minutes?|mins?|days?))\b/gi,
+      /\b([a-zA-Z0-9\s-]+)(?:\s+(?:hours?|hrs?|minutes?|mins?|days?))\b/gi
+    ];
+    
+    for (const pattern of durationPatterns) {
       cleanTitle = cleanTitle.replace(pattern, '').trim();
     }
   }

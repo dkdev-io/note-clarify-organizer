@@ -6,7 +6,7 @@
 import { Task } from './types';
 import { generateId, convertToTaskLanguage, filterMeetingChatter, isIntroductionText } from './utils';
 import { extractDate } from './date-parser';
-import { extractPriority, extractAssignee, extractStatus, isRecurringTask, extractProjectName } from './metadata-extractor';
+import { extractPriority, extractAssignee, extractStatus, isRecurringTask, extractProjectName, extractDuration } from './metadata-extractor';
 import { splitIntoSubtasks, cleanupTaskTitle } from './task-text-processor';
 import { validateTask, validateTasks } from './task-validator';
 import { refineTask } from './task-editor';
@@ -87,9 +87,10 @@ export const parseTextIntoTasks = (text: string, defaultProjectName: string | nu
       const assignee = extractAssignee(subtaskText);
       const status = extractStatus(subtaskText);
       const recurring = isRecurringTask(subtaskText);
+      const duration = extractDuration(subtaskText); // Extract duration information
       
       // Clean up the task title - remove names, dates, priority, etc.
-      let processedTitle = cleanupTaskTitle(subtaskText, assignee, dueDate);
+      let processedTitle = cleanupTaskTitle(subtaskText, assignee, dueDate, duration);
       
       // Try to separate title from description if there's a colon or dash
       let title = processedTitle;
@@ -124,6 +125,11 @@ export const parseTextIntoTasks = (text: string, defaultProjectName: string | nu
       // Add to seen titles set to prevent duplicates
       seenTaskTitles.add(normalizedTitle);
       
+      // Add duration information to the description if available
+      if (duration && !description.includes(duration)) {
+        description = description ? `${description} Duration: ${duration}.` : `Duration: ${duration}.`;
+      }
+      
       // Add a task with the project name explicitly set, but with a clean description that doesn't duplicate metadata
       tasks.push({
         id: generateId(),
@@ -136,7 +142,8 @@ export const parseTextIntoTasks = (text: string, defaultProjectName: string | nu
         workspace_id: null,
         isRecurring: recurring.isRecurring,
         frequency: recurring.frequency,
-        project: projectName // Ensure project is explicitly set
+        project: projectName, // Ensure project is explicitly set
+        duration: duration // Add duration to task object
       });
     }
   }
@@ -158,6 +165,7 @@ export {
   extractStatus,
   isRecurringTask,
   extractProjectName,
+  extractDuration,
   cleanupTaskTitle,
   splitIntoSubtasks
 };
