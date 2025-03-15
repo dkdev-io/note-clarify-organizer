@@ -1,122 +1,93 @@
 
-import React from 'react';
-import MotionApiConnect from '@/components/MotionApiConnect';
-import NoteInput from '@/components/note-input';
-import TaskExtractor from '@/components/TaskExtractor';
-import LLMProcessor from '@/components/LLMProcessor';
-import TaskReview from '@/components/TaskReview';
-import TaskPreview from '@/components/TaskPreview';
-import { Task } from '@/utils/parser';
-import { Step, ApiProps } from '../types';
+import React, { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { TaskExtractor } from '@/components/TaskExtractor';
+import { Task } from '@/utils/task-parser/types';
+import { parseTextIntoTasks } from '@/utils/task-parser';
+import { useToast } from '@/hooks/use-toast';
+import TaskToIssueConverter from '@/components/task-review/TaskToIssueConverter';
 
-interface TaskConverterContentProps {
-  step: Step;
-  noteText: string;
-  projectName: string | null;
-  extractedTasks: Task[];
-  selectedTasks: Task[];
-  processedTasks: Task[];
-  reviewedTasks: Task[];
-  apiProps: ApiProps;
-  onApiConnect: (apiKey: string, fetchedWorkspaces: any[], workspaceId?: string, project?: string) => void;
-  onSkipConnect: () => void;
-  onParseText: (text: string, projectName: string | null) => void;
-  onContinueToProcess: (tasks: Task[]) => void;
-  onContinueToReview: (tasks: Task[]) => void;
-  onContinueToPreview: (tasks: Task[], updatedProjectName?: string) => void;
-  onComplete: () => void;
-  onBackToExtract: () => void;
-  onBackToProcess: () => void;
-  onBackToReview: () => void;
-  onBackToInput: () => void;
-}
+const TaskConverterContent: React.FC = () => {
+  const [noteText, setNoteText] = useState<string>('');
+  const [extractedTasks, setExtractedTasks] = useState<Task[]>([]);
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const { toast } = useToast();
+  const { id } = useParams<{ id: string }>();
 
-const TaskConverterContent: React.FC<TaskConverterContentProps> = ({
-  step,
-  noteText,
-  projectName,
-  extractedTasks,
-  selectedTasks,
-  processedTasks,
-  reviewedTasks,
-  apiProps,
-  onApiConnect,
-  onSkipConnect,
-  onParseText,
-  onContinueToProcess,
-  onContinueToReview,
-  onContinueToPreview,
-  onComplete,
-  onBackToExtract,
-  onBackToProcess,
-  onBackToReview,
-  onBackToInput
-}) => {
-  switch (step) {
-    case 'connect':
-      return (
-        <MotionApiConnect 
-          onConnect={onApiConnect} 
-          onSkip={onSkipConnect} 
-        />
-      );
-    
-    case 'input':
-      return (
-        <NoteInput 
-          onParseTasks={onParseText} 
-          apiProps={apiProps}
-        />
-      );
-    
-    case 'extract':
-      return (
-        <TaskExtractor 
-          rawText={noteText}
-          extractedTasks={extractedTasks}
-          projectName={projectName}
-          onBack={onBackToInput}
-          onContinue={onContinueToProcess}
-          apiProps={apiProps}
-        />
-      );
-    
-    case 'process':
-      return (
-        <LLMProcessor 
-          selectedTasks={selectedTasks}
-          projectName={projectName}
-          onBack={onBackToExtract}
-          onContinue={onContinueToReview}
-          apiProps={apiProps}
-        />
-      );
-    
-    case 'review':
-      return (
-        <TaskReview 
-          tasks={processedTasks}
-          projectName={projectName}
-          onBack={onBackToProcess}
-          onContinue={onContinueToPreview}
-          apiProps={apiProps}
-        />
-      );
-    
-    case 'preview':
-      return (
-        <TaskPreview 
-          tasks={reviewedTasks}
-          projectName={projectName}
-          onBack={onBackToReview}
-          onComplete={onComplete}
-          apiProps={apiProps}
-        />
-      );
-    
-    default:
-      return null;
-  }
+  const handleExtractTasks = async (text: string) => {
+    if (!text || text.trim() === '') {
+      toast({
+        title: "Empty notes",
+        description: "Please enter some notes to extract tasks from.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setNoteText(text);
+    setIsProcessing(true);
+
+    try {
+      // Simple parsing for now
+      const tasks = parseTextIntoTasks(text);
+      setExtractedTasks(tasks);
+
+      if (tasks.length === 0) {
+        toast({
+          title: "No tasks found",
+          description: "Couldn't extract any tasks from your notes. Try adding more detailed text.",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Tasks extracted",
+          description: `Successfully extracted ${tasks.length} tasks from your notes.`,
+        });
+      }
+    } catch (error) {
+      console.error('Error extracting tasks:', error);
+      toast({
+        title: "Error extracting tasks",
+        description: "Something went wrong while extracting tasks.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  return (
+    <div className="container mx-auto py-6 space-y-8">
+      <TaskExtractor 
+        initialText={noteText} 
+        onExtract={handleExtractTasks} 
+        isProcessing={isProcessing} 
+      />
+
+      {extractedTasks.length > 0 && (
+        <div className="bg-white p-6 rounded-lg shadow space-y-6">
+          <h2 className="text-xl font-bold border-b pb-2">Extracted Tasks</h2>
+          <div className="space-y-4">
+            {extractedTasks.map((task, index) => (
+              <div key={task.id || index} className="p-4 border rounded-md">
+                <h3 className="font-medium">{task.title}</h3>
+                {task.description && <p className="text-gray-600 mt-1">{task.description}</p>}
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {task.dueDate && <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Due: {task.dueDate}</span>}
+                  {task.priority && <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded">Priority: {task.priority}</span>}
+                  {task.assignee && <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">Assignee: {task.assignee}</span>}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-6">
+            <TaskToIssueConverter tasks={extractedTasks} />
+          </div>
+        </div>
+      )}
+    </div>
+  );
 };
 
 export default TaskConverterContent;

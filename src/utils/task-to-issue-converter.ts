@@ -1,0 +1,140 @@
+
+import { Task } from './task-parser/types';
+import { IssueFormData, IssuePriority, IssueStatus } from '@/types/issue';
+import { issueService } from '@/services/issueService';
+
+/**
+ * Maps task priority to issue priority
+ */
+const mapPriority = (taskPriority: string | null): IssuePriority => {
+  if (!taskPriority) return 'medium';
+  
+  switch (taskPriority.toLowerCase()) {
+    case 'high':
+      return 'high';
+    case 'low':
+      return 'low';
+    case 'medium':
+      return 'medium';
+    default:
+      return 'medium';
+  }
+};
+
+/**
+ * Maps task status to issue status
+ */
+const mapStatus = (taskStatus: string | null): IssueStatus => {
+  if (!taskStatus) return 'open';
+  
+  switch (taskStatus.toLowerCase()) {
+    case 'in_progress':
+    case 'in progress':
+      return 'in-progress';
+    case 'completed':
+    case 'done':
+      return 'resolved';
+    case 'closed':
+      return 'closed';
+    default:
+      return 'open';
+  }
+};
+
+/**
+ * Converts a task to an issue format
+ */
+export const taskToIssue = (task: Task): IssueFormData => {
+  // Build description to include task metadata
+  let description = task.description || '';
+  
+  // Add assignee if available
+  if (task.assignee) {
+    description += `\n\nAssignee: ${task.assignee}`;
+  }
+  
+  // Add project info if available
+  if (task.project) {
+    description += `\n\nProject: ${task.project}`;
+  }
+  
+  // Add due date if available
+  if (task.dueDate) {
+    description += `\n\nDue Date: ${task.dueDate}`;
+  }
+  
+  // Add time estimate if available
+  if (task.timeEstimate) {
+    description += `\n\nTime Estimate: ${task.timeEstimate} minutes`;
+  }
+  
+  // Add duration if available
+  if (task.duration) {
+    description += `\n\nDuration: ${task.duration}`;
+  }
+  
+  return {
+    title: task.title,
+    description: description.trim(),
+    status: mapStatus(task.status),
+    priority: mapPriority(task.priority),
+    created_by: task.assignee || '',
+    assigned_to: task.assignee || ''
+  };
+};
+
+/**
+ * Add a single task to the issue logs
+ */
+export const addTaskToIssueLog = async (task: Task): Promise<boolean> => {
+  try {
+    const issueData = taskToIssue(task);
+    console.log('Converting task to issue:', task);
+    console.log('Issue data to be saved:', issueData);
+    
+    const result = await issueService.createIssue(issueData);
+    console.log('Result of creating issue:', result);
+    
+    return result !== null;
+  } catch (error) {
+    console.error('Error adding task to issue log:', error);
+    return false;
+  }
+};
+
+/**
+ * Add multiple tasks to the issue logs
+ * @returns Object containing successful and failed tasks
+ */
+export const addTasksToIssueLogs = async (tasks: Task[]): Promise<{
+  successful: number;
+  failed: number;
+  totalTasks: number;
+}> => {
+  let successful = 0;
+  let failed = 0;
+  
+  console.log(`Starting to add ${tasks.length} tasks to issue logs`);
+  
+  for (const task of tasks) {
+    try {
+      const success = await addTaskToIssueLog(task);
+      if (success) {
+        successful++;
+      } else {
+        failed++;
+      }
+    } catch (error) {
+      console.error(`Error adding task to issue logs: ${error}`);
+      failed++;
+    }
+  }
+  
+  console.log(`Completed adding tasks to issue logs: ${successful} successful, ${failed} failed`);
+  
+  return {
+    successful,
+    failed,
+    totalTasks: tasks.length
+  };
+};
