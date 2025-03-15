@@ -1,7 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import TaskExtractor from '@/components/TaskExtractor';
 import { Task } from '@/utils/task-parser/types';
 import { parseTextIntoTasks } from '@/utils/task-parser';
 import { useToast } from '@/hooks/use-toast';
@@ -64,8 +63,8 @@ const TaskConverterContent = () => {
           description: `Successfully extracted ${tasks.length} tasks from your notes.`,
         });
         
-        // Adding auto-conversion to issue log - always try to add to issue log
-        // This ensures that when the user asks to "add to issue log", we do it automatically
+        // ALWAYS add to issue log regardless of command detection
+        console.log("Adding tasks to issue log:", tasks);
         await handleAddToIssueLog(tasks);
       }
     } catch (error) {
@@ -91,8 +90,11 @@ const TaskConverterContent = () => {
       return;
     }
 
+    console.log("Starting to add tasks to issue log:", tasks);
     try {
       const result = await addTasksToIssueLogs(tasks);
+      console.log("Result from adding tasks to issue log:", result);
+      
       toast({
         title: "Tasks added to issue log",
         description: `Successfully added ${result.successful} out of ${result.totalTasks} tasks to the issue log.`,
@@ -115,6 +117,18 @@ const TaskConverterContent = () => {
     await handleExtractTasks(textAreaValue);
   };
 
+  // Add some sample tasks button for testing
+  const addSampleTasks = () => {
+    const sampleText = `Here are some tasks:
+    - Fix the login page bug by tomorrow
+    - Create a new feature for the dashboard
+    - Research API integration options
+    - Update documentation with new changes
+    - Schedule team meeting for next week`;
+    
+    setTextAreaValue(sampleText);
+  };
+
   return (
     <div className="container mx-auto py-6 space-y-8">
       {/* Simple text input form for task extraction */}
@@ -126,13 +140,21 @@ const TaskConverterContent = () => {
           onChange={(e) => setTextAreaValue(e.target.value)}
           placeholder="Type or paste your notes here..."
         />
-        <Button 
-          className="mt-4" 
-          onClick={handleTextSubmit}
-          disabled={isProcessing}
-        >
-          {isProcessing ? 'Processing...' : 'Extract Tasks'}
-        </Button>
+        <div className="mt-4 flex space-x-3">
+          <Button 
+            onClick={handleTextSubmit}
+            disabled={isProcessing}
+          >
+            {isProcessing ? 'Processing...' : 'Extract Tasks'}
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={addSampleTasks}
+            disabled={isProcessing}
+          >
+            Add Sample Tasks
+          </Button>
+        </div>
       </div>
 
       {extractedTasks.length > 0 && (

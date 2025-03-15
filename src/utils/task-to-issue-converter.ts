@@ -16,6 +16,8 @@ const mapPriority = (taskPriority: string | null): IssuePriority => {
       return 'low';
     case 'medium':
       return 'medium';
+    case 'critical':
+      return 'critical';
     default:
       return 'medium';
   }
@@ -73,7 +75,7 @@ export const taskToIssue = (task: Task): IssueFormData => {
     description += `\n\nDuration: ${task.duration}`;
   }
   
-  return {
+  const result: IssueFormData = {
     title: task.title,
     description: description.trim(),
     status: mapStatus(task.status),
@@ -81,6 +83,9 @@ export const taskToIssue = (task: Task): IssueFormData => {
     created_by: task.assignee || '',
     assigned_to: task.assignee || ''
   };
+  
+  console.log("Converted task to issue:", result);
+  return result;
 };
 
 /**
@@ -118,10 +123,13 @@ export const addTasksToIssueLogs = async (tasks: Task[]): Promise<{
   
   for (const task of tasks) {
     try {
+      console.log(`Processing task: ${task.title}`);
       const success = await addTaskToIssueLog(task);
       if (success) {
+        console.log(`Successfully added task: ${task.title}`);
         successful++;
       } else {
+        console.log(`Failed to add task: ${task.title}`);
         failed++;
       }
     } catch (error) {
