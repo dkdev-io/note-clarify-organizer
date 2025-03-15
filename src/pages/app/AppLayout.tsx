@@ -21,9 +21,9 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 }) => {
   return (
     <header className="text-center mb-8">
-      <h1 className="text-3xl font-medium text-gray-900 mb-2">Note to Task Converter</h1>
+      <h1 className="text-3xl font-medium text-gray-900 mb-2">Projectize Step Two: Connect Your Note Taking App or Paste Your Notes Below</h1>
       <p className="text-muted-foreground max-w-md mx-auto">
-        Transform your meeting notes into structured tasks for Motion
+        Option 1: Connect Your Note Taking App
       </p>
       {isConnected && step !== 'connect' && step !== 'complete' && (
         <div className="mt-3 flex flex-wrap justify-center gap-2">
