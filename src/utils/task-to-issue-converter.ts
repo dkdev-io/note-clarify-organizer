@@ -165,7 +165,103 @@ export const addTasksToIssueLogs = async (tasks: Task[]): Promise<{
   };
 };
 
-// Immediately add sample tasks to the issue log when this module is loaded
+// Add the specific requested issues to the issue log
+(async () => {
+  console.log('🚀 Adding requested specific issues to issue log database...');
+  
+  const specificIssues: Task[] = [
+    {
+      id: 'issue-1',
+      title: 'LLM with OpenAI not connected',
+      description: 'The application is failing to connect to OpenAI for LLM processing. Users are only getting basic parser results, and advanced task extraction is not functioning.',
+      priority: 'high',
+      status: 'open',
+      assignee: 'DevOps',
+      project: 'AI Integration',
+      workspace_id: null,
+      isRecurring: false,
+      frequency: null,
+      projectId: null,
+      duration: '2 days',
+      timeEstimate: 480,
+      dueDate: null
+    },
+    {
+      id: 'issue-2',
+      title: 'Authentication not functioning',
+      description: 'Users are unable to log in to the application. Authentication flow is broken, possibly due to incorrect Supabase integration or expired/invalid credentials.',
+      priority: 'critical',
+      status: 'in-progress',
+      assignee: 'Security Team',
+      project: 'User Management',
+      workspace_id: null,
+      isRecurring: false,
+      frequency: null,
+      projectId: null,
+      duration: '1 day',
+      timeEstimate: 240,
+      dueDate: null
+    },
+    {
+      id: 'issue-3',
+      title: 'Tasks adding to blank project instead of selected project',
+      description: 'When a user selects a specific project, tasks are still being created without the project information. The project selection is not being passed correctly to the task creation service.',
+      priority: 'medium',
+      status: 'open',
+      assignee: 'Frontend Team',
+      project: 'Task Management',
+      workspace_id: null,
+      isRecurring: false,
+      frequency: null,
+      projectId: null,
+      duration: '4 hours',
+      timeEstimate: 240,
+      dueDate: null
+    },
+    {
+      id: 'issue-4',
+      title: 'Incorrect identification of existing Motion users',
+      description: 'The system fails to correctly match existing Motion users when parsing notes. Tasks are being assigned to new user accounts instead of being matched to existing Motion users with similar names.',
+      priority: 'medium',
+      status: 'open',
+      assignee: 'Data Team',
+      project: 'User Matching',
+      workspace_id: null,
+      isRecurring: false,
+      frequency: null,
+      projectId: null,
+      duration: '3 days',
+      timeEstimate: 720,
+      dueDate: null
+    },
+    {
+      id: 'issue-5',
+      title: 'Incorrect duration parsing for tasks',
+      description: 'When time duration is specified in notes (e.g., "2 days" or "4 hours"), the system is not correctly identifying and storing this information as task duration. Time-based metadata is being lost during task creation.',
+      priority: 'low',
+      status: 'open',
+      assignee: 'Parser Team',
+      project: 'Task Parser',
+      workspace_id: null,
+      isRecurring: false,
+      frequency: null,
+      projectId: null,
+      duration: '1 day',
+      timeEstimate: 180,
+      dueDate: null
+    }
+  ];
+  
+  try {
+    // Using the previously defined function to add tasks to issue logs
+    const result = await addTasksToIssueLogs(specificIssues);
+    console.log('✅ Successfully added specific issues to issue log:', result);
+  } catch (error) {
+    console.error('❌ Error adding specific issues to issue log:', error);
+  }
+})();
+
+// The original auto-addition of historical tasks runs as well (keeping it for completeness)
 (async () => {
   console.log('🚀 Auto-adding historical tasks to issue log database...');
   
