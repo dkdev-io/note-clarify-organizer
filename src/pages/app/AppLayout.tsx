@@ -22,8 +22,11 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   return (
     <header className="text-center mb-8">
       <h1 className="text-3xl font-bold text-gray-900 mb-2">
-        Option 1: Connect Your Note Taking App
+        Projectize Step Two
       </h1>
+      <p className="text-xl text-gray-700 mb-4">
+        Connect your note taking app or paste your notes below
+      </p>
       {isConnected && step !== 'connect' && step !== 'complete' && (
         <div className="mt-3 flex flex-wrap justify-center gap-2">
           <ConnectionBadge type="connected" />
