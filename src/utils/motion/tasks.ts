@@ -4,7 +4,7 @@
  */
 
 import { getApiKey, isUsingProxyMode } from './api-core';
-import { Task } from '../task-parser/types'; // Ensure we're importing from the correct path
+import { Task } from '../task-parser/types'; // Make sure to import from the correct path
 
 // Add tasks to Motion
 export const addTasksToMotion = async (

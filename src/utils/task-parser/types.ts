@@ -15,9 +15,9 @@ export interface Task {
   isRecurring: boolean;
   frequency: string | null;
   project: string | null;
-  projectId: string | null; // Changed from optional to required with null default
-  duration: string | null; // Changed from optional to required with null default
-  timeEstimate: number | null; // Changed from optional to required with null default
+  projectId: string | null; // Required field with null default
+  duration: string | null; // Required field with null default
+  timeEstimate: number | null; // Required field with null default
 }
 
 export interface RecurringTaskInfo {

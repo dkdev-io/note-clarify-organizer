@@ -130,11 +130,11 @@ export const parseTextIntoTasks = (text: string, defaultProjectName: string | nu
         description = description ? `${description} Duration: ${duration}.` : `Duration: ${duration}.`;
       }
       
-      // Add a task with the project name explicitly set, but with a clean description that doesn't duplicate metadata
+      // Create the task object with ALL required fields including projectId and timeEstimate
       tasks.push({
         id: generateId(),
         title: title.trim(),
-        description: description.trim(), // Just the actual description without metadata
+        description: description.trim(),
         dueDate,
         priority,
         status,
@@ -142,8 +142,10 @@ export const parseTextIntoTasks = (text: string, defaultProjectName: string | nu
         workspace_id: null,
         isRecurring: recurring.isRecurring,
         frequency: recurring.frequency,
-        project: projectName, // Ensure project is explicitly set
-        duration: duration // Add duration to task object
+        project: projectName,
+        projectId: null, // Ensure projectId is explicitly set (null by default)
+        duration: duration, // Add duration to task object
+        timeEstimate: null // Ensure timeEstimate is explicitly set (null by default)
       });
     }
   }
