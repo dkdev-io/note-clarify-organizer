@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
@@ -43,6 +44,7 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
           title: "API Key Loaded",
           description: "A previously stored API key has been loaded. Click Connect to validate.",
         });
+        // Don't automatically connect here, just show the key was loaded
       }
     }
   }, [toast, onConnect]);

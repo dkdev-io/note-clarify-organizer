@@ -1,5 +1,5 @@
 
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useState, useContext, useEffect } from 'react';
 import { AppContextType } from './contextTypes';
 import { ApiProps, Step } from '../types';
 import { Task } from '@/utils/parser';
@@ -20,7 +20,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 // Provider component
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Change the initial step to 'input' so users start with the note input screen
+  // Set the initial step to 'input' so users start with the note input screen
   const [step, setStep] = useState<Step>('input');
   const [noteText, setNoteText] = useState('');
   const [extractedTasks, setExtractedTasks] = useState<Task[]>([]);
@@ -38,6 +38,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     selectedProjectId: null,
     users: [],
   });
+
+  // Check for proxy mode on mount to set the connection state properly
+  useEffect(() => {
+    const usingProxy = sessionStorage.getItem('using_motion_proxy') === 'true';
+    if (usingProxy) {
+      updateApiProps({
+        isConnected: true,
+        apiKey: 'proxy_mode'
+      });
+    }
+  }, []);
 
   // Update API props
   const updateApiProps = (props: Partial<ApiProps>) => {
