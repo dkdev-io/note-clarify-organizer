@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useContext } from 'react';
 import { AppContextType } from './contextTypes';
 import { ApiProps, Step } from '../types';
@@ -19,7 +20,8 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 // Provider component
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [step, setStep] = useState<Step>('connect');
+  // Change the initial step to 'input' so users start with the note input screen
+  const [step, setStep] = useState<Step>('input');
   const [noteText, setNoteText] = useState('');
   const [extractedTasks, setExtractedTasks] = useState<Task[]>([]);
   const [projectName, setProjectName] = useState<string | null>(null);

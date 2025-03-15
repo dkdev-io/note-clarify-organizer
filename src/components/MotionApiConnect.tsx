@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
@@ -48,93 +47,6 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
     }
   }, [toast, onConnect]);
 
-  useEffect(() => {
-    if (apiKey) {
-      setIsKeyValid(null);
-      setErrorMessage(null);
-    }
-  }, [apiKey]);
-
-  const validateKey = async () => {
-    if (!apiKey.trim()) {
-      setErrorMessage("Please enter your Motion API key");
-      return;
-    }
-    
-    const trimmedKey = apiKey.trim().replace(/^["']|["']$/g, '');
-    
-    setIsValidating(true);
-    setErrorMessage(null);
-    
-    try {
-      console.log('Starting API key validation...');
-      setMotionApiKey(trimmedKey);
-      
-      await validateMotionApiKey(trimmedKey);
-      setIsKeyValid(true);
-      
-      console.log('API key is valid, fetching workspaces...');
-      const fetchedWorkspaces = await fetchWorkspaces(trimmedKey);
-      console.log('Fetched workspaces:', fetchedWorkspaces);
-      
-      if (rememberKey) {
-        storeApiKey(trimmedKey);
-        toast({
-          title: "API Key Saved",
-          description: "Your API key has been saved for future use.",
-        });
-      }
-      
-      if (fetchedWorkspaces.length === 0) {
-        setErrorMessage(
-          "Your API key is valid, but no workspaces were found. " +
-          "Make sure you have at least one workspace in your Motion account."
-        );
-      } else {
-        toast({
-          title: "Successfully connected",
-          description: "Your Motion API key is valid. Continue to select workspace and project.",
-        });
-        
-        onConnect(trimmedKey, fetchedWorkspaces);
-      }
-    } catch (error) {
-      console.error("Error during validation:", error);
-      setIsKeyValid(false);
-      
-      if (error instanceof Error) {
-        setErrorMessage(error.message || 
-          "Invalid Motion API key. Please check the key and try again. " +
-          "Make sure you are using an API key created in your Motion account settings with proper permissions."
-        );
-      } else {
-        setErrorMessage(
-          "Failed to validate API key. Please check your internet connection and try again."
-        );
-      }
-      
-      toast({
-        title: "Connection Error",
-        description: "Failed to validate API key. Please ensure it has correct permissions.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsValidating(false);
-    }
-  };
-
-  const handleClearApiKey = () => {
-    setApiKey('');
-    setIsKeyValid(null);
-    setErrorMessage(null);
-    clearStoredApiKey();
-    
-    toast({
-      title: "API Key Cleared",
-      description: "Your saved API key has been removed.",
-    });
-  };
-
   if (isProxyMode) {
     return null;
   }
@@ -177,6 +89,106 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
       </Card>
     </div>
   );
+
+  function validateKey() {
+    if (!apiKey.trim()) {
+      setErrorMessage("Please enter your Motion API key");
+      return;
+    }
+    
+    const trimmedKey = apiKey.trim().replace(/^["']|["']$/g, '');
+    
+    setIsValidating(true);
+    setErrorMessage(null);
+    
+    try {
+      console.log('Starting API key validation...');
+      setMotionApiKey(trimmedKey);
+      
+      validateMotionApiKey(trimmedKey)
+        .then(() => {
+          setIsKeyValid(true);
+          
+          console.log('API key is valid, fetching workspaces...');
+          return fetchWorkspaces(trimmedKey);
+        })
+        .then((fetchedWorkspaces) => {
+          console.log('Fetched workspaces:', fetchedWorkspaces);
+          
+          if (rememberKey) {
+            storeApiKey(trimmedKey);
+            toast({
+              title: "API Key Saved",
+              description: "Your API key has been saved for future use.",
+            });
+          }
+          
+          if (fetchedWorkspaces.length === 0) {
+            setErrorMessage(
+              "Your API key is valid, but no workspaces were found. " +
+              "Make sure you have at least one workspace in your Motion account."
+            );
+          } else {
+            toast({
+              title: "Successfully connected",
+              description: "Your Motion API key is valid. Continue to select workspace and project.",
+            });
+            
+            onConnect(trimmedKey, fetchedWorkspaces);
+          }
+        })
+        .catch((error) => {
+          console.error("Error during validation:", error);
+          setIsKeyValid(false);
+          
+          if (error instanceof Error) {
+            setErrorMessage(error.message || 
+              "Invalid Motion API key. Please check the key and try again. " +
+              "Make sure you are using an API key created in your Motion account settings with proper permissions."
+            );
+          } else {
+            setErrorMessage(
+              "Failed to validate API key. Please check your internet connection and try again."
+            );
+          }
+          
+          toast({
+            title: "Connection Error",
+            description: "Failed to validate API key. Please ensure it has correct permissions.",
+            variant: "destructive",
+          });
+        })
+        .finally(() => {
+          setIsValidating(false);
+        });
+    } catch (error) {
+      console.error("Error during validation:", error);
+      setIsKeyValid(false);
+      setIsValidating(false);
+      
+      setErrorMessage(
+        "An unexpected error occurred. Please try again later."
+      );
+      
+      toast({
+        title: "Connection Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
+    }
+  }
+
+  function handleClearApiKey() {
+    setApiKey('');
+    setIsKeyValid(null);
+    setErrorMessage(null);
+    clearStoredApiKey();
+    
+    toast({
+      title: "API Key Cleared",
+      description: "Your saved API key has been removed.",
+    });
+  }
 };
 
 export default MotionApiConnect;
