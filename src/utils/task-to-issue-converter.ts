@@ -176,7 +176,7 @@ export const addLLMConnectionIssueReport = async (): Promise<boolean> => {
     
     // Create the issue data
     const issueData: IssueFormData = {
-      title: "LLM Connection Issues Investigation",
+      title: "LLM not connecting",
       description: `
 Summary of LLM Connection Issues:
 
@@ -206,7 +206,7 @@ Date reported: ${now.toLocaleString()}
       `.trim(),
       status: "open",
       priority: "high",
-      created_by: "System Diagnostics"
+      created_by: "Dan"
     };
     
     console.log('Creating LLM Connection Issue report with specific ID');
@@ -270,12 +270,12 @@ Date reported: ${now.toLocaleString()}
       `.trim(),
       status: "open",
       priority: "high",
-      created_by: "System Diagnostics"
+      created_by: "Dan"
     };
     
     console.log('Creating Project Assignment Issue report with specific ID');
     
-    // Use the ID "2" as requested
+    // Use the ID "2" as requested (sequential after LLM issue)
     const result = await issueService.createIssueWithId("2", issueData);
     
     return !!result;
@@ -337,12 +337,12 @@ Date reported: ${now.toLocaleString()}
       `.trim(),
       status: "open",
       priority: "high",
-      created_by: "System Diagnostics"
+      created_by: "Dan"
     };
     
     console.log('Creating Time Estimation Issue report with specific ID');
     
-    // Use the ID "3" as requested
+    // Use the ID "3" as requested (sequential after project issue)
     const result = await issueService.createIssueWithId("3", issueData);
     
     return !!result;
