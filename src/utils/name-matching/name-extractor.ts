@@ -5,7 +5,7 @@
 
 /**
  * Extract potential names from text
- * This is a simple implementation that looks for words followed by "will"
+ * This is a simple implementation that looks for words followed by action verbs
  * A more sophisticated implementation would use NLP
  */
 export function extractPotentialNames(text: string): string[] {
