@@ -48,7 +48,8 @@ export const issueService = {
     
     const { data, error } = await supabase
       .from('issue_logs')
-      .insert([dataWithTimestamps]);
+      .insert([dataWithTimestamps])
+      .select();
       
     if (error) {
       console.error('Error creating issue:', error);
@@ -58,8 +59,8 @@ export const issueService = {
     
     console.log('Issue created successfully:', data);
     
-    // Return the first item if available
-    return data && data.length > 0 ? data[0] as Issue : null;
+    // Fix TypeScript error by properly checking if data exists and has elements
+    return data && Array.isArray(data) && data.length > 0 ? data[0] as Issue : null;
   },
 
   // Update an existing issue
@@ -83,7 +84,8 @@ export const issueService = {
     
     console.log('Issue updated successfully:', data);
     
-    return data && data.length > 0 ? data[0] as Issue : null;
+    // Fix TypeScript error by properly checking if data exists and has elements
+    return data && Array.isArray(data) && data.length > 0 ? data[0] as Issue : null;
   },
 
   // Delete an issue
