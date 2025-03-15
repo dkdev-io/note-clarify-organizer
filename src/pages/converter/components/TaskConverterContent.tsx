@@ -108,9 +108,13 @@ const TaskConverterContent = () => {
   return (
     <div className="container mx-auto py-6 space-y-8">
       <TaskExtractor 
-        defaultValue={noteText} 
+        rawText={noteText} 
         onExtract={handleExtractTasks} 
         isProcessing={isProcessing} 
+        extractedTasks={[]}
+        projectName={null}
+        onBack={() => {}}
+        onContinue={() => {}}
       />
 
       {extractedTasks.length > 0 && (
