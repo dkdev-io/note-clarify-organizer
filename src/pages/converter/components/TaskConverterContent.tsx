@@ -9,6 +9,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { issueService } from '@/services/issueService';
 import { IssueFormData } from '@/types/issue';
+import '../../../utils/create-llm-issue-report';
+import '../../../utils/create-project-issue-report';
+import '../../../utils/create-time-estimation-issue-report';
 
 const TaskConverterContent = () => {
   const [noteText, setNoteText] = useState<string>('');
@@ -17,7 +20,6 @@ const TaskConverterContent = () => {
   const { toast } = useToast();
   const { id } = useParams<{ id: string }>();
 
-  // Force add a direct issue for testing
   const addDirectTestIssue = async () => {
     const testIssue: IssueFormData = {
       title: "Test Issue - Direct Addition",
@@ -46,7 +48,6 @@ const TaskConverterContent = () => {
     }
   };
 
-  // Check if text contains a command to add tasks to issue log
   const checkForIssueLogCommand = (text: string): boolean => {
     const issueLogCommands = [
       /add to issue log/i,
@@ -85,7 +86,6 @@ const TaskConverterContent = () => {
 
     try {
       console.log("Extracting tasks from text:", text.substring(0, 100) + "...");
-      // Simple parsing for now
       const tasks = parseTextIntoTasks(text);
       console.log("Extracted tasks:", tasks);
       setExtractedTasks(tasks);
@@ -102,7 +102,6 @@ const TaskConverterContent = () => {
           description: `Successfully extracted ${tasks.length} tasks from your notes.`,
         });
         
-        // ALWAYS add to issue log regardless of command detection
         console.log("🔄 Adding extracted tasks to issue log immediately:", tasks);
         const result = await handleAddToIssueLog(tasks);
         console.log("✅ Result of adding to issue log:", result);
@@ -119,7 +118,6 @@ const TaskConverterContent = () => {
     }
   };
 
-  // Function to handle adding tasks to issue log
   const handleAddToIssueLog = async (tasks: Task[]): Promise<{
     successful: number;
     failed: number;
@@ -157,14 +155,32 @@ const TaskConverterContent = () => {
     }
   };
 
-  // Simulate task extraction with textarea and button
+  const createAllIssueReports = async () => {
+    try {
+      await import('../../../utils/create-llm-issue-report');
+      await import('../../../utils/create-project-issue-report');
+      await import('../../../utils/create-time-estimation-issue-report');
+      
+      toast({
+        title: "Issue reports created",
+        description: "Successfully created diagnostic issue reports.",
+      });
+    } catch (error) {
+      console.error("Error creating issue reports:", error);
+      toast({
+        title: "Error creating issue reports",
+        description: "Failed to create diagnostic issue reports.",
+        variant: "destructive"
+      });
+    }
+  };
+
   const [textAreaValue, setTextAreaValue] = useState('');
 
   const handleTextSubmit = async () => {
     await handleExtractTasks(textAreaValue);
   };
 
-  // Add some sample tasks button for testing
   const addSampleTasks = () => {
     const sampleText = `Here are some tasks:
     - Fix the login page bug by tomorrow (high priority)
@@ -176,7 +192,6 @@ const TaskConverterContent = () => {
     setTextAreaValue(sampleText);
   };
 
-  // Force add current tasks to issue log
   const forceAddToIssueLog = async () => {
     if (extractedTasks.length === 0) {
       toast({
@@ -198,19 +213,28 @@ const TaskConverterContent = () => {
 
   return (
     <div className="container mx-auto py-6 space-y-8">
-      {/* Task input form */}
       <Card className="bg-white shadow-md">
         <CardHeader>
           <CardTitle className="flex justify-between items-center">
             <span>Enter your notes</span>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={addDirectTestIssue}
-              className="text-xs"
-            >
-              Add Test Issue Directly
-            </Button>
+            <div className="space-x-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={addDirectTestIssue}
+                className="text-xs"
+              >
+                Add Test Issue Directly
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={createAllIssueReports}
+                className="text-xs"
+              >
+                Create Issue Reports
+              </Button>
+            </div>
           </CardTitle>
         </CardHeader>
         <CardContent>
