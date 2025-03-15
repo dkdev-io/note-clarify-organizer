@@ -36,8 +36,8 @@ export const issueService = {
 
   // Create a new issue
   async createIssue(issueData: IssueFormData): Promise<Issue | null> {
-    // Add console log to debug
-    console.log('Creating issue with data:', issueData);
+    // Add detailed console logs for debugging
+    console.log('📋 Creating issue with data:', JSON.stringify(issueData, null, 2));
     
     // Add timestamps if not present
     const dataWithTimestamps = {
@@ -46,18 +46,20 @@ export const issueService = {
       updated_at: new Date().toISOString()
     };
     
+    console.log('📤 Sending data to Supabase:', JSON.stringify(dataWithTimestamps, null, 2));
+    
     const { data, error } = await supabase
       .from('issue_logs')
       .insert([dataWithTimestamps])
       .select();
       
     if (error) {
-      console.error('Error creating issue:', error);
-      console.error('Error details:', error.message, error.details, error.hint);
+      console.error('❌ Error creating issue:', error);
+      console.error('❌ Error details:', error.message, error.details, error.hint);
       throw error;
     }
     
-    console.log('Issue created successfully:', data);
+    console.log('✅ Issue created successfully:', data);
     
     // Fix TypeScript error by properly checking if data exists and has elements
     return data && Array.isArray(data) && data.length > 0 ? data[0] as Issue : null;

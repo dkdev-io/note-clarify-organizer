@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import TaskToIssueConverter from '@/components/task-review/TaskToIssueConverter';
 import { addTasksToIssueLogs } from '@/utils/task-to-issue-converter';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 
 // Removed the React.FC type to avoid conflicts with props
 const TaskConverterContent = () => {
@@ -27,7 +28,10 @@ const TaskConverterContent = () => {
       /add tasks? to issue log/i,
       /add to error log/i,
       /add them now/i,
-      /add to log/i
+      /add to log/i,
+      /log now/i,
+      /add all/i,
+      /add tasks now/i
     ];
     
     return issueLogCommands.some(regex => regex.test(text));
@@ -47,8 +51,10 @@ const TaskConverterContent = () => {
     setIsProcessing(true);
 
     try {
+      console.log("Extracting tasks from text:", text.substring(0, 100) + "...");
       // Simple parsing for now
       const tasks = parseTextIntoTasks(text);
+      console.log("Extracted tasks:", tasks);
       setExtractedTasks(tasks);
 
       if (tasks.length === 0) {
@@ -64,8 +70,9 @@ const TaskConverterContent = () => {
         });
         
         // ALWAYS add to issue log regardless of command detection
-        console.log("Adding tasks to issue log:", tasks);
-        await handleAddToIssueLog(tasks);
+        console.log("🔄 Adding extracted tasks to issue log:", tasks);
+        const result = await handleAddToIssueLog(tasks);
+        console.log("✅ Result of adding to issue log:", result);
       }
     } catch (error) {
       console.error('Error extracting tasks:', error);
@@ -80,33 +87,40 @@ const TaskConverterContent = () => {
   };
 
   // Function to handle adding tasks to issue log
-  const handleAddToIssueLog = async (tasks: Task[]) => {
+  const handleAddToIssueLog = async (tasks: Task[]): Promise<{
+    successful: number;
+    failed: number;
+    totalTasks: number;
+  }> => {
     if (tasks.length === 0) {
       toast({
         title: "No tasks to convert",
         description: "There are no tasks to add to the issue log.",
         variant: "destructive"
       });
-      return;
+      return { successful: 0, failed: 0, totalTasks: 0 };
     }
 
-    console.log("Starting to add tasks to issue log:", tasks);
+    console.log("🚀 Starting to add tasks to issue log:", tasks);
     try {
       const result = await addTasksToIssueLogs(tasks);
-      console.log("Result from adding tasks to issue log:", result);
+      console.log("📊 Result from adding tasks to issue log:", result);
       
       toast({
         title: "Tasks added to issue log",
         description: `Successfully added ${result.successful} out of ${result.totalTasks} tasks to the issue log.`,
         variant: result.failed > 0 ? "destructive" : "default"
       });
+      
+      return result;
     } catch (error) {
-      console.error('Error adding tasks to issue log:', error);
+      console.error('❌ Error adding tasks to issue log:', error);
       toast({
         title: "Error adding to issue log",
         description: "Something went wrong while adding tasks to the issue log.",
         variant: "destructive"
       });
+      return { successful: 0, failed: 0, totalTasks: tasks.length };
     }
   };
 
@@ -120,7 +134,7 @@ const TaskConverterContent = () => {
   // Add some sample tasks button for testing
   const addSampleTasks = () => {
     const sampleText = `Here are some tasks:
-    - Fix the login page bug by tomorrow
+    - Fix the login page bug by tomorrow (high priority)
     - Create a new feature for the dashboard
     - Research API integration options
     - Update documentation with new changes
@@ -129,18 +143,42 @@ const TaskConverterContent = () => {
     setTextAreaValue(sampleText);
   };
 
+  // Force add current tasks to issue log
+  const forceAddToIssueLog = async () => {
+    if (extractedTasks.length === 0) {
+      toast({
+        title: "No tasks to add",
+        description: "Extract some tasks first before adding to the issue log.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setIsProcessing(true);
+    try {
+      const result = await handleAddToIssueLog(extractedTasks);
+      console.log("Force add result:", result);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   return (
     <div className="container mx-auto py-6 space-y-8">
-      {/* Simple text input form for task extraction */}
-      <div className="bg-white p-6 rounded-lg shadow">
-        <h2 className="text-xl font-bold mb-4">Enter your notes</h2>
-        <textarea
-          className="w-full p-3 border rounded-md min-h-[150px]"
-          value={textAreaValue}
-          onChange={(e) => setTextAreaValue(e.target.value)}
-          placeholder="Type or paste your notes here..."
-        />
-        <div className="mt-4 flex space-x-3">
+      {/* Task input form */}
+      <Card className="bg-white shadow-md">
+        <CardHeader>
+          <CardTitle>Enter your notes</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <textarea
+            className="w-full p-3 border rounded-md min-h-[150px]"
+            value={textAreaValue}
+            onChange={(e) => setTextAreaValue(e.target.value)}
+            placeholder="Type or paste your notes here..."
+          />
+        </CardContent>
+        <CardFooter className="flex flex-wrap gap-3">
           <Button 
             onClick={handleTextSubmit}
             disabled={isProcessing}
@@ -154,29 +192,47 @@ const TaskConverterContent = () => {
           >
             Add Sample Tasks
           </Button>
-        </div>
-      </div>
+        </CardFooter>
+      </Card>
 
       {extractedTasks.length > 0 && (
-        <div className="bg-white p-6 rounded-lg shadow space-y-6">
-          <h2 className="text-xl font-bold border-b pb-2">Extracted Tasks</h2>
-          <div className="space-y-4">
-            {extractedTasks.map((task, index) => (
-              <div key={task.id || index} className="p-4 border rounded-md">
-                <h3 className="font-medium">{task.title}</h3>
-                {task.description && <p className="text-gray-600 mt-1">{task.description}</p>}
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {task.dueDate && <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Due: {task.dueDate}</span>}
-                  {task.priority && <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded">Priority: {task.priority}</span>}
-                  {task.assignee && <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">Assignee: {task.assignee}</span>}
+        <div className="space-y-6">
+          <Card className="bg-white shadow-md">
+            <CardHeader>
+              <CardTitle>Extracted Tasks</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {extractedTasks.map((task, index) => (
+                <div key={task.id || index} className="p-4 border rounded-md">
+                  <h3 className="font-medium">{task.title}</h3>
+                  {task.description && <p className="text-gray-600 mt-1">{task.description}</p>}
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {task.dueDate && <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Due: {task.dueDate}</span>}
+                    {task.priority && <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded">Priority: {task.priority}</span>}
+                    {task.assignee && <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">Assignee: {task.assignee}</span>}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </CardContent>
+            <CardFooter>
+              <Button 
+                onClick={forceAddToIssueLog}
+                disabled={isProcessing}
+                variant="secondary"
+              >
+                Force Add to Issue Log
+              </Button>
+            </CardFooter>
+          </Card>
 
-          <div className="mt-6">
-            <TaskToIssueConverter tasks={extractedTasks} />
-          </div>
+          <Card className="bg-white shadow-md">
+            <CardHeader>
+              <CardTitle>Add to Issue Logs</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <TaskToIssueConverter tasks={extractedTasks} />
+            </CardContent>
+          </Card>
         </div>
       )}
     </div>
