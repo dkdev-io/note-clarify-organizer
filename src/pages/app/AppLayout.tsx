@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { BadgeProps } from '@/components/ui/badge';
 import { Step } from './types';
@@ -20,8 +21,8 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 }) => {
   return (
     <header className="text-center mb-8">
-      <h1 className="text-3xl font-medium text-gray-900 mb-2">
-        <strong>Option 1: Connect Your Note Taking App</strong>
+      <h1 className="text-3xl font-bold text-gray-900 mb-2">
+        Option 1: Connect Your Note Taking App
       </h1>
       {isConnected && step !== 'connect' && step !== 'complete' && (
         <div className="mt-3 flex flex-wrap justify-center gap-2">
