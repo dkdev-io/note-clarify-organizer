@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import NoteInput from '@/components/NoteInput';
+import NoteInput from '@/components/note-input';
 import { ApiProps } from '../../types';
 import { useAppContext } from '../../context/AppContextProvider';
 import MotionAlert from './MotionAlert';

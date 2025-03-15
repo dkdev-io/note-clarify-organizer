@@ -1,7 +1,7 @@
 
 import React from 'react';
 import MotionApiConnect from '@/components/MotionApiConnect';
-import NoteInput from '@/components/NoteInput';
+import NoteInput from '@/components/note-input';
 import TaskExtractor from '@/components/TaskExtractor';
 import LLMProcessor from '@/components/LLMProcessor';
 import TaskReview from '@/components/TaskReview';
