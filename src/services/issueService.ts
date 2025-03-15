@@ -5,6 +5,7 @@ import { Issue, IssueFormData } from "@/types/issue";
 export const issueService = {
   // Fetch all issues
   async getAllIssues(): Promise<Issue[]> {
+    console.log('Fetching all issues from the database');
     const { data, error } = await supabase
       .from('issue_logs')
       .select('*')
@@ -15,11 +16,13 @@ export const issueService = {
       throw error;
     }
 
+    console.log(`Retrieved ${data?.length || 0} issues from the database`);
     return data as Issue[];
   },
 
   // Get a single issue by ID
   async getIssueById(id: string): Promise<Issue | null> {
+    console.log(`Fetching issue with ID: ${id}`);
     const { data, error } = await supabase
       .from('issue_logs')
       .select('*')
@@ -39,6 +42,12 @@ export const issueService = {
     // Add detailed console logs for debugging
     console.log('📋 Creating issue with data:', JSON.stringify(issueData, null, 2));
     
+    // Validate the data before sending to Supabase
+    if (!issueData.title) {
+      console.error('❌ Issue data missing title - cannot create');
+      throw new Error('Issue title is required');
+    }
+    
     // Add timestamps if not present
     const dataWithTimestamps = {
       ...issueData,
@@ -48,21 +57,30 @@ export const issueService = {
     
     console.log('📤 Sending data to Supabase:', JSON.stringify(dataWithTimestamps, null, 2));
     
-    const { data, error } = await supabase
-      .from('issue_logs')
-      .insert([dataWithTimestamps])
-      .select();
+    // Table name check
+    const tableName = 'issue_logs';
+    console.log(`Using table name: ${tableName}`);
+    
+    try {
+      const { data, error } = await supabase
+        .from(tableName)
+        .insert([dataWithTimestamps])
+        .select();
+        
+      if (error) {
+        console.error('❌ Error creating issue:', error);
+        console.error('❌ Error details:', error.message, error.details, error.hint);
+        throw error;
+      }
       
-    if (error) {
-      console.error('❌ Error creating issue:', error);
-      console.error('❌ Error details:', error.message, error.details, error.hint);
-      throw error;
+      console.log('✅ Issue created successfully:', data);
+      
+      // Fix TypeScript error by properly checking if data exists and has elements
+      return data && Array.isArray(data) && data.length > 0 ? data[0] as Issue : null;
+    } catch (queryError) {
+      console.error('❌ Exception while creating issue:', queryError);
+      throw queryError;
     }
-    
-    console.log('✅ Issue created successfully:', data);
-    
-    // Fix TypeScript error by properly checking if data exists and has elements
-    return data && Array.isArray(data) && data.length > 0 ? data[0] as Issue : null;
   },
 
   // Update an existing issue

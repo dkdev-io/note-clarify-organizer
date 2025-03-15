@@ -8,14 +8,44 @@ import TaskToIssueConverter from '@/components/task-review/TaskToIssueConverter'
 import { addTasksToIssueLogs } from '@/utils/task-to-issue-converter';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { issueService } from '@/services/issueService';
+import { IssueFormData } from '@/types/issue';
 
-// Removed the React.FC type to avoid conflicts with props
 const TaskConverterContent = () => {
   const [noteText, setNoteText] = useState<string>('');
   const [extractedTasks, setExtractedTasks] = useState<Task[]>([]);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const { toast } = useToast();
   const { id } = useParams<{ id: string }>();
+
+  // Force add a direct issue for testing
+  const addDirectTestIssue = async () => {
+    const testIssue: IssueFormData = {
+      title: "Test Issue - Direct Addition",
+      description: "This is a test issue added directly to verify the issue service is working.",
+      status: 'open',
+      priority: 'medium',
+      created_by: 'Test User',
+      assigned_to: 'Test User'
+    };
+    
+    console.log("💡 Adding direct test issue:", testIssue);
+    try {
+      const result = await issueService.createIssue(testIssue);
+      console.log("✅ Direct test issue result:", result);
+      toast({
+        title: "Test issue created",
+        description: "Successfully added a test issue directly to the database.",
+      });
+    } catch (error) {
+      console.error("❌ Error adding direct test issue:", error);
+      toast({
+        title: "Error creating test issue",
+        description: "Failed to add test issue directly to the database.",
+        variant: "destructive"
+      });
+    }
+  };
 
   // Check if text contains a command to add tasks to issue log
   const checkForIssueLogCommand = (text: string): boolean => {
@@ -31,7 +61,11 @@ const TaskConverterContent = () => {
       /add to log/i,
       /log now/i,
       /add all/i,
-      /add tasks now/i
+      /add tasks now/i,
+      /convert to issue/i,
+      /save as issue/i,
+      /track as issue/i,
+      /record issue/i
     ];
     
     return issueLogCommands.some(regex => regex.test(text));
@@ -70,7 +104,7 @@ const TaskConverterContent = () => {
         });
         
         // ALWAYS add to issue log regardless of command detection
-        console.log("🔄 Adding extracted tasks to issue log:", tasks);
+        console.log("🔄 Adding extracted tasks to issue log immediately:", tasks);
         const result = await handleAddToIssueLog(tasks);
         console.log("✅ Result of adding to issue log:", result);
       }
@@ -168,7 +202,17 @@ const TaskConverterContent = () => {
       {/* Task input form */}
       <Card className="bg-white shadow-md">
         <CardHeader>
-          <CardTitle>Enter your notes</CardTitle>
+          <CardTitle className="flex justify-between items-center">
+            <span>Enter your notes</span>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={addDirectTestIssue}
+              className="text-xs"
+            >
+              Add Test Issue Directly
+            </Button>
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <textarea
@@ -183,7 +227,7 @@ const TaskConverterContent = () => {
             onClick={handleTextSubmit}
             disabled={isProcessing}
           >
-            {isProcessing ? 'Processing...' : 'Extract Tasks'}
+            {isProcessing ? 'Processing...' : 'Extract Tasks & Add to Issue Log'}
           </Button>
           <Button 
             variant="outline" 

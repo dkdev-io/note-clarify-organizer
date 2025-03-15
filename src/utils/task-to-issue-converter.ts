@@ -9,17 +9,17 @@ import { issueService } from '@/services/issueService';
 const mapPriority = (taskPriority: string | null): IssuePriority => {
   if (!taskPriority) return 'medium';
   
-  switch (taskPriority.toLowerCase()) {
-    case 'high':
-      return 'high';
-    case 'low':
-      return 'low';
-    case 'medium':
-      return 'medium';
-    case 'critical':
-      return 'critical';
-    default:
-      return 'medium';
+  const priority = taskPriority.toLowerCase();
+  console.log(`Mapping priority: ${taskPriority} -> normalized: ${priority}`);
+  
+  if (priority.includes('high') || priority.includes('urgent') || priority.includes('important')) {
+    return 'high';
+  } else if (priority.includes('low')) {
+    return 'low';
+  } else if (priority.includes('critical')) {
+    return 'critical';
+  } else {
+    return 'medium';
   }
 };
 
@@ -29,17 +29,17 @@ const mapPriority = (taskPriority: string | null): IssuePriority => {
 const mapStatus = (taskStatus: string | null): IssueStatus => {
   if (!taskStatus) return 'open';
   
-  switch (taskStatus.toLowerCase()) {
-    case 'in_progress':
-    case 'in progress':
-      return 'in-progress';
-    case 'completed':
-    case 'done':
-      return 'resolved';
-    case 'closed':
-      return 'closed';
-    default:
-      return 'open';
+  const status = taskStatus.toLowerCase();
+  console.log(`Mapping status: ${taskStatus} -> normalized: ${status}`);
+  
+  if (status.includes('progress') || status.includes('working') || status.includes('started')) {
+    return 'in-progress';
+  } else if (status.includes('complete') || status.includes('done') || status.includes('resolved') || status.includes('finished')) {
+    return 'resolved';
+  } else if (status.includes('close') || status.includes('cancel') || status.includes('abandon')) {
+    return 'closed';
+  } else {
+    return 'open';
   }
 };
 
@@ -82,11 +82,11 @@ export const taskToIssue = (task: Task): IssueFormData => {
     description: description.trim(),
     status: mapStatus(task.status),
     priority: mapPriority(task.priority),
-    created_by: task.assignee || '',
+    created_by: task.assignee || 'System',
     assigned_to: task.assignee || ''
   };
   
-  console.log("Converted task to issue:", result);
+  console.log("Converted task to issue:", JSON.stringify(result, null, 2));
   return result;
 };
 
@@ -99,6 +99,12 @@ export const addTaskToIssueLog = async (task: Task): Promise<boolean> => {
     const issueData = taskToIssue(task);
     console.log('📋 Issue data to be saved:', JSON.stringify(issueData, null, 2));
     
+    // Validate the issue data before saving
+    if (!issueData.title) {
+      console.error('❌ Task has no title, cannot create issue');
+      return false;
+    }
+    
     const result = await issueService.createIssue(issueData);
     console.log('✅ Result of creating issue:', result);
     
@@ -110,6 +116,7 @@ export const addTaskToIssueLog = async (task: Task): Promise<boolean> => {
     return true;
   } catch (error) {
     console.error('❌ Error adding task to issue log:', error);
+    console.error('Error details:', error);
     return false;
   }
 };
