@@ -32,10 +32,10 @@ const WorkspaceProjectSelect: React.FC<WorkspaceProjectSelectProps> = ({
       <Card className="bg-white bg-opacity-80 backdrop-blur-sm border border-gray-100 shadow-card">
         <CardHeader>
           <CardTitle className="text-2xl font-medium text-gray-900">
-            Select Workspace & Project
+            Projectize Step One: Select Your Workspace and Project
           </CardTitle>
           <p className="text-muted-foreground text-sm mt-1">
-            Choose where your tasks will be created in Motion
+            Picking your workspace and project will help get your Projectized notes in the right spot
           </p>
         </CardHeader>
         <CardContent>

@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { FileTextIcon, SendIcon, ArrowRightIcon, PlusIcon, InfoIcon, LinkIcon, VideoIcon, FileAudioIcon, MailIcon } from 'lucide-react';
+import { FileTextIcon, SendIcon, ArrowRightIcon, InfoIcon, LinkIcon, VideoIcon, FileAudioIcon, MailIcon } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -62,66 +62,29 @@ const NoteInput: React.FC<NoteInputProps> = ({ onParseTasks, apiProps }) => {
     }, 400);
   };
 
-  const sampleNotes = [
-    "XYZ Client Marketing Campaign - March 12:\n- Sarah needs to prepare the Q2 sales report by May 1st.\n- Update the client presentation with new metrics - high priority.\n- Schedule follow-up meeting with the marketing team next week.\n- John to review the product roadmap document before Friday.",
-    "Project Alpha Planning:\n1. Research competitors by end of month\n2. Mike must create wireframes for the new dashboard\n3. Urgent: Fix the login bug reported by users\n4. Schedule user interviews for next sprint",
-    "Creative Agency Rebranding:\n• Jennifer must take the logo and add the tagline by March 11.\n• Meet with stakeholders about budget concerns on Tuesday\n• Mark to redesign the website homepage by end of week"
-  ];
-
-  // Create a sample based on the connected users if available
-  if (apiProps.isConnected && apiProps.users && apiProps.users.length > 0) {
-    // Get up to 3 random users from the list
-    const availableUsers = [...apiProps.users];
-    const selectedUsers = [];
-    
-    for (let i = 0; i < Math.min(3, availableUsers.length); i++) {
-      const randomIndex = Math.floor(Math.random() * availableUsers.length);
-      const user = availableUsers.splice(randomIndex, 1)[0];
-      if (user && user.name) {
-        // Extract first name
-        const firstName = user.name.split(' ')[0];
-        selectedUsers.push(firstName);
-      }
-    }
-    
-    if (selectedUsers.length > 0) {
-      // Replace sample 3 with a sample that uses the actual Motion users
-      const userSample = `Team Project Updates:\n• ${selectedUsers[0] || 'Alex'} will research new tools by March 15th.\n• ${selectedUsers[1] || 'Jamie'} needs to finish the documentation by next Friday.\n• ${selectedUsers[2] || 'Taylor'} will set up the project meeting for next week.`;
-      
-      sampleNotes[2] = userSample;
-    }
-  }
-
-  const loadSample = (index: number) => {
-    setNoteText(sampleNotes[index]);
-    
-    // Small toast to confirm sample loaded
-    toast({
-      title: "Sample loaded",
-      description: "You can now extract tasks from this sample text.",
-    });
-  };
-
   return (
     <div className={`w-full max-w-2xl mx-auto transition-all duration-500 ${isTransitioning ? 'opacity-0 translate-x-10' : 'opacity-100 translate-x-0'}`}>
       <h2 className="text-xl font-bold text-left mb-4 flex items-center">
         <LinkIcon className="inline-block mr-2 h-5 w-5 text-primary" />
-        Connect Your Note Taking App or Paste Your Notes Below
+        Projectize Step Two: Connect Your Note Taking App or Paste Your Notes Below
       </h2>
       
       {/* Integration icons */}
-      <div className="mb-4 rounded-lg bg-white p-4 border border-gray-100 shadow-sm flex items-center justify-start space-x-6">
-        <div className="flex flex-col items-center">
-          <VideoIcon className="h-8 w-8 text-blue-600" />
-          <span className="text-xs mt-1">Zoom</span>
-        </div>
-        <div className="flex flex-col items-center">
-          <FileAudioIcon className="h-8 w-8 text-purple-600" />
-          <span className="text-xs mt-1">Otter AI</span>
-        </div>
-        <div className="flex flex-col items-center">
-          <MailIcon className="h-8 w-8 text-red-500" />
-          <span className="text-xs mt-1">Google</span>
+      <div className="mb-4 rounded-lg bg-white p-4 border border-gray-100 shadow-sm">
+        <h3 className="font-medium mb-3">Option 1: Connect Your Note Taking App</h3>
+        <div className="flex items-center justify-start space-x-6">
+          <div className="flex flex-col items-center">
+            <VideoIcon className="h-8 w-8 text-blue-600" />
+            <span className="text-xs mt-1">Zoom</span>
+          </div>
+          <div className="flex flex-col items-center">
+            <FileAudioIcon className="h-8 w-8 text-purple-600" />
+            <span className="text-xs mt-1">Otter AI</span>
+          </div>
+          <div className="flex flex-col items-center">
+            <MailIcon className="h-8 w-8 text-red-500" />
+            <span className="text-xs mt-1">Google</span>
+          </div>
         </div>
       </div>
       
@@ -130,7 +93,7 @@ const NoteInput: React.FC<NoteInputProps> = ({ onParseTasks, apiProps }) => {
           <div className="flex items-center justify-between">
             <CardTitle className="text-2xl font-medium text-gray-900">
               <FileTextIcon className="inline-block mr-2 h-6 w-6 text-primary" />
-              Paste your notes below
+              <strong>Option 2: Paste Your Notes Below</strong>
             </CardTitle>
             
             <TooltipProvider>
@@ -164,21 +127,6 @@ const NoteInput: React.FC<NoteInputProps> = ({ onParseTasks, apiProps }) => {
             value={noteText}
             onChange={(e) => setNoteText(e.target.value)}
           />
-          <div className="flex flex-wrap gap-2 mt-4">
-            <p className="text-xs text-muted-foreground w-full mb-1">Try one of these examples:</p>
-            {sampleNotes.map((_, index) => (
-              <Button 
-                key={index} 
-                variant="outline" 
-                size="sm" 
-                className="text-xs bg-secondary hover:bg-secondary/80"
-                onClick={() => loadSample(index)}
-              >
-                <PlusIcon className="h-3 w-3 mr-1" />
-                Sample {index + 1}
-              </Button>
-            ))}
-          </div>
         </CardContent>
         <CardFooter className="flex justify-end pt-2 pb-4 px-6">
           <Button 

@@ -7,10 +7,12 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogClose
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import UserNameInputWithUsers from "@/components/UserNameInputWithUsers";
 import { useToast } from "@/components/ui/use-toast";
+import { X } from 'lucide-react';
 
 // Define proper type for user mappings
 interface UserMapping {
@@ -54,6 +56,10 @@ const UserMappingDialog: React.FC<UserMappingDialogProps> = ({
   return (
     <Dialog open={showUserDialog} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-md">
+        <DialogClose className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
+          <X className="h-4 w-4" />
+          <span className="sr-only">Close</span>
+        </DialogClose>
         <DialogHeader>
           <DialogTitle>Map Users</DialogTitle>
           <DialogDescription>

@@ -74,7 +74,7 @@ const ApiKeyInput: React.FC<ApiKeyInputProps> = ({
       <Alert variant="default" className="mt-2 bg-blue-50 text-blue-800 border-blue-200">
         <InfoIcon className="h-4 w-4 text-blue-500" />
         <AlertDescription className="text-xs">
-          A valid Motion API key with read/write access is required to connect your account.
+          Connect your Motion account to automatically create tasks from your notes.
         </AlertDescription>
       </Alert>
     </div>

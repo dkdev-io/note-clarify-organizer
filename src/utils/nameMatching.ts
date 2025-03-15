@@ -1,3 +1,4 @@
+
 /**
  * Utility functions for matching names in text to Motion users
  */
@@ -16,30 +17,35 @@ export function isNicknameOrShortened(input: string, target: string): boolean {
     return true;
   }
   
-  // Check for common nicknames and shortened versions
+  // Improved nickname matching with more variations
   const commonNicknames: Record<string, string[]> = {
-    'dan': ['daniel', 'danny'],
-    'mat': ['matthew', 'matt', 'mateo'],
-    'mtt': ['matthew', 'matt'],
-    'dn': ['dan', 'daniel', 'danny', 'dean'],
-    'mt': ['matt', 'matthew'],
-    'matt': ['matthew'],
-    'dave': ['david'],
-    'jim': ['james'],
-    'bob': ['robert'],
-    'bill': ['william'],
-    'mike': ['michael'],
-    'tom': ['thomas'],
-    'joe': ['joseph'],
-    'chris': ['christopher', 'christian'],
-    'alex': ['alexander', 'alexandra'],
-    'nick': ['nicholas'],
-    'rick': ['richard'],
-    'tony': ['anthony'],
-    'sam': ['samuel', 'samantha'],
-    'beth': ['elizabeth'],
+    'dan': ['daniel', 'danny', 'danielle'],
+    'mat': ['matthew', 'matt', 'mateo', 'matteo'],
+    'mtt': ['matthew', 'matt', 'mateo'],
+    'dn': ['dan', 'daniel', 'danny', 'dean', 'deon'],
+    'mt': ['matt', 'matthew', 'mateo'],
+    'matt': ['matthew', 'matthias'],
+    'dave': ['david', 'davey'],
+    'jim': ['james', 'jimmy', 'jimbo'],
+    'bob': ['robert', 'bobby', 'rob'],
+    'bill': ['william', 'billy', 'will'],
+    'mike': ['michael', 'micky', 'mick'],
+    'tom': ['thomas', 'tommy'],
+    'joe': ['joseph', 'joey'],
+    'josh': ['joshua'],
+    'ben': ['benjamin', 'benji'],
+    'chris': ['christopher', 'christian', 'christoph'],
+    'alex': ['alexander', 'alexandra', 'alexis', 'alejandro'],
+    'nick': ['nicholas', 'nico', 'nicolas'],
+    'rick': ['richard', 'ricky', 'ricardo'],
+    'tony': ['anthony', 'antonio', 'antoine'],
+    'sam': ['samuel', 'samantha', 'sammy'],
+    'beth': ['elizabeth', 'elisabeth', 'betsy'],
     'juan': ['juanito', 'juanita'],
     'da': ['dan', 'daniel', 'dave', 'david'],
+    'j': ['john', 'james', 'joseph', 'jack', 'jim', 'josh'],
+    'm': ['michael', 'mark', 'mike', 'matthew', 'matt'],
+    'd': ['david', 'daniel', 'dave', 'dan', 'derek'],
   };
   
   // Check if input is a known nickname
@@ -79,6 +85,11 @@ export function calculateSimilarity(str1: string, str2: string): number {
   // Fast path for equal strings or empty strings
   if (a === b) return 1;
   if (a.length === 0 || b.length === 0) return 0;
+  
+  // Check first name match (common in professional settings)
+  const aFirstName = a.split(' ')[0];
+  const bFirstName = b.split(' ')[0];
+  if (aFirstName === bFirstName) return 0.9; // High score for matching first names
   
   // Create matrix
   const matrix = [];
@@ -121,71 +132,74 @@ export function calculateSimilarity(str1: string, str2: string): number {
  * @returns Array of potential matching users
  */
 export function findUserMatches(name: string, users: any[], threshold: number = 0.6): any[] {
-  if (!name || !users || users.length === 0) return [];
+  if (!name || !users || users.length === 0) {
+    console.log(`No matches possible for ${name} - empty input or no users available`);
+    return [];
+  }
   
   // Normalize the name for comparison (lowercase)
   const normalizedName = name.toLowerCase();
+  console.log(`Finding matches for: "${name}" (normalized: "${normalizedName}")`);
+  console.log(`Available users: ${users.map(u => u.name).join(', ')}`);
   
-  // First do an exact match with first name or full name
+  // First check for exact matches (case-insensitive)
   const exactMatches = users.filter(user => {
     if (!user.name) return false;
-    
     const userName = user.name.toLowerCase();
     const firstNameOnly = userName.split(' ')[0]; // Get just the first name
     
-    return userName === normalizedName || 
-           firstNameOnly === normalizedName ||
-           userName.includes(normalizedName) ||
-           normalizedName.includes(firstNameOnly);
+    const exactFullMatch = userName === normalizedName;
+    const exactFirstNameMatch = firstNameOnly === normalizedName;
+    const nameIncludes = userName.includes(normalizedName);
+    const firstNameIncludes = normalizedName.includes(firstNameOnly);
+    
+    if (exactFullMatch || exactFirstNameMatch || nameIncludes || firstNameIncludes) {
+      console.log(`Exact match found: "${name}" matches "${user.name}"`);
+      return true;
+    }
+    return false;
   });
   
   if (exactMatches.length > 0) {
-    console.log(`Found exact matches for ${name}:`, exactMatches.map(u => u.name));
+    console.log(`Found ${exactMatches.length} exact matches for ${name}`);
     return exactMatches;
   }
   
-  // Special case handling for common nicknames
-  const nicknames: Record<string, string[]> = {
-    'matt': ['matthew'],
-    'matthew': ['matt'],
-    'dan': ['daniel'],
-    'daniel': ['dan'],
-    'dave': ['david'],
-    'jim': ['james'],
-    'bob': ['robert'],
-    'rob': ['robert'],
-    'mike': ['michael'],
-    'joe': ['joseph'],
-    'alex': ['alexander'],
-    'will': ['william']
-  };
-  
   // Check for nickname matches
-  const normalizedNameLower = normalizedName.toLowerCase();
-  
-  for (const user of users) {
-    if (!user.name) continue;
-    
+  const nicknameMatches = users.filter(user => {
+    if (!user.name) return false;
     const userName = user.name.toLowerCase();
     const firstNameOnly = userName.split(' ')[0];
     
-    // Check if this is a nickname match
-    if (nicknames[normalizedNameLower] && 
-        nicknames[normalizedNameLower].some(nick => firstNameOnly.includes(nick))) {
-      console.log(`Found nickname match: ${name} matches ${user.name}`);
-      return [user];
+    if (isNicknameOrShortened(normalizedName, firstNameOnly) || 
+        isNicknameOrShortened(firstNameOnly, normalizedName)) {
+      console.log(`Nickname match found: "${name}" matches "${user.name}" through nickname recognition`);
+      return true;
     }
-    
-    if (nicknames[firstNameOnly] && 
-        nicknames[firstNameOnly].some(nick => normalizedNameLower.includes(nick))) {
-      console.log(`Found nickname match: ${user.name} matches ${name}`);
-      return [user];
-    }
+    return false;
+  });
+  
+  if (nicknameMatches.length > 0) {
+    console.log(`Found ${nicknameMatches.length} nickname matches for ${name}`);
+    return nicknameMatches;
   }
   
-  // If we didn't find any exact or nickname matches, return empty array
-  console.log(`No matches found for ${name}`);
-  return [];
+  // If no exact or nickname matches, try similarity-based matching
+  console.log(`No exact or nickname matches for ${name}, trying similarity matching`);
+  const similarityMatches = users
+    .map(user => ({
+      user,
+      similarity: calculateSimilarity(normalizedName, user.name?.toLowerCase() || '')
+    }))
+    .filter(match => match.similarity >= threshold)
+    .sort((a, b) => b.similarity - a.similarity)
+    .map(match => {
+      console.log(`Similarity match: "${name}" ~ "${match.user.name}" (score: ${match.similarity.toFixed(2)})`);
+      return match.user;
+    });
+  
+  console.log(`Found ${similarityMatches.length} similarity matches for ${name}`);
+  return similarityMatches;
 }
 
 /**
@@ -194,9 +208,26 @@ export function findUserMatches(name: string, users: any[], threshold: number = 
  * A more sophisticated implementation would use NLP
  */
 export function extractPotentialNames(text: string): string[] {
-  const namePattern = /(\b[A-Z][a-z]*\b)\s+will\b/g;
-  const matches = [...text.matchAll(namePattern)];
-  return matches.map(match => match[1]);
+  // More comprehensive patterns to catch different ways people are assigned tasks
+  const patterns = [
+    /(\b[A-Z][a-z]*\b)\s+will\b/g,  // "John will"
+    /(\b[A-Z][a-z]*\b)\s+needs to\b/g,  // "John needs to"
+    /(\b[A-Z][a-z]*\b)\s+should\b/g,  // "John should"
+    /(\b[A-Z][a-z]*\b)\s+is going to\b/g,  // "John is going to"
+    /(\b[A-Z][a-z]*\b)\s+must\b/g,  // "John must"
+    /(\b[A-Z][a-z]*\b)\s+to\b/g,  // "Assign John to"
+  ];
+  
+  let allNames: string[] = [];
+  
+  patterns.forEach(pattern => {
+    const matches = [...text.matchAll(pattern)];
+    const names = matches.map(match => match[1]);
+    allNames = [...allNames, ...names];
+  });
+  
+  // Remove duplicates
+  return [...new Set(allNames)];
 }
 
 // Add an alias for findUserMatches to maintain backwards compatibility
