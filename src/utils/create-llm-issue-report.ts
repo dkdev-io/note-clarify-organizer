@@ -17,6 +17,3 @@ export const createLLMIssueReport = async (): Promise<void> => {
     console.error('Error creating LLM connection issue report:', error);
   }
 };
-
-// Execute immediately - create the issue report
-createLLMIssueReport();
