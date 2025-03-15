@@ -15,9 +15,9 @@ export interface Task {
   isRecurring: boolean;
   frequency: string | null;
   project: string | null;
-  projectId?: string | null; // Add projectId field
-  duration?: string | null;
-  timeEstimate?: number | null; // Add timeEstimate field
+  projectId: string | null; // Changed from optional to required with null default
+  duration: string | null; // Changed from optional to required with null default
+  timeEstimate: number | null; // Changed from optional to required with null default
 }
 
 export interface RecurringTaskInfo {
@@ -25,7 +25,7 @@ export interface RecurringTaskInfo {
   frequency: string | null;
 }
 
-// Add the missing validation result interfaces
+// Ensure these validation interfaces are properly exported
 export interface TaskValidationResult {
   valid: boolean;
   missingFields: string[];

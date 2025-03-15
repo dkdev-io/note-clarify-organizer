@@ -69,7 +69,7 @@ export const addTasksToMotionService = async (
       // Ensure due date is properly formatted for the API
       dueDate: task.dueDate,
       // Add the time estimate if provided
-      timeEstimate: timeEstimate ? parseInt(timeEstimate, 10) : undefined
+      timeEstimate: timeEstimate ? parseInt(timeEstimate, 10) : (task.timeEstimate || null)
     }));
 
     console.log("Sending tasks to Motion with the following data:", {
