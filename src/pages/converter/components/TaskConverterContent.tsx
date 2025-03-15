@@ -6,6 +6,7 @@ import { Task } from '@/utils/task-parser/types';
 import { parseTextIntoTasks } from '@/utils/task-parser';
 import { useToast } from '@/hooks/use-toast';
 import TaskToIssueConverter from '@/components/task-review/TaskToIssueConverter';
+import { addTasksToIssueLogs } from '@/utils/task-to-issue-converter';
 
 // Removed the React.FC type to avoid conflicts with props
 const TaskConverterContent = () => {
@@ -14,6 +15,20 @@ const TaskConverterContent = () => {
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const { toast } = useToast();
   const { id } = useParams<{ id: string }>();
+
+  // Check if text contains a command to add tasks to issue log
+  const checkForIssueLogCommand = (text: string): boolean => {
+    const issueLogCommands = [
+      /add to issue log/i,
+      /add to issues/i,
+      /add to the issue log/i,
+      /log as issues?/i,
+      /create issues?/i,
+      /add tasks? to issue log/i
+    ];
+    
+    return issueLogCommands.some(regex => regex.test(text));
+  };
 
   const handleExtractTasks = async (text: string) => {
     if (!text || text.trim() === '') {
@@ -44,6 +59,11 @@ const TaskConverterContent = () => {
           title: "Tasks extracted",
           description: `Successfully extracted ${tasks.length} tasks from your notes.`,
         });
+        
+        // Check if the text contains a command to add to issue log
+        if (checkForIssueLogCommand(text)) {
+          await handleAddToIssueLog(tasks);
+        }
       }
     } catch (error) {
       console.error('Error extracting tasks:', error);
@@ -57,10 +77,38 @@ const TaskConverterContent = () => {
     }
   };
 
+  // Function to handle adding tasks to issue log
+  const handleAddToIssueLog = async (tasks: Task[]) => {
+    if (tasks.length === 0) {
+      toast({
+        title: "No tasks to convert",
+        description: "There are no tasks to add to the issue log.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const result = await addTasksToIssueLogs(tasks);
+      toast({
+        title: "Tasks added to issue log",
+        description: `Successfully added ${result.successful} out of ${result.totalTasks} tasks to the issue log.`,
+        variant: result.failed > 0 ? "destructive" : "default"
+      });
+    } catch (error) {
+      console.error('Error adding tasks to issue log:', error);
+      toast({
+        title: "Error adding to issue log",
+        description: "Something went wrong while adding tasks to the issue log.",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <div className="container mx-auto py-6 space-y-8">
       <TaskExtractor 
-        initialText={noteText} 
+        defaultValue={noteText} 
         onExtract={handleExtractTasks} 
         isProcessing={isProcessing} 
       />
