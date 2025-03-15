@@ -1,3 +1,4 @@
+
 import { Task } from './task-parser/types';
 import { IssueFormData, IssuePriority, IssueStatus } from '@/types/issue';
 import { issueService } from '@/services/issueService';
@@ -90,7 +91,7 @@ export const taskToIssue = (task: Task): IssueFormData => {
 };
 
 /**
- * Add a single task to the issue logs
+ * Add a single task to the issue log
  */
 export const addTaskToIssueLog = async (task: Task): Promise<boolean> => {
   try {
@@ -165,6 +166,11 @@ export const addTasksToIssueLogs = async (tasks: Task[]): Promise<{
   };
 };
 
+// Generate proper UUIDs for our predefined issues
+const LLM_ISSUE_UUID = "11111111-1111-1111-1111-111111111111";
+const PROJECT_ISSUE_UUID = "22222222-2222-2222-2222-222222222222";
+const TIME_ISSUE_UUID = "33333333-3333-3333-3333-333333333333";
+
 /**
  * Add a report about LLM connection issues
  */
@@ -209,10 +215,10 @@ Date reported: ${now.toLocaleString()}
       created_by: "Dan"
     };
     
-    console.log('Creating LLM Connection Issue report with specific ID');
+    console.log('Creating LLM Connection Issue report with specific UUID');
     
-    // Use the ID "1" as requested
-    const result = await issueService.createIssueWithId("1", issueData);
+    // Use a proper UUID format
+    const result = await issueService.createIssueWithId(LLM_ISSUE_UUID, issueData);
     
     return !!result;
   } catch (error) {
@@ -273,10 +279,10 @@ Date reported: ${now.toLocaleString()}
       created_by: "Dan"
     };
     
-    console.log('Creating Project Assignment Issue report with specific ID');
+    console.log('Creating Project Assignment Issue report with specific UUID');
     
-    // Use the ID "2" as requested (sequential after LLM issue)
-    const result = await issueService.createIssueWithId("2", issueData);
+    // Use a proper UUID format
+    const result = await issueService.createIssueWithId(PROJECT_ISSUE_UUID, issueData);
     
     return !!result;
   } catch (error) {
@@ -340,10 +346,10 @@ Date reported: ${now.toLocaleString()}
       created_by: "Dan"
     };
     
-    console.log('Creating Time Estimation Issue report with specific ID');
+    console.log('Creating Time Estimation Issue report with specific UUID');
     
-    // Use the ID "3" as requested (sequential after project issue)
-    const result = await issueService.createIssueWithId("3", issueData);
+    // Use a proper UUID format
+    const result = await issueService.createIssueWithId(TIME_ISSUE_UUID, issueData);
     
     return !!result;
   } catch (error) {
