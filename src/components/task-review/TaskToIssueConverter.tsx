@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Task } from '@/utils/task-parser/types';
-import { addTasksToIssueLogs } from '@/utils/task-to-issue-converter';
+import { addTasksToIssueLogs } from '@/utils/issue-converter';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, Check, ClipboardList } from 'lucide-react';
 

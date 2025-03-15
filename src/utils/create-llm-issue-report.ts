@@ -1,5 +1,4 @@
-
-import { addLLMConnectionIssueReport } from './task-to-issue-converter';
+import { addLLMConnectionIssueReport } from './issue-converter';
 
 /**
  * Creates the LLM connection issue report in the database

@@ -1,5 +1,4 @@
-
-import { addTimeEstimationIssueReport } from './task-to-issue-converter';
+import { addTimeEstimationIssueReport } from './issue-converter';
 
 /**
  * Creates the time estimation issue report in the database

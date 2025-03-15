@@ -1,5 +1,4 @@
-
-import { addProjectAssignmentIssueReport } from './task-to-issue-converter';
+import { addProjectAssignmentIssueReport } from './issue-converter';
 
 /**
  * Creates the project assignment issue report in the database

@@ -1,10 +1,11 @@
+
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Task } from '@/utils/task-parser/types';
 import { parseTextIntoTasks } from '@/utils/task-parser';
 import { useToast } from '@/hooks/use-toast';
 import TaskToIssueConverter from '@/components/task-review/TaskToIssueConverter';
-import { addTasksToIssueLogs } from '@/utils/task-to-issue-converter';
+import { addTasksToIssueLogs } from '@/utils/issue-converter';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { issueService } from '@/services/issueService';
