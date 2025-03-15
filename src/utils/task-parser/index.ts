@@ -1,4 +1,3 @@
-
 /**
  * Main task parser module that brings together all the parsing utilities
  */
@@ -143,9 +142,9 @@ export const parseTextIntoTasks = (text: string, defaultProjectName: string | nu
         isRecurring: recurring.isRecurring,
         frequency: recurring.frequency,
         project: projectName,
-        projectId: null, // Ensure projectId is explicitly set (null by default)
+        projectId: null, // Ensure projectId is explicitly set
         duration: duration, // Add duration to task object
-        timeEstimate: null // Ensure timeEstimate is explicitly set (null by default)
+        timeEstimate: null // Ensure timeEstimate is explicitly set
       });
     }
   }
