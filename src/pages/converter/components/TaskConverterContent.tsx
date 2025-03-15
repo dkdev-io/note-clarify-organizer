@@ -1,13 +1,14 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { TaskExtractor } from '@/components/TaskExtractor';
+import TaskExtractor from '@/components/TaskExtractor'; // Changed from named import to default import
 import { Task } from '@/utils/task-parser/types';
 import { parseTextIntoTasks } from '@/utils/task-parser';
 import { useToast } from '@/hooks/use-toast';
 import TaskToIssueConverter from '@/components/task-review/TaskToIssueConverter';
 
-const TaskConverterContent: React.FC = () => {
+// Removed the React.FC type to avoid conflicts with props
+const TaskConverterContent = () => {
   const [noteText, setNoteText] = useState<string>('');
   const [extractedTasks, setExtractedTasks] = useState<Task[]>([]);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);

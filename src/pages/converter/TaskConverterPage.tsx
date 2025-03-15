@@ -167,27 +167,7 @@ const TaskConverterPage = () => {
               onReconnect={handleReconnect}
             />
           ) : (
-            <TaskConverterContent 
-              step={step}
-              noteText={noteText}
-              projectName={projectName}
-              extractedTasks={extractedTasks}
-              selectedTasks={selectedTasks}
-              processedTasks={processedTasks}
-              reviewedTasks={reviewedTasks}
-              apiProps={apiProps}
-              onApiConnect={handleApiConnect}
-              onSkipConnect={handleSkipConnect}
-              onParseText={handleParseText}
-              onContinueToProcess={handleContinueToProcess}
-              onContinueToReview={handleContinueToReview}
-              onContinueToPreview={handleContinueToPreview}
-              onComplete={handleComplete}
-              onBackToExtract={() => setStep('extract')}
-              onBackToProcess={() => setStep('process')}
-              onBackToReview={() => setStep('review')}
-              onBackToInput={() => setStep('input')}
-            />
+            <TaskConverterContent />
           )}
         </main>
       </div>
