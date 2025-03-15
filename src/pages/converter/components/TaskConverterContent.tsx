@@ -9,13 +9,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { issueService } from '@/services/issueService';
 import { IssueFormData } from '@/types/issue';
-import { createAllIssueReports } from '@/utils/create-all-issue-reports';
 
 const TaskConverterContent = () => {
   const [noteText, setNoteText] = useState<string>('');
   const [extractedTasks, setExtractedTasks] = useState<Task[]>([]);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
-  const [isCreatingReports, setIsCreatingReports] = useState<boolean>(false);
   const { toast } = useToast();
   const { id } = useParams<{ id: string }>();
 
@@ -45,27 +43,6 @@ const TaskConverterContent = () => {
         description: "Failed to add test issue directly to the database.",
         variant: "destructive"
       });
-    }
-  };
-
-  // Function to create all diagnostic issue reports
-  const handleCreateAllReports = async () => {
-    setIsCreatingReports(true);
-    try {
-      await createAllIssueReports();
-      toast({
-        title: "Issue reports created",
-        description: "Successfully created all diagnostic issue reports.",
-      });
-    } catch (error) {
-      console.error("❌ Error creating issue reports:", error);
-      toast({
-        title: "Error creating issue reports",
-        description: "Failed to create diagnostic issue reports.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsCreatingReports(false);
     }
   };
 
@@ -226,25 +203,14 @@ const TaskConverterContent = () => {
         <CardHeader>
           <CardTitle className="flex justify-between items-center">
             <span>Enter your notes</span>
-            <div className="flex gap-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={addDirectTestIssue}
-                className="text-xs"
-              >
-                Add Test Issue Directly
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleCreateAllReports}
-                disabled={isCreatingReports}
-                className="text-xs bg-blue-50 text-blue-800 hover:bg-blue-100"
-              >
-                {isCreatingReports ? 'Creating...' : 'Create Diagnostic Reports'}
-              </Button>
-            </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={addDirectTestIssue}
+              className="text-xs"
+            >
+              Add Test Issue Directly
+            </Button>
           </CardTitle>
         </CardHeader>
         <CardContent>

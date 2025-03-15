@@ -17,3 +17,6 @@ export const createProjectIssueReport = async (): Promise<void> => {
     console.error('Error creating project assignment issue report:', error);
   }
 };
+
+// Execute immediately - create the issue report
+createProjectIssueReport();

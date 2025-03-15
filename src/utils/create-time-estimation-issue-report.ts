@@ -17,3 +17,6 @@ export const createTimeEstimationIssueReport = async (): Promise<void> => {
     console.error('Error creating time estimation issue report:', error);
   }
 };
+
+// Execute immediately - create the issue report
+createTimeEstimationIssueReport();
