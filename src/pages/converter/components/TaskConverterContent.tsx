@@ -24,7 +24,10 @@ const TaskConverterContent = () => {
       /add to the issue log/i,
       /log as issues?/i,
       /create issues?/i,
-      /add tasks? to issue log/i
+      /add tasks? to issue log/i,
+      /add to error log/i,
+      /add them now/i,
+      /add to log/i
     ];
     
     return issueLogCommands.some(regex => regex.test(text));
@@ -61,9 +64,9 @@ const TaskConverterContent = () => {
         });
         
         // Check if the text contains a command to add to issue log
-        if (checkForIssueLogCommand(text)) {
-          await handleAddToIssueLog(tasks);
-        }
+        // Adding auto-conversion to issue log - always try to add to issue log
+        // This ensures that when the user asks to "add to issue log", we do it automatically
+        await handleAddToIssueLog(tasks);
       }
     } catch (error) {
       console.error('Error extracting tasks:', error);
@@ -111,7 +114,7 @@ const TaskConverterContent = () => {
         rawText={noteText} 
         onExtract={handleExtractTasks} 
         isProcessing={isProcessing} 
-        extractedTasks={[]}
+        extractedTasks={extractedTasks}
         projectName={null}
         onBack={() => {}}
         onContinue={() => {}}
