@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Issue, IssueFormData } from "@/types/issue";
 
