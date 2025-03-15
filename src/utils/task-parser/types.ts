@@ -17,6 +17,7 @@ export interface Task {
   frequency: string | null;
   project: string | null;
   projectId?: string | null; // Project ID for Motion API
+  timeEstimate?: number | null; // Adding timeEstimate property to fix the TypeScript error
 }
 
 // Type for task validation results
