@@ -15,10 +15,26 @@ export interface Task {
   isRecurring: boolean;
   frequency: string | null;
   project: string | null;
-  duration?: string | null; // Add duration field
+  projectId?: string | null; // Add projectId field 
+  duration?: string | null;
+  timeEstimate?: number | null; // Add timeEstimate field
 }
 
 export interface RecurringTaskInfo {
   isRecurring: boolean;
   frequency: string | null;
+}
+
+// Add the missing validation result interfaces
+export interface TaskValidationResult {
+  valid: boolean;
+  missingFields: string[];
+}
+
+export interface MultiTaskValidationResult {
+  allValid: boolean;
+  tasksWithMissingFields: Array<{
+    task: Task;
+    missingFields: string[];
+  }>;
 }
