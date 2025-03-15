@@ -165,3 +165,99 @@ export const addTasksToIssueLogs = async (tasks: Task[]): Promise<{
     totalTasks: tasks.length
   };
 };
+
+// Immediately add sample tasks to the issue log when this module is loaded
+(async () => {
+  console.log('🚀 Auto-adding historical tasks to issue log database...');
+  
+  const historicalTasks: Task[] = [
+    {
+      id: 'hist-task-1',
+      title: 'Fix login page authentication',
+      description: 'Users reported issues with login page not accepting valid credentials',
+      priority: 'high',
+      status: 'resolved',
+      assignee: 'Sarah',
+      project: 'User Authentication',
+      workspace_id: null,
+      isRecurring: false,
+      frequency: null,
+      projectId: null,
+      duration: '2 days',
+      timeEstimate: 240,
+      dueDate: '2023-08-15'
+    },
+    {
+      id: 'hist-task-2',
+      title: 'Deploy new feature to production',
+      description: 'The new dashboard analytics feature needs to be deployed to production servers',
+      priority: 'medium',
+      status: 'in-progress',
+      assignee: 'John',
+      project: 'Feature Deployment',
+      workspace_id: null,
+      isRecurring: false,
+      frequency: null,
+      projectId: null,
+      duration: '1 day',
+      timeEstimate: 120,
+      dueDate: null
+    },
+    {
+      id: 'hist-task-3',
+      title: 'Update documentation for API v2',
+      description: 'Update all documentation to reflect changes in API version 2.0',
+      priority: 'low',
+      status: 'open',
+      assignee: 'Lisa',
+      project: 'Documentation',
+      workspace_id: null,
+      isRecurring: false,
+      frequency: null,
+      projectId: null,
+      duration: '3 days',
+      timeEstimate: 360,
+      dueDate: '2023-09-01'
+    },
+    {
+      id: 'hist-task-4',
+      title: 'Investigate server downtime',
+      description: 'Server experienced unexpected downtime on May 15. Need to investigate logs and identify cause.',
+      priority: 'critical',
+      status: 'closed',
+      assignee: 'Alex',
+      project: 'Server Maintenance',
+      workspace_id: null,
+      isRecurring: false,
+      frequency: null,
+      projectId: null,
+      duration: '4 hours',
+      timeEstimate: 240,
+      dueDate: '2023-05-16'
+    },
+    {
+      id: 'hist-task-5',
+      title: 'Implement password reset functionality',
+      description: 'Add ability for users to reset their passwords through email',
+      priority: 'medium',
+      status: 'open',
+      assignee: 'Carlos',
+      project: 'User Management',
+      workspace_id: null,
+      isRecurring: false,
+      frequency: null,
+      projectId: null,
+      duration: '2 days',
+      timeEstimate: 240,
+      dueDate: '2023-07-30'
+    }
+  ];
+  
+  try {
+    const result = await addTasksToIssueLogs(historicalTasks);
+    console.log('✅ Auto-addition result:', result);
+  } catch (error) {
+    console.error('❌ Error auto-adding historical tasks:', error);
+  }
+})();
+
