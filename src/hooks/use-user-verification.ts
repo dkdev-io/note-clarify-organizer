@@ -1,7 +1,6 @@
-
 import { useState, useCallback } from 'react';
 import { fetchUsers } from '@/utils/motion';
-import { findPotentialMatches } from '@/utils/nameMatching';
+import { findPotentialMatches } from '@/utils/name-matching';
 
 interface UseUserVerificationProps {
   workspaceId: string;
@@ -20,7 +19,6 @@ export function useUserVerification({ workspaceId, apiKey }: UseUserVerification
   const [users, setUsers] = useState<User[]>([]);
   const [hasLoaded, setHasLoaded] = useState(false);
   
-  // Load all users (can be called preemptively)
   const loadUsers = useCallback(async () => {
     if (hasLoaded || !workspaceId) return;
     
@@ -35,11 +33,9 @@ export function useUserVerification({ workspaceId, apiKey }: UseUserVerification
     }
   }, [workspaceId, apiKey, hasLoaded]);
   
-  // Check if a name has potential matches without opening the verifier
   const checkNameMatch = useCallback(async (name: string, threshold = 0.8) => {
     let currentUsers = users;
     
-    // Load users if not already loaded
     if (!hasLoaded) {
       currentUsers = await loadUsers() || [];
     }
@@ -48,20 +44,17 @@ export function useUserVerification({ workspaceId, apiKey }: UseUserVerification
     return matches.length > 0 ? matches : null;
   }, [users, hasLoaded, loadUsers]);
   
-  // Start verification process for a name
   const verifyName = useCallback((name: string) => {
     setCurrentName(name);
     setIsVerifying(true);
     return loadUsers();
   }, [loadUsers]);
   
-  // Cancel verification process
   const cancelVerification = useCallback(() => {
     setIsVerifying(false);
     setCurrentName(null);
   }, []);
   
-  // Complete verification with a selected user
   const completeVerification = useCallback((userId: string, userName: string) => {
     setIsVerifying(false);
     setCurrentName(null);

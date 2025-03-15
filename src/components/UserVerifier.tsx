@@ -8,7 +8,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { AlertCircle, UserCheck, UserX, InfoIcon, User } from 'lucide-react';
-import { findPotentialMatches } from '@/utils/nameMatching';
+import { findPotentialMatches } from '@/utils/name-matching';
 import { fetchUsers } from '@/utils/motion';
 
 interface UserVerifierProps {
