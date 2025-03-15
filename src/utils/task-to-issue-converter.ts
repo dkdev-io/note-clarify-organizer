@@ -1,4 +1,3 @@
-
 import { Task } from './task-parser/types';
 import { IssueFormData, IssuePriority, IssueStatus } from '@/types/issue';
 import { issueService } from '@/services/issueService';
@@ -260,4 +259,3 @@ export const addTasksToIssueLogs = async (tasks: Task[]): Promise<{
     console.error('❌ Error auto-adding historical tasks:', error);
   }
 })();
-

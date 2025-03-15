@@ -48,6 +48,12 @@ export const issueService = {
       throw new Error('Issue title is required');
     }
     
+    // Validate priority field
+    if (issueData.priority && !['low', 'medium', 'high', 'critical'].includes(issueData.priority)) {
+      console.error(`❌ Invalid priority value: ${issueData.priority}`);
+      issueData.priority = 'medium'; // Default to medium if invalid
+    }
+    
     // Add timestamps if not present
     const dataWithTimestamps = {
       ...issueData,
