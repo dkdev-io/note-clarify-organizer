@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Issue, IssueFormData } from "@/types/issue";
 
@@ -131,5 +132,45 @@ export const issueService = {
     console.log('Issue deleted successfully');
     
     return true;
+  },
+  
+  // Create issue with specific ID
+  async createIssueWithId(id: string, issueData: IssueFormData): Promise<Issue | null> {
+    console.log('📋 Creating issue with specific ID:', id);
+    console.log('📋 Issue data:', JSON.stringify(issueData, null, 2));
+    
+    // Validate the data
+    if (!issueData.title) {
+      console.error('❌ Issue data missing title - cannot create');
+      throw new Error('Issue title is required');
+    }
+    
+    // Add timestamps and ID
+    const dataWithDetails = {
+      ...issueData,
+      id: id,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    
+    try {
+      const { data, error } = await supabase
+        .from('issue_logs')
+        .insert([dataWithDetails])
+        .select();
+        
+      if (error) {
+        console.error('❌ Error creating issue with ID:', error);
+        console.error('❌ Error details:', error.message, error.details, error.hint);
+        throw error;
+      }
+      
+      console.log('✅ Issue created successfully with ID:', id);
+      
+      return data && Array.isArray(data) && data.length > 0 ? data[0] as Issue : null;
+    } catch (queryError) {
+      console.error('❌ Exception while creating issue with ID:', queryError);
+      throw queryError;
+    }
   }
 };
