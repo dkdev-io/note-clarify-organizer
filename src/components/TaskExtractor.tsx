@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Task } from '@/utils/parser';
 import { 
@@ -8,6 +8,7 @@ import {
   TasksList, 
   TaskFooter 
 } from './task-extractor';
+import { useTaskExtractor } from '@/hooks/useTaskExtractor';
 
 interface ApiProps {
   isConnected: boolean;
@@ -32,43 +33,18 @@ const TaskExtractor: React.FC<TaskExtractorProps> = ({
   onContinue,
   apiProps
 }) => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [selectedTasks, setSelectedTasks] = useState<Task[]>([]);
-  const [isTransitioning, setIsTransitioning] = useState(false);
-
-  useEffect(() => {
-    // Select all tasks by default
-    setSelectedTasks([...extractedTasks]);
-    
-    // Simulate processing delay for a smoother UX
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1200);
-    
-    return () => clearTimeout(timer);
-  }, [extractedTasks]);
-
-  const toggleTask = (task: Task) => {
-    if (selectedTasks.some(t => t.id === task.id)) {
-      setSelectedTasks(selectedTasks.filter(t => t.id !== task.id));
-    } else {
-      setSelectedTasks([...selectedTasks, task]);
-    }
-  };
-
-  const handleContinue = () => {
-    setIsTransitioning(true);
-    setTimeout(() => {
-      onContinue(selectedTasks);
-    }, 400);
-  };
-
-  const handleBack = () => {
-    setIsTransitioning(true);
-    setTimeout(() => {
-      onBack();
-    }, 400);
-  };
+  const {
+    isLoading,
+    selectedTasks,
+    isTransitioning,
+    toggleTask,
+    handleContinue,
+    handleBack
+  } = useTaskExtractor({
+    rawText,
+    extractedTasks,
+    onContinue
+  });
 
   return (
     <div className={`w-full max-w-2xl mx-auto transition-all duration-500 ${
@@ -91,7 +67,7 @@ const TaskExtractor: React.FC<TaskExtractorProps> = ({
               tasks={extractedTasks}
               selectedTasks={selectedTasks}
               toggleTask={toggleTask}
-              onBack={handleBack}
+              onBack={() => handleBack(onBack)}
             />
           )}
         </CardContent>
@@ -101,8 +77,8 @@ const TaskExtractor: React.FC<TaskExtractorProps> = ({
             selectedTasksCount={selectedTasks.length}
             isLoading={isLoading}
             isTransitioning={isTransitioning}
-            onBack={handleBack}
-            onContinue={handleContinue}
+            onBack={() => handleBack(onBack)}
+            onContinue={() => handleContinue()}
           />
         </CardFooter>
       </Card>
