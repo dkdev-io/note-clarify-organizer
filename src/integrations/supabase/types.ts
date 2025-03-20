@@ -63,6 +63,45 @@ export type Database = {
         }
         Relationships: []
       }
+      subscribers: {
+        Row: {
+          challenge: string | null
+          created_at: string
+          email: string
+          first_name: string | null
+          has_completed_profile: boolean | null
+          id: string
+          industry: string | null
+          last_name: string | null
+          linkedin: string | null
+          role: string | null
+        }
+        Insert: {
+          challenge?: string | null
+          created_at?: string
+          email: string
+          first_name?: string | null
+          has_completed_profile?: boolean | null
+          id?: string
+          industry?: string | null
+          last_name?: string | null
+          linkedin?: string | null
+          role?: string | null
+        }
+        Update: {
+          challenge?: string | null
+          created_at?: string
+          email?: string
+          first_name?: string | null
+          has_completed_profile?: boolean | null
+          id?: string
+          industry?: string | null
+          last_name?: string | null
+          linkedin?: string | null
+          role?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
