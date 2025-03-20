@@ -16,6 +16,9 @@ import { tasksToCSV, downloadTasksAsCSV } from './export';
 export const parseTextIntoTasks = (text: string, defaultProjectName: string | null = null): Task[] => {
   if (!text.trim()) return [];
   
+  // Enhanced logging for debugging
+  console.log("Starting text parsing with:", text.substring(0, 100) + "...");
+  
   // Extract a project name first from the overall text or use the provided default
   const extractedProjectName = extractProjectName(text);
   
@@ -82,10 +85,14 @@ export const parseTextIntoTasks = (text: string, defaultProjectName: string | nu
     const subtasks = splitIntoSubtasks(taskText);
     
     for (const subtaskText of subtasks) {
+      // Enhanced logging for debugging
+      console.log("Processing subtask:", subtaskText);
+      
       // Extract task information first to properly identify assignees, dates, etc.
       const dueDate = extractDate(subtaskText);
       const priority = extractPriority(subtaskText);
       const assignee = extractAssignee(subtaskText);
+      console.log("Extracted assignee:", assignee);
       const status = extractStatus(subtaskText);
       const recurring = isRecurringTask(subtaskText);
       const duration = extractDuration(subtaskText); // Extract duration information
@@ -150,6 +157,9 @@ export const parseTextIntoTasks = (text: string, defaultProjectName: string | nu
       });
     }
   }
+  
+  // Enhanced logging for debugging
+  console.log(`Extracted ${tasks.length} tasks. First task:`, tasks.length > 0 ? tasks[0] : 'None');
   
   return tasks;
 };

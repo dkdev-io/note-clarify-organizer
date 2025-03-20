@@ -1,12 +1,10 @@
 
 /**
- * Name matching utilities
- * Helps match names in text to Motion users
+ * Main module for name matching functionality
  */
 
-// Re-export everything for backwards compatibility
-export * from './types';
-export * from './nickname-matcher';
-export * from './similarity';
-export * from './name-extractor';
-export * from './user-matcher';
+export { findUserMatches, findPotentialMatches } from './user-matcher';
+export { isNicknameOrShortened } from './nickname-matcher';
+export { extractPotentialNames } from './name-extractor';
+export { calculateSimilarity } from './similarity';
+export type { NameMatchUser } from './types';
