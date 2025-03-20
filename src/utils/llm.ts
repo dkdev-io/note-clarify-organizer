@@ -18,7 +18,7 @@ export async function processNotesWithLLM(
     console.log(`Sending ${text.length} characters to process-notes function${projectName ? ` for project '${projectName}'` : ''}`);
     
     // Create a more manageable timeout
-    const timeout = 12000; // 12 seconds
+    const timeout = 15000; // 15 seconds
     
     // Call the Supabase edge function with proper timeout handling
     const { data, error } = await Promise.race([

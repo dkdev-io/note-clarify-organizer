@@ -28,7 +28,9 @@ auto_confirm_new_users = true
 [[functions]]
 name = "process-notes"
 verify_jwt = false
+import_map = "./import_map.json"
 
 [[functions]]
 name = "process-task-batch"
 verify_jwt = false
+import_map = "./import_map.json"
