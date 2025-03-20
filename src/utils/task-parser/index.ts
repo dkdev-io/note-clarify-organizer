@@ -1,3 +1,4 @@
+
 /**
  * Main task parser module that brings together all the parsing utilities
  */
@@ -9,6 +10,7 @@ import { extractPriority, extractAssignee, extractStatus, isRecurringTask, extra
 import { splitIntoSubtasks, cleanupTaskTitle } from './task-text-processor';
 import { validateTask, validateTasks } from './task-validator';
 import { refineTask } from './task-editor';
+import { tasksToCSV, downloadTasksAsCSV } from './export';
 
 // Main function to parse text into potential tasks
 export const parseTextIntoTasks = (text: string, defaultProjectName: string | null = null): Task[] => {
@@ -168,5 +170,7 @@ export {
   extractProjectName,
   extractDuration,
   cleanupTaskTitle,
-  splitIntoSubtasks
+  splitIntoSubtasks,
+  tasksToCSV,
+  downloadTasksAsCSV
 };

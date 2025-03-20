@@ -3,6 +3,8 @@ import React from 'react';
 import { Task } from '@/utils/task-parser/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { FileSpreadsheetIcon } from 'lucide-react';
+import { downloadTasksAsCSV } from '@/utils/task-parser/export';
 
 interface ExtractedTasksCardProps {
   extractedTasks: Task[];
@@ -15,6 +17,11 @@ const ExtractedTasksCard: React.FC<ExtractedTasksCardProps> = ({
   isProcessing,
   forceAddToIssueLog
 }) => {
+  const handleDownloadCSV = () => {
+    const filename = `projectize-tasks-${new Date().toISOString().slice(0, 10)}.csv`;
+    downloadTasksAsCSV(extractedTasks, filename);
+  };
+
   return (
     <Card className="bg-white shadow-md">
       <CardHeader>
@@ -33,13 +40,22 @@ const ExtractedTasksCard: React.FC<ExtractedTasksCardProps> = ({
           </div>
         ))}
       </CardContent>
-      <CardFooter>
+      <CardFooter className="flex gap-2">
         <Button 
           onClick={forceAddToIssueLog}
           disabled={isProcessing}
           variant="secondary"
         >
           Force Add to Issue Log
+        </Button>
+        <Button
+          onClick={handleDownloadCSV}
+          disabled={isProcessing || extractedTasks.length === 0}
+          variant="outline"
+          className="flex items-center gap-2"
+        >
+          <FileSpreadsheetIcon className="h-4 w-4" />
+          Download as Spreadsheet
         </Button>
       </CardFooter>
     </Card>
