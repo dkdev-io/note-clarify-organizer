@@ -4,12 +4,13 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = 'https://fvxfmlhvxmpmbtouarcp.supabase.co';
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ2eGZtbGh2eG1wbWJ0b3VhcmNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE3MjE0MzQsImV4cCI6MjA1NzI5NzQzNH0.r0h6kc5obgxrzBldoCFodRoo9pbY8tghWgnjtQ2BR9Q';
 
-// Create the Supabase client with redirect settings
+// Create the Supabase client with improved auth settings
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: false // Disable automatic URL detection to bypass email verification
+    detectSessionInUrl: true, // Enable detection of access_token in the URL
+    flowType: 'pkce' // Use PKCE flow for better security
   }
 });
 
