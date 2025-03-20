@@ -5,7 +5,7 @@ import { Input } from './ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './ui/card';
 import { useToast } from '@/hooks/use-toast';
 
-const CORRECT_PASSWORD = 'project2025ize!';
+const CORRECT_PASSWORD = 'abc123:)';
 
 interface PasswordProtectionProps {
   children: React.ReactNode;
