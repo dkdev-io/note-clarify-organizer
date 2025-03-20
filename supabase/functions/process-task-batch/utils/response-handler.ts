@@ -1,3 +1,4 @@
+
 import { corsHeaders } from "./cors.ts";
 
 // Create error response with consistent formatting
@@ -52,6 +53,16 @@ export function parseEnhancedTasks(responseText: string, originalTasks: any[]) {
         title: originalTask.title || enhancedTask.title || '',
         // Use the enhanced project name or the original or the provided project name
         project: enhancedTask.project || originalTask.project || null,
+        // Preserve new Motion fields if they exist in the original task
+        startDate: enhancedTask.startDate || originalTask.startDate || null,
+        hardDeadline: enhancedTask.hardDeadline || originalTask.hardDeadline || false,
+        folder: enhancedTask.folder || originalTask.folder || null,
+        autoScheduled: enhancedTask.autoScheduled !== undefined ? enhancedTask.autoScheduled : 
+                      (originalTask.autoScheduled !== undefined ? originalTask.autoScheduled : true),
+        isPending: enhancedTask.isPending || originalTask.isPending || false,
+        schedule: enhancedTask.schedule || originalTask.schedule || "Work hours",
+        labels: enhancedTask.labels || originalTask.labels || null,
+        customFields: enhancedTask.customFields || originalTask.customFields || null
       };
     });
   } catch (error) {

@@ -8,6 +8,8 @@ export interface Task {
   title: string;
   description: string;
   dueDate: string | null;
+  startDate: string | null;  // Added for Motion's start date
+  hardDeadline: boolean;     // Added for Motion's hard deadline flag
   priority: 'low' | 'medium' | 'high' | null;
   status: 'todo' | 'in_progress' | 'completed' | string | null;
   assignee: string | null;
@@ -18,6 +20,12 @@ export interface Task {
   projectId: string | null;
   duration: string | null;
   timeEstimate: number | null;
+  folder: string | null;      // Added for Motion's folder organization
+  autoScheduled: boolean;     // Added for auto-scheduled flag
+  isPending: boolean;         // Added for pending status
+  schedule: string | null;    // Added for schedule preference (e.g., "Work hours")
+  labels: string[] | null;    // Added for task labels
+  customFields: Record<string, any> | null;  // Added for custom fields
 }
 
 export interface RecurringTaskInfo {

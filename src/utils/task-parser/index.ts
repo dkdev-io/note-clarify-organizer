@@ -138,12 +138,14 @@ export const parseTextIntoTasks = (text: string, defaultProjectName: string | nu
         description = description ? `${description} Duration: ${duration}.` : `Duration: ${duration}.`;
       }
       
-      // Create the task object with ALL required fields including projectId and timeEstimate
+      // Create the task object with ALL required fields including new Motion fields
       tasks.push({
         id: generateId(),
         title: title.trim(),
         description: description.trim(),
         dueDate,
+        startDate: null,             // Initialize new field for Motion's start date
+        hardDeadline: false,         // Initialize new field for Motion's hard deadline
         priority,
         status,
         assignee,
@@ -151,9 +153,15 @@ export const parseTextIntoTasks = (text: string, defaultProjectName: string | nu
         isRecurring: recurring.isRecurring,
         frequency: recurring.frequency,
         project: projectName,
-        projectId: null, // Ensure projectId is explicitly set
-        duration: duration, // Add duration to task object
-        timeEstimate: null // Ensure timeEstimate is explicitly set
+        projectId: null,
+        duration: duration,
+        timeEstimate: null,
+        folder: null,                // Initialize new field for Motion's folder
+        autoScheduled: true,         // Default to auto-scheduled
+        isPending: false,            // Default to not pending
+        schedule: "Work hours",      // Default schedule
+        labels: null,                // Initialize labels as null
+        customFields: null           // Initialize custom fields as null
       });
     }
   }

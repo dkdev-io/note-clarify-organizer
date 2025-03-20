@@ -23,9 +23,36 @@ export const taskToIssue = (task: Task): IssueFormData => {
     description += `\n\nProject: ${task.project}`;
   }
   
+  // Add folder info if available
+  if (task.folder) {
+    description += `\n\nFolder: ${task.folder}`;
+  }
+  
+  // Add start date if available
+  if (task.startDate) {
+    description += `\n\nStart Date: ${task.startDate}`;
+  }
+  
   // Add due date if available
   if (task.dueDate) {
     description += `\n\nDue Date: ${task.dueDate}`;
+    
+    if (task.hardDeadline) {
+      description += " (Hard deadline)";
+    }
+  }
+  
+  // Add auto-scheduling info
+  description += `\n\nAuto-scheduled: ${task.autoScheduled ? 'Yes' : 'No'}`;
+  
+  // Add pending status
+  if (task.isPending) {
+    description += `\n\nPending: Yes`;
+  }
+  
+  // Add schedule preference
+  if (task.schedule) {
+    description += `\n\nSchedule: ${task.schedule}`;
   }
   
   // Add time estimate if available
@@ -36,6 +63,16 @@ export const taskToIssue = (task: Task): IssueFormData => {
   // Add duration if available
   if (task.duration) {
     description += `\n\nDuration: ${task.duration}`;
+  }
+  
+  // Add labels if available
+  if (task.labels && task.labels.length > 0) {
+    description += `\n\nLabels: ${task.labels.join(', ')}`;
+  }
+  
+  // Add custom fields if available
+  if (task.customFields) {
+    description += `\n\nCustom Fields: ${JSON.stringify(task.customFields)}`;
   }
   
   const result: IssueFormData = {

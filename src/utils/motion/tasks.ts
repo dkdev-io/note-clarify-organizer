@@ -56,11 +56,27 @@ export const addTasksToMotion = async (
           console.log(`Adding task "${task.title}" without project ID`);
         }
         
+        // Add folder if available
+        if (task.folder) {
+          taskData.folder = task.folder;
+        }
+
         // Add due date if available
         if (task.dueDate) {
           // Format the date as ISO string (YYYY-MM-DD)
           taskData.dueDate = new Date(task.dueDate).toISOString().split('T')[0];
           console.log(`Task due date: ${taskData.dueDate}`);
+          
+          // Add hard deadline flag if set
+          if (task.hardDeadline) {
+            taskData.hardDeadline = true;
+          }
+        }
+        
+        // Add start date if available
+        if (task.startDate) {
+          taskData.startDate = new Date(task.startDate).toISOString().split('T')[0];
+          console.log(`Task start date: ${taskData.startDate}`);
         }
         
         // Add time estimate if available
@@ -70,6 +86,29 @@ export const addTasksToMotion = async (
         } else if (task.timeEstimate) {
           taskData.timeEstimate = task.timeEstimate;
           console.log(`Task time estimate from task: ${taskData.timeEstimate} minutes`);
+        }
+        
+        // Add auto scheduling preference
+        taskData.autoScheduled = task.autoScheduled !== undefined ? task.autoScheduled : true;
+        
+        // Add isPending flag
+        if (task.isPending) {
+          taskData.isPending = true;
+        }
+        
+        // Add schedule preference
+        if (task.schedule) {
+          taskData.schedule = task.schedule;
+        }
+        
+        // Add labels if available
+        if (task.labels && task.labels.length > 0) {
+          taskData.labels = task.labels;
+        }
+        
+        // Add custom fields if available
+        if (task.customFields) {
+          taskData.customFields = task.customFields;
         }
         
         console.log("Sending task to Motion:", taskData);
