@@ -4,6 +4,7 @@ import { useToast } from "@/components/ui/use-toast";
 import IntegrationOptions from './IntegrationOptions';
 import NotesTextArea from './NotesTextArea';
 import NoteInputHeader from './NoteInputHeader';
+import SpreadsheetUpload from './SpreadsheetUpload';
 
 interface ApiProps {
   isConnected: boolean;
@@ -60,10 +61,49 @@ const NoteInput: React.FC<NoteInputProps> = ({ onParseTasks, apiProps }) => {
     }, 400);
   };
 
+  const handleSpreadsheetData = (data: any[]) => {
+    // Convert spreadsheet data to text format that can be processed
+    const formattedText = data.map(item => {
+      let taskText = `- ${item.title}`;
+      
+      if (item.description) {
+        taskText += `: ${item.description}`;
+      }
+      
+      if (item.assignee) {
+        taskText += ` (assigned to ${item.assignee})`;
+      }
+      
+      if (item.dueDate) {
+        taskText += ` due ${item.dueDate}`;
+      }
+      
+      if (item.priority) {
+        taskText += ` [${item.priority} priority]`;
+      }
+      
+      return taskText;
+    }).join('\n\n');
+    
+    // Set the formatted text to the noteText state
+    setNoteText(formattedText);
+    
+    toast({
+      title: "Spreadsheet data imported",
+      description: `${data.length} tasks have been extracted from your spreadsheet and added to the notes.`,
+    });
+  };
+
   return (
     <div className={`w-full max-w-2xl mx-auto transition-all duration-500 ${isTransitioning ? 'opacity-0 translate-x-10' : 'opacity-100 translate-x-0'}`}>
       <NoteInputHeader />
       <IntegrationOptions />
+      
+      {/* Add Spreadsheet Upload component */}
+      <div className="mb-4">
+        <SpreadsheetUpload onSpreadsheetData={handleSpreadsheetData} />
+      </div>
+      
       <NotesTextArea 
         noteText={noteText}
         setNoteText={setNoteText}

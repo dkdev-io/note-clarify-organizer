@@ -15,6 +15,7 @@ interface ApiProps {
   isConnected: boolean;
   apiKey: string | null;
   workspaces: any[];
+  users?: any[];
 }
 
 interface TaskExtractorProps {
@@ -24,6 +25,7 @@ interface TaskExtractorProps {
   onBack: () => void;
   onContinue: (tasks: Task[]) => void;
   apiProps?: ApiProps;
+  spreadsheetSource?: boolean; // New prop to indicate if tasks came from spreadsheet
 }
 
 const TaskExtractor: React.FC<TaskExtractorProps> = ({ 
@@ -32,7 +34,8 @@ const TaskExtractor: React.FC<TaskExtractorProps> = ({
   projectName,
   onBack, 
   onContinue,
-  apiProps
+  apiProps,
+  spreadsheetSource = false
 }) => {
   const {
     isLoading,
@@ -49,7 +52,10 @@ const TaskExtractor: React.FC<TaskExtractorProps> = ({
 
   // Show extraction failed component if no tasks were found
   if (!isLoading && extractedTasks.length === 0) {
-    return <TaskExtractionFailed onBack={onBack} />;
+    return <TaskExtractionFailed 
+      onBack={onBack} 
+      sourceType={spreadsheetSource ? "spreadsheet" : "notes"}
+    />;
   }
 
   return (
@@ -62,6 +68,7 @@ const TaskExtractor: React.FC<TaskExtractorProps> = ({
             projectName={projectName}
             selectedTasksCount={selectedTasks.length}
             totalTasksCount={extractedTasks.length}
+            sourceType={spreadsheetSource ? "spreadsheet" : "notes"}
           />
         </CardHeader>
         
