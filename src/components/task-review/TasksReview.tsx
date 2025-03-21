@@ -1,13 +1,13 @@
 
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent } from "@/components/ui/card";
-import { Task } from '@/utils/parser';
-import { useToast } from "@/hooks/use-toast";
+import React, { useState } from 'react';
+import { Card } from "@/components/ui/card";
+import { Task } from '@/utils/task-parser/types';
+import { refineTask } from '@/utils/task-parser/task-editor';
 import TasksList from './TasksList';
 import TaskReviewHeader from './TaskReviewHeader';
 import TaskReviewFooter from './TaskReviewFooter';
-import { ApiProps } from '@/pages/converter/types';
-import { addTasksToMotionService } from './task-review-service';
+import EditTaskForm from './EditTaskForm';
+import { generateId } from '@/utils/task-parser/utils';
 
 interface TasksReviewProps {
   rawText: string;
@@ -15,158 +15,100 @@ interface TasksReviewProps {
   projectName: string | null;
   onBack: () => void;
   onAddToMotion: (tasks: Task[], projectName: string | null) => void;
-  apiProps: ApiProps;
+  apiProps: any;
 }
 
-const TasksReview: React.FC<TasksReviewProps> = ({ 
-  rawText, 
-  initialTasks, 
-  projectName, 
-  onBack, 
+const TasksReview: React.FC<TasksReviewProps> = ({
+  rawText,
+  initialTasks,
+  projectName,
+  onBack,
   onAddToMotion,
   apiProps
 }) => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
-  const [editedTasks, setEditedTasks] = useState<Task[]>([]);
-  const [editedProjectName, setEditedProjectName] = useState<string | null>(
-    // If apiProps has a selectedProject, use that, otherwise use the provided projectName
-    apiProps.selectedProject || projectName
-  );
-  const [isTransitioning, setIsTransitioning] = useState(false);
-  const { toast } = useToast();
-
-  // Update editedProjectName whenever apiProps.selectedProject changes
-  useEffect(() => {
-    if (apiProps.selectedProject) {
-      setEditedProjectName(apiProps.selectedProject);
-    }
-  }, [apiProps.selectedProject]);
-
-  useEffect(() => {
-    const tasksWithCorrectAssignees = initialTasks.map(task => ({
-      ...task,
-      // If we have a selectedProject from Motion API, make sure it's set on all tasks
-      project: apiProps.selectedProject || task.project || projectName,
-      assignee: task.assignee || null
-    }));
-    
-    setEditedTasks(tasksWithCorrectAssignees);
-    
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
-    
-    return () => clearTimeout(timer);
-  }, [initialTasks, apiProps.selectedProject, projectName]);
+  const [currentProjectName, setCurrentProjectName] = useState<string | null>(projectName);
 
   const handleEditTask = (taskId: string) => {
     setEditingTaskId(taskId);
   };
 
-  const handleSaveTask = () => {
+  const handleSaveEdit = () => {
     setEditingTaskId(null);
   };
 
   const handleUpdateTask = (taskId: string, field: keyof Task, value: any) => {
-    setEditedTasks(editedTasks.map(task => 
-      task.id === taskId ? { ...task, [field]: value } : task
-    ));
+    setTasks(prev => 
+      prev.map(task => 
+        task.id === taskId 
+          ? refineTask(task, { [field]: value }) 
+          : task
+      )
+    );
   };
 
-  const handleDeleteTask = (taskId: string) => {
-    setEditedTasks(editedTasks.filter(task => task.id !== taskId));
+  const handleContinue = () => {
+    onAddToMotion(tasks, currentProjectName);
   };
 
-  const handleAddToMotion = async () => {
-    if (editedTasks.length === 0) {
-      toast({
-        title: "No tasks to add",
-        description: "Please create at least one task to add to Motion.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setIsProcessing(true);
-
-    try {
-      console.log("Adding tasks to Motion with project name:", editedProjectName || apiProps.selectedProject);
-      
-      const result = await addTasksToMotionService(
-        editedTasks,
-        editedProjectName || apiProps.selectedProject, // Use the edited project name or the selected Motion project
-        apiProps
-      );
-      
-      if (result.success) {
-        toast({
-          title: "Success!",
-          description: result.message,
-        });
-        onAddToMotion(editedTasks, editedProjectName);
-      } else {
-        toast({
-          title: "Error",
-          description: result.message,
-          variant: "destructive"
-        });
-        console.error("Failed to add tasks:", result.errors);
-      }
-    } catch (error) {
-      console.error("Error adding tasks to Motion:", error);
-      toast({
-        title: "Error",
-        description: "Failed to add tasks to Motion. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsProcessing(false);
-    }
+  const handleProjectNameChange = (name: string) => {
+    setCurrentProjectName(name);
   };
 
-  const handleBack = () => {
-    setIsTransitioning(true);
-    setTimeout(() => {
-      onBack();
-    }, 400);
-  };
-
-  const handleProjectNameChange = (name: string | null) => {
-    setEditedProjectName(name);
+  const handleAddTask = () => {
+    const newTask: Task = {
+      id: generateId(),
+      title: "New Task",
+      description: "",
+      dueDate: null,
+      startDate: null,
+      hardDeadline: false,
+      priority: null,
+      status: 'todo',
+      assignee: null,
+      workspace_id: apiProps.selectedWorkspaceId || null,
+      isRecurring: false,
+      frequency: null,
+      project: currentProjectName,
+      projectId: apiProps.selectedProjectId || null,
+      duration: null,
+      timeEstimate: null,
+      folder: null,
+      autoScheduled: true,
+      isPending: false,
+      schedule: "Work hours",
+      labels: null,
+      customFields: null
+    };
+    
+    setTasks([...tasks, newTask]);
+    setEditingTaskId(newTask.id);
   };
 
   return (
-    <div className={`w-full max-w-2xl mx-auto transition-all duration-500 ${isTransitioning ? 'opacity-0 translate-x-10' : 'opacity-100 translate-x-0'}`}>
-      <Card className="bg-white bg-opacity-80 backdrop-blur-sm border border-gray-100 shadow-card overflow-hidden">
-        <TaskReviewHeader 
-          tasksCount={editedTasks.length}
-          projectName={editedProjectName}
+    <div className="w-full max-w-3xl mx-auto">
+      <Card className="bg-white shadow-sm border">
+        <TaskReviewHeader
+          taskCount={tasks.length}
+          projectName={currentProjectName}
           onProjectNameChange={handleProjectNameChange}
+          rawText={rawText}
         />
         
-        <CardContent className="pb-0">
-          <TasksList 
-            tasks={editedTasks}
-            editingTaskId={editingTaskId}
-            isLoading={isLoading}
-            onEditTask={handleEditTask}
-            onSaveTask={handleSaveTask}
-            onUpdateTask={handleUpdateTask}
-            onDeleteTask={handleDeleteTask}
-            onBack={handleBack}
-          />
-        </CardContent>
-        
-        <TaskReviewFooter 
-          onBack={handleBack}
-          onAddToMotion={handleAddToMotion}
-          isLoading={isLoading}
-          isProcessing={isProcessing}
-          isTransitioning={isTransitioning}
+        <TasksList
+          tasks={tasks}
           editingTaskId={editingTaskId}
-          tasksLength={editedTasks.length}
+          onEditTask={handleEditTask}
+          onUpdateTask={handleUpdateTask}
+          onSaveEdit={handleSaveEdit}
+          onAddTask={handleAddTask}
+        />
+        
+        <TaskReviewFooter
+          onBack={onBack}
+          onContinue={handleContinue}
+          taskCount={tasks.length}
         />
       </Card>
     </div>
