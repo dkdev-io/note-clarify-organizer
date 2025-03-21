@@ -8,30 +8,35 @@ interface TaskReviewFooterProps {
   onBack: () => void;
   onAddToMotion?: () => void;
   onContinue?: () => void;
-  isLoading: boolean;
-  isProcessing: boolean;
-  isTransitioning: boolean;
-  editingTaskId: string | null;
-  tasksLength: number;
+  isLoading?: boolean;
+  isProcessing?: boolean;
+  isTransitioning?: boolean;
+  editingTaskId?: string | null;
+  tasksLength?: number;
+  tasksCount?: number;
 }
 
 const TaskReviewFooter: React.FC<TaskReviewFooterProps> = ({ 
   onBack, 
   onAddToMotion,
   onContinue, 
-  isLoading, 
-  isProcessing, 
-  isTransitioning,
-  editingTaskId,
-  tasksLength
+  isLoading = false, 
+  isProcessing = false, 
+  isTransitioning = false,
+  editingTaskId = null,
+  tasksLength = 0,
+  tasksCount = 0
 }) => {
+  // Use tasksCount if provided, otherwise fallback to tasksLength for backward compatibility
+  const effectiveTasksCount = tasksCount || tasksLength;
+  
   // Determine which action button to show based on provided props
   const renderActionButton = () => {
     if (onContinue) {
       return (
         <Button 
           onClick={onContinue}
-          disabled={tasksLength === 0 || isLoading || isProcessing || isTransitioning || editingTaskId !== null}
+          disabled={effectiveTasksCount === 0 || isLoading || isProcessing || isTransitioning || editingTaskId !== null}
           className="transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"
         >
           Continue to Preview
@@ -44,7 +49,7 @@ const TaskReviewFooter: React.FC<TaskReviewFooterProps> = ({
       return (
         <Button 
           onClick={onAddToMotion}
-          disabled={tasksLength === 0 || isLoading || isProcessing || isTransitioning || editingTaskId !== null}
+          disabled={effectiveTasksCount === 0 || isLoading || isProcessing || isTransitioning || editingTaskId !== null}
           className="transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"
         >
           {isProcessing ? (

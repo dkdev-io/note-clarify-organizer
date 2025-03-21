@@ -8,11 +8,21 @@ import { TaskPriorityBadge, TaskAssigneeBadge, TaskDueDateBadge } from './badges
 
 interface TaskItemProps {
   task: Task;
+  isEditing?: boolean;
   onEdit: (taskId: string) => void;
-  onDelete: (taskId: string) => void;
+  onDelete?: (taskId: string) => void;
+  onSave?: () => void;
+  onUpdateTask?: (field: keyof Task, value: any) => void;
 }
 
-const TaskItem: React.FC<TaskItemProps> = ({ task, onEdit, onDelete }) => {
+const TaskItem: React.FC<TaskItemProps> = ({ 
+  task, 
+  isEditing = false, 
+  onEdit, 
+  onDelete = () => {}, 
+  onSave = () => {},
+  onUpdateTask = () => {} 
+}) => {
   return (
     <div className="py-4 group border-b border-gray-100 last:border-none">
       <div className="flex items-start gap-3">
@@ -39,22 +49,35 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, onEdit, onDelete }) => {
             </div>
             
             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-8 w-8 text-gray-500 hover:text-gray-700 rounded-full"
-                onClick={() => onEdit(task.id)}
-              >
-                <PencilIcon className="h-4 w-4" />
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-8 w-8 text-gray-500 hover:text-red-600 rounded-full"
-                onClick={() => onDelete(task.id)}
-              >
-                <TrashIcon className="h-4 w-4" />
-              </Button>
+              {isEditing ? (
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-8 w-8 text-gray-500 hover:text-gray-700 rounded-full"
+                  onClick={() => onSave()}
+                >
+                  <PencilIcon className="h-4 w-4" />
+                </Button>
+              ) : (
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-8 w-8 text-gray-500 hover:text-gray-700 rounded-full"
+                  onClick={() => onEdit(task.id)}
+                >
+                  <PencilIcon className="h-4 w-4" />
+                </Button>
+              )}
+              {onDelete && (
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-8 w-8 text-gray-500 hover:text-red-600 rounded-full"
+                  onClick={() => onDelete(task.id)}
+                >
+                  <TrashIcon className="h-4 w-4" />
+                </Button>
+              )}
             </div>
           </div>
         </div>

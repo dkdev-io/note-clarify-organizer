@@ -9,12 +9,14 @@ interface TaskReviewHeaderProps {
   tasksCount: number;
   projectName: string | null;
   onProjectNameChange: (name: string | null) => void;
+  rawText?: string;
 }
 
 const TaskReviewHeader: React.FC<TaskReviewHeaderProps> = ({ 
   tasksCount, 
   projectName, 
-  onProjectNameChange 
+  onProjectNameChange,
+  rawText
 }) => {
   return (
     <CardHeader>
