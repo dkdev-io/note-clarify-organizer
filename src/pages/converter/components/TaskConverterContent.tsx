@@ -6,6 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import NotesInputCard from './NotesInputCard';
 import ExtractedTasksCard from './ExtractedTasksCard';
 import IssueLogCard from './IssueLogCard';
+import TaskExtractionFailed from '@/components/task-review/TaskExtractionFailed';
 import { 
   extractTasksFromText, 
   addTasksToIssueLog, 
@@ -19,6 +20,7 @@ const TaskConverterContent = () => {
   const [noteText, setNoteText] = useState<string>('');
   const [extractedTasks, setExtractedTasks] = useState<Task[]>([]);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [extractionFailed, setExtractionFailed] = useState<boolean>(false);
   const { toast } = useToast();
   const { id } = useParams<{ id: string }>();
   const [textAreaValue, setTextAreaValue] = useState('');
@@ -51,12 +53,14 @@ const TaskConverterContent = () => {
 
     setNoteText(text);
     setIsProcessing(true);
+    setExtractionFailed(false);
 
     try {
       const tasks = extractTasksFromText(text);
       setExtractedTasks(tasks);
 
       if (tasks.length === 0) {
+        setExtractionFailed(true);
         toast({
           title: "No tasks found",
           description: "Couldn't extract any tasks from your notes. Try adding more detailed text.",
@@ -74,6 +78,7 @@ const TaskConverterContent = () => {
       }
     } catch (error) {
       console.error('Error extracting tasks:', error);
+      setExtractionFailed(true);
       toast({
         title: "Error extracting tasks",
         description: "Something went wrong while extracting tasks.",
@@ -163,6 +168,10 @@ const TaskConverterContent = () => {
     }
   };
 
+  const handleRetry = () => {
+    setExtractionFailed(false);
+  };
+
   return (
     <div className="container mx-auto py-6 space-y-8">
       <NotesInputCard
@@ -175,7 +184,11 @@ const TaskConverterContent = () => {
         createAllIssueReports={createAllIssueReports}
       />
 
-      {extractedTasks.length > 0 && (
+      {extractionFailed ? (
+        <TaskExtractionFailed 
+          onBack={handleRetry} 
+        />
+      ) : extractedTasks.length > 0 && (
         <div className="space-y-6">
           <ExtractedTasksCard
             extractedTasks={extractedTasks}

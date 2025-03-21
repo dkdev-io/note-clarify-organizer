@@ -9,6 +9,7 @@ import {
   TaskFooter 
 } from './task-extractor';
 import { useTaskExtractor } from '@/hooks/useTaskExtractor';
+import TaskExtractionFailed from './task-review/TaskExtractionFailed';
 
 interface ApiProps {
   isConnected: boolean;
@@ -45,6 +46,11 @@ const TaskExtractor: React.FC<TaskExtractorProps> = ({
     extractedTasks,
     onContinue
   });
+
+  // Show extraction failed component if no tasks were found
+  if (!isLoading && extractedTasks.length === 0) {
+    return <TaskExtractionFailed onBack={onBack} />;
+  }
 
   return (
     <div className={`w-full max-w-2xl mx-auto transition-all duration-500 ${

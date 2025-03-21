@@ -3,7 +3,7 @@ import React from 'react';
 import { Task } from '@/utils/parser';
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import { PencilIcon, TrashIcon } from 'lucide-react';
+import { PencilIcon, TrashIcon, CheckIcon } from 'lucide-react';
 import { TaskPriorityBadge, TaskAssigneeBadge, TaskDueDateBadge } from './badges';
 
 interface TaskItemProps {
@@ -53,10 +53,10 @@ const TaskItem: React.FC<TaskItemProps> = ({
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="h-8 w-8 text-gray-500 hover:text-gray-700 rounded-full"
+                  className="h-8 w-8 text-gray-500 hover:text-primary rounded-full"
                   onClick={() => onSave()}
                 >
-                  <PencilIcon className="h-4 w-4" />
+                  <CheckIcon className="h-4 w-4" />
                 </Button>
               ) : (
                 <Button 

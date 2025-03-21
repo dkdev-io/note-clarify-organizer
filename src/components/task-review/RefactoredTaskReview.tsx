@@ -46,7 +46,7 @@ const RefactoredTaskReview: React.FC<RefactoredTaskReviewProps> = ({
   };
 
   const handleAddTask = () => {
-    // Add task implementation
+    // Implementation for adding a new task
     console.log('Add task');
   };
 
