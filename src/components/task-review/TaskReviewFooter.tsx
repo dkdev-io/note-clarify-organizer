@@ -2,11 +2,12 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { CardFooter } from "@/components/ui/card";
-import { ArrowLeftIcon, LoaderIcon, ExternalLinkIcon } from 'lucide-react';
+import { ArrowLeftIcon, LoaderIcon, ExternalLinkIcon, ArrowRightIcon } from 'lucide-react';
 
 interface TaskReviewFooterProps {
   onBack: () => void;
-  onAddToMotion: () => void;
+  onAddToMotion?: () => void;
+  onContinue?: () => void;
   isLoading: boolean;
   isProcessing: boolean;
   isTransitioning: boolean;
@@ -16,13 +17,54 @@ interface TaskReviewFooterProps {
 
 const TaskReviewFooter: React.FC<TaskReviewFooterProps> = ({ 
   onBack, 
-  onAddToMotion, 
+  onAddToMotion,
+  onContinue, 
   isLoading, 
   isProcessing, 
   isTransitioning,
   editingTaskId,
   tasksLength
 }) => {
+  // Determine which action button to show based on provided props
+  const renderActionButton = () => {
+    if (onContinue) {
+      return (
+        <Button 
+          onClick={onContinue}
+          disabled={tasksLength === 0 || isLoading || isProcessing || isTransitioning || editingTaskId !== null}
+          className="transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"
+        >
+          Continue to Preview
+          <ArrowRightIcon className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    }
+    
+    if (onAddToMotion) {
+      return (
+        <Button 
+          onClick={onAddToMotion}
+          disabled={tasksLength === 0 || isLoading || isProcessing || isTransitioning || editingTaskId !== null}
+          className="transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"
+        >
+          {isProcessing ? (
+            <>
+              <LoaderIcon className="mr-2 h-4 w-4 animate-spin" />
+              Processing
+            </>
+          ) : (
+            <>
+              Add to Motion
+              <ExternalLinkIcon className="ml-2 h-4 w-4" />
+            </>
+          )}
+        </Button>
+      );
+    }
+    
+    return null;
+  };
+
   return (
     <CardFooter className="flex justify-between py-4 mt-4">
       <Button 
@@ -33,23 +75,7 @@ const TaskReviewFooter: React.FC<TaskReviewFooterProps> = ({
         <ArrowLeftIcon className="mr-2 h-4 w-4" />
         Back
       </Button>
-      <Button 
-        onClick={onAddToMotion}
-        disabled={tasksLength === 0 || isLoading || isProcessing || isTransitioning || editingTaskId !== null}
-        className="transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"
-      >
-        {isProcessing ? (
-          <>
-            <LoaderIcon className="mr-2 h-4 w-4 animate-spin" />
-            Processing
-          </>
-        ) : (
-          <>
-            Add to Motion
-            <ExternalLinkIcon className="ml-2 h-4 w-4" />
-          </>
-        )}
-      </Button>
+      {renderActionButton()}
     </CardFooter>
   );
 };
