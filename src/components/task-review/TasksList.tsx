@@ -85,7 +85,7 @@ const TasksList: React.FC<TasksListProps> = ({
                   isEditing={task.id === editingTaskId}
                   onEdit={() => onEditTask(task.id)}
                   onSave={onSaveEdit}
-                  onUpdateTask={onUpdateTask}
+                  onUpdateTask={(field, value) => onUpdateTask(task.id, field, value)}
                 />
               ))}
             </div>
@@ -94,7 +94,7 @@ const TasksList: React.FC<TasksListProps> = ({
       </CardContent>
 
       <Dialog open={showAISuggestions} onOpenChange={setShowAISuggestions}>
-        <DialogContent className="sm:max-w-3xl p-0" closeButton={false}>
+        <DialogContent className="sm:max-w-3xl p-0">
           <AISuggestionsChat
             tasks={tasks}
             onApplySuggestions={handleApplySuggestions}

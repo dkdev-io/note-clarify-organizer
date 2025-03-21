@@ -45,6 +45,11 @@ const RefactoredTaskReview: React.FC<RefactoredTaskReviewProps> = ({
     setEditedTasks(editedTasks.filter(task => task.id !== taskId));
   };
 
+  const handleAddTask = () => {
+    // Add task implementation
+    console.log('Add task');
+  };
+
   const handleContinue = () => {
     setIsTransitioning(true);
     setTimeout(() => {
@@ -75,22 +80,18 @@ const RefactoredTaskReview: React.FC<RefactoredTaskReviewProps> = ({
         <TasksList 
           tasks={editedTasks}
           editingTaskId={editingTaskId}
-          isLoading={false}
           onEditTask={handleEditTask}
-          onSaveTask={handleSaveTask}
           onUpdateTask={handleUpdateTask}
-          onDeleteTask={handleDeleteTask}
-          onBack={handleBack}
+          onSaveEdit={handleSaveTask}
+          onAddTask={handleAddTask}
         />
         
         <TaskReviewFooter 
           onBack={handleBack}
           onContinue={handleContinue}
-          isLoading={false}
-          isProcessing={false}
           isTransitioning={isTransitioning}
           editingTaskId={editingTaskId}
-          tasksLength={editedTasks.length}
+          tasksCount={editedTasks.length}
         />
       </Card>
     </div>

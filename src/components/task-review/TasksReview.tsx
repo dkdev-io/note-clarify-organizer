@@ -52,7 +52,7 @@ const TasksReview: React.FC<TasksReviewProps> = ({
     onAddToMotion(tasks, currentProjectName);
   };
 
-  const handleProjectNameChange = (name: string) => {
+  const handleProjectNameChange = (name: string | null) => {
     setCurrentProjectName(name);
   };
 
@@ -90,7 +90,7 @@ const TasksReview: React.FC<TasksReviewProps> = ({
     <div className="w-full max-w-3xl mx-auto">
       <Card className="bg-white shadow-sm border">
         <TaskReviewHeader
-          taskCount={tasks.length}
+          tasksCount={tasks.length}
           projectName={currentProjectName}
           onProjectNameChange={handleProjectNameChange}
           rawText={rawText}
@@ -108,7 +108,7 @@ const TasksReview: React.FC<TasksReviewProps> = ({
         <TaskReviewFooter
           onBack={onBack}
           onContinue={handleContinue}
-          taskCount={tasks.length}
+          tasksCount={tasks.length}
         />
       </Card>
     </div>
