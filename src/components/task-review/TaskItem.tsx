@@ -3,9 +3,8 @@ import React from 'react';
 import { Task } from '@/utils/parser';
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import { PencilIcon, TrashIcon, CalendarIcon, User2Icon } from 'lucide-react';
-import { Badge } from "@/components/ui/badge";
-import { formatDate } from 'date-fns';
+import { PencilIcon, TrashIcon } from 'lucide-react';
+import { TaskPriorityBadge, TaskAssigneeBadge, TaskDueDateBadge } from './badges';
 
 interface TaskItemProps {
   task: Task;
@@ -14,15 +13,6 @@ interface TaskItemProps {
 }
 
 const TaskItem: React.FC<TaskItemProps> = ({ task, onEdit, onDelete }) => {
-  const priorityColors = {
-    high: 'bg-red-100 text-red-800 border-red-200',
-    medium: 'bg-amber-100 text-amber-800 border-amber-200',
-    low: 'bg-green-100 text-green-800 border-green-200',
-    normal: 'bg-blue-100 text-blue-800 border-blue-200'
-  };
-  
-  const priorityColor = task.priority ? priorityColors[task.priority as keyof typeof priorityColors] : priorityColors.normal;
-  
   return (
     <div className="py-4 group border-b border-gray-100 last:border-none">
       <div className="flex items-start gap-3">
@@ -42,30 +32,9 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, onEdit, onDelete }) => {
               )}
               
               <div className="flex flex-wrap gap-2 mt-3">
-                {task.priority && (
-                  <Badge variant="outline" className={`${priorityColor} capitalize`}>
-                    {task.priority}
-                  </Badge>
-                )}
-                
-                {task.assignee !== null && task.assignee !== undefined && task.assignee !== '' ? (
-                  <Badge variant="secondary" className="flex items-center gap-1">
-                    <User2Icon className="h-3 w-3" />
-                    {task.assignee}
-                  </Badge>
-                ) : (
-                  <Badge variant="outline" className="flex items-center gap-1 border-gray-200 text-gray-500">
-                    <User2Icon className="h-3 w-3" />
-                    Not Assigned
-                  </Badge>
-                )}
-                
-                {task.dueDate && (
-                  <Badge variant="outline" className="flex items-center gap-1 border-blue-200 bg-blue-50 text-blue-700">
-                    <CalendarIcon className="h-3 w-3" />
-                    {formatDate(new Date(task.dueDate), 'MMM d, yyyy')}
-                  </Badge>
-                )}
+                <TaskPriorityBadge priority={task.priority} />
+                <TaskAssigneeBadge assignee={task.assignee} />
+                <TaskDueDateBadge dueDate={task.dueDate} />
               </div>
             </div>
             
