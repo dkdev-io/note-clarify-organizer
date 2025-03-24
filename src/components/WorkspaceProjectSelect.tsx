@@ -1,10 +1,9 @@
-
 import React from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeftIcon } from 'lucide-react';
 import WorkspaceSelect from './WorkspaceSelect';
-import ProjectSelect from './ProjectSelect';
+import { ProjectSelect } from './project';
 
 interface WorkspaceProjectSelectProps {
   apiKey: string | null;
