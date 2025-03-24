@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Task } from '@/utils/task-parser/types';
 import { Step, ApiProps } from './types';
 import { useToast } from "@/components/ui/use-toast";
@@ -31,6 +32,13 @@ const TaskConverterPage = () => {
   const [users, setUsers] = useState<any[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   
+  // Debug logging for task flow
+  useEffect(() => {
+    if (extractedTasks && extractedTasks.length > 0) {
+      console.log('TaskConverterPage - extractedTasks updated:', extractedTasks);
+    }
+  }, [extractedTasks]);
+  
   // Handle API connection
   const handleApiConnect = (apiKey: string, fetchedWorkspaces: any[], workspaceId?: string, project?: string) => {
     setMotionApiKey(apiKey);
@@ -56,6 +64,7 @@ const TaskConverterPage = () => {
     const effectiveProjectName = selectedProject || providedProjectName;
     
     const tasks = parseTextIntoTasks(text, effectiveProjectName);
+    console.log('Tasks after parsing:', tasks); // Debug log
     
     // Extract project name from tasks if not provided
     const extractedProjectName = tasks.find(task => task.project)?.project || effectiveProjectName || null;
@@ -78,6 +87,7 @@ const TaskConverterPage = () => {
 
   // Handle moving from extraction to AI enhancement
   const handleContinueToEnhance = (tasks: Task[]) => {
+    console.log('Continuing to enhance with tasks:', tasks); // Debug log
     setSelectedTasks(tasks);
     setStep('enhance');
   };
@@ -149,6 +159,7 @@ const TaskConverterPage = () => {
   const renderStepContent = () => {
     switch (step) {
       case 'extract':
+        console.log('Rendering extract step with tasks:', extractedTasks); // Debug log
         return (
           <TaskExtractor
             rawText={noteText}

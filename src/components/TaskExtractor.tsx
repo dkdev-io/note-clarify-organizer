@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Task } from '@/utils/parser';
 import { 
@@ -50,8 +50,13 @@ const TaskExtractor: React.FC<TaskExtractorProps> = ({
     onContinue
   });
 
+  // Debug logging to trace task data flow
+  useEffect(() => {
+    console.log('TaskExtractor received tasks:', extractedTasks);
+  }, [extractedTasks]);
+
   // Show extraction failed component if no tasks were found
-  if (!isLoading && extractedTasks.length === 0) {
+  if (!isLoading && (!extractedTasks || extractedTasks.length === 0)) {
     return <TaskExtractionFailed 
       onBack={onBack} 
       sourceType={spreadsheetSource ? "spreadsheet" : "notes"}

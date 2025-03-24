@@ -18,8 +18,14 @@ export function useTaskExtractor({
   const [isTransitioning, setIsTransitioning] = useState(false);
 
   useEffect(() => {
+    // Debug log to trace tasks reaching the hook
+    console.log('useTaskExtractor received tasks:', extractedTasks);
+    
+    // Make sure extractedTasks is an array before proceeding
+    const tasksArray = Array.isArray(extractedTasks) ? extractedTasks : [];
+    
     // Select all tasks by default
-    setSelectedTasks([...extractedTasks]);
+    setSelectedTasks([...tasksArray]);
     
     // Simulate processing delay for a smoother UX
     const timer = setTimeout(() => {

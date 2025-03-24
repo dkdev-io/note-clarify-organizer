@@ -10,3 +10,6 @@ export interface ApiProps {
   selectedProject: string | null;
   selectedProjectId?: string | null;
 }
+
+// Add Task type export to ensure consistency
+export { type Task } from '@/utils/task-parser/types';

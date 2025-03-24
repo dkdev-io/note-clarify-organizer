@@ -20,6 +20,11 @@ const TaskExtractionResults: React.FC<TaskExtractionResultsProps> = ({
   forceAddToIssueLog,
   handleRetry
 }) => {
+  // Log tasks to debug
+  React.useEffect(() => {
+    console.log('TaskExtractionResults received tasks:', extractedTasks);
+  }, [extractedTasks]);
+
   if (extractionFailed) {
     return (
       <TaskExtractionFailed 
@@ -28,7 +33,8 @@ const TaskExtractionResults: React.FC<TaskExtractionResultsProps> = ({
     );
   }
   
-  if (extractedTasks.length > 0) {
+  // Make sure extractedTasks is an array and has items
+  if (extractedTasks && extractedTasks.length > 0) {
     return (
       <div className="space-y-6">
         <ExtractedTasksCard
