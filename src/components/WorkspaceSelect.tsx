@@ -1,22 +1,15 @@
 
 import React, { useState, useEffect } from 'react';
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { PlusCircleIcon } from 'lucide-react';
 import { Label } from "@/components/ui/label";
-import { LoaderIcon, PlusCircleIcon, AlertTriangleIcon, RefreshCw, ExternalLinkIcon } from 'lucide-react';
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { getWorkspacesForDropdown } from '@/utils/motion';
 import { useToast } from "@/components/ui/use-toast";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { getWorkspacesForDropdown } from '@/utils/motion';
+import { 
+  WorkspaceList, 
+  CreateWorkspaceForm, 
+  WorkspaceError,
+  EmptyWorkspaceMessage
+} from '@/components/workspace';
 
 interface WorkspaceSelectProps {
   apiKey: string | null;
@@ -144,126 +137,38 @@ const WorkspaceSelect: React.FC<WorkspaceSelectProps> = ({
           <div className="flex justify-between items-center">
             <Label htmlFor="workspace">Select Workspace</Label>
           </div>
-          <div className="flex gap-2">
-            <div className="flex-1">
-              <Select
-                value={selectedWorkspaceId || undefined}
-                onValueChange={onWorkspaceSelect}
-                disabled={isLoading}
-              >
-                <SelectTrigger className="w-full">
-                  {isLoading ? (
-                    <div className="flex items-center">
-                      <LoaderIcon className="mr-2 h-3 w-3 animate-spin" />
-                      <span>Loading workspaces...</span>
-                    </div>
-                  ) : (
-                    <SelectValue placeholder="Select a workspace" />
-                  )}
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectLabel>Workspaces</SelectLabel>
-                    {workspaces.map(workspace => (
-                      <SelectItem key={workspace.value} value={workspace.value}>
-                        {workspace.label}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex gap-1">
-              <Button 
-                variant="outline" 
-                size="icon" 
-                onClick={loadWorkspaces}
-                disabled={isLoading}
-                title="Refresh Workspaces"
-              >
-                <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-              </Button>
-              <Button 
-                variant="outline" 
-                size="icon" 
-                onClick={() => setShowNewWorkspaceForm(true)}
-                title="Create New Workspace"
-              >
-                <PlusCircleIcon className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
           
-          {error && (
-            <Alert variant="destructive" className="mt-2">
-              <AlertTriangleIcon className="h-4 w-4" />
-              <AlertDescription>
-                {error}
-                {error?.includes("API key") && (
-                  <Button
-                    size="sm"
-                    variant="link"
-                    className="px-0 h-6 text-sm font-normal underline-offset-2 mt-1 flex items-center"
-                    onClick={handleOpenMotionSettings}
-                  >
-                    <ExternalLinkIcon className="h-3 w-3 mr-1" />
-                    Check your API keys in Motion
-                  </Button>
-                )}
-              </AlertDescription>
-            </Alert>
-          )}
+          <WorkspaceList
+            workspaces={workspaces}
+            selectedWorkspaceId={selectedWorkspaceId}
+            onWorkspaceSelect={onWorkspaceSelect}
+            onRefresh={loadWorkspaces}
+            onCreateNew={() => setShowNewWorkspaceForm(true)}
+            isLoading={isLoading}
+          />
           
-          {workspaces.length === 0 && !isLoading && !error && (
-            <p className="text-sm text-amber-600 mt-1">
-              No workspaces found. You can create a new one or check your API key.
-            </p>
-          )}
+          <WorkspaceError 
+            error={error} 
+            onOpenMotionSettings={handleOpenMotionSettings} 
+          />
+          
+          <EmptyWorkspaceMessage 
+            isLoading={isLoading} 
+            error={error} 
+            workspaces={workspaces} 
+          />
         </div>
       ) : (
-        <Card className="border border-dashed">
-          <CardHeader className="py-3">
-            <CardTitle className="text-sm font-medium">Create New Workspace</CardTitle>
-          </CardHeader>
-          <CardContent className="py-2">
-            <div className="space-y-2">
-              <Label htmlFor="newWorkspaceName">Workspace Name</Label>
-              <Input
-                id="newWorkspaceName"
-                value={newWorkspaceName}
-                onChange={e => setNewWorkspaceName(e.target.value)}
-                placeholder="Enter workspace name"
-              />
-            </div>
-          </CardContent>
-          <CardFooter className="flex justify-end gap-2 py-3">
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={() => {
-                setShowNewWorkspaceForm(false);
-                setNewWorkspaceName('');
-              }}
-              disabled={isCreating}
-            >
-              Cancel
-            </Button>
-            <Button 
-              size="sm"
-              onClick={handleCreateWorkspace}
-              disabled={!newWorkspaceName.trim() || isCreating}
-            >
-              {isCreating ? (
-                <>
-                  <LoaderIcon className="mr-2 h-3 w-3 animate-spin" />
-                  Creating...
-                </>
-              ) : (
-                'Create Workspace'
-              )}
-            </Button>
-          </CardFooter>
-        </Card>
+        <CreateWorkspaceForm
+          newWorkspaceName={newWorkspaceName}
+          onNameChange={setNewWorkspaceName}
+          onCancel={() => {
+            setShowNewWorkspaceForm(false);
+            setNewWorkspaceName('');
+          }}
+          onSubmit={handleCreateWorkspace}
+          isCreating={isCreating}
+        />
       )}
     </div>
   );
