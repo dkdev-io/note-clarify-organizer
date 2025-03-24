@@ -81,6 +81,87 @@ export type Database = {
         }
         Relationships: []
       }
+      extracted_tasks: {
+        Row: {
+          assignee: string | null
+          auto_scheduled: boolean | null
+          created_at: string
+          custom_fields: Json | null
+          description: string | null
+          due_date: string | null
+          duration: string | null
+          folder: string | null
+          frequency: string | null
+          hard_deadline: boolean | null
+          id: string
+          is_pending: boolean | null
+          is_recurring: boolean | null
+          labels: string[] | null
+          priority: string | null
+          project: string | null
+          project_id: string | null
+          schedule: string | null
+          start_date: string | null
+          status: string | null
+          time_estimate: number | null
+          title: string
+          updated_at: string
+          workspace_id: string | null
+        }
+        Insert: {
+          assignee?: string | null
+          auto_scheduled?: boolean | null
+          created_at?: string
+          custom_fields?: Json | null
+          description?: string | null
+          due_date?: string | null
+          duration?: string | null
+          folder?: string | null
+          frequency?: string | null
+          hard_deadline?: boolean | null
+          id?: string
+          is_pending?: boolean | null
+          is_recurring?: boolean | null
+          labels?: string[] | null
+          priority?: string | null
+          project?: string | null
+          project_id?: string | null
+          schedule?: string | null
+          start_date?: string | null
+          status?: string | null
+          time_estimate?: number | null
+          title: string
+          updated_at?: string
+          workspace_id?: string | null
+        }
+        Update: {
+          assignee?: string | null
+          auto_scheduled?: boolean | null
+          created_at?: string
+          custom_fields?: Json | null
+          description?: string | null
+          due_date?: string | null
+          duration?: string | null
+          folder?: string | null
+          frequency?: string | null
+          hard_deadline?: boolean | null
+          id?: string
+          is_pending?: boolean | null
+          is_recurring?: boolean | null
+          labels?: string[] | null
+          priority?: string | null
+          project?: string | null
+          project_id?: string | null
+          schedule?: string | null
+          start_date?: string | null
+          status?: string | null
+          time_estimate?: number | null
+          title?: string
+          updated_at?: string
+          workspace_id?: string | null
+        }
+        Relationships: []
+      }
       issue_logs: {
         Row: {
           assigned_to: string | null

@@ -1,41 +1,15 @@
 
-# Project ID
+# A string used as a project reference
 project_id = "fvxfmlhvxmpmbtouarcp"
 
-# API Configuration
-[api]
-port = 54321
-
-# Database Configuration
-[db]
-port = 54322
-
-# Studio Configuration
-[studio]
-port = 54323
-
-# Inbucket Configuration
-[inbucket]
-port = 54324
-
-# Storage Configuration
-[storage]
-file_size_limit = "50MiB"
-
-# Auth Configuration
-[auth]
-site_url = "https://projectize.lovable.app"
-additional_redirect_urls = ["https://projectize.lovable.app", "http://localhost:3000", "http://localhost:5173"]
-
-# Function Configurations
 [functions.process-notes]
 verify_jwt = false
-import_map = "./import_map.json"
 
 [functions.process-task-batch]
 verify_jwt = false
-import_map = "./import_map.json"
 
 [functions.process-task-enhancements]
 verify_jwt = false
-import_map = "./import_map.json"
+
+[functions.enhance-tasks]
+verify_jwt = false

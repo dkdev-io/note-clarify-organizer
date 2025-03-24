@@ -2,7 +2,11 @@
 import { useState } from 'react';
 import { Task } from '@/utils/task-parser/types';
 import { useToast } from '@/hooks/use-toast';
-import { extractTasksFromText, addTasksToIssueLog } from '../pages/converter/services/TaskConverterService';
+import { 
+  extractTasksFromText, 
+  addTasksToIssueLog,
+  getTasksWithRecommendations 
+} from '../pages/converter/services/TaskConverterService';
 
 export function useTaskExtraction() {
   const [noteText, setNoteText] = useState<string>('');
@@ -27,9 +31,9 @@ export function useTaskExtraction() {
     setExtractionFailed(false);
 
     try {
-      const tasks = extractTasksFromText(text);
-      setExtractedTasks(tasks);
-
+      // Extract tasks from the text and store them in Supabase
+      const tasks = await extractTasksFromText(text);
+      
       if (tasks.length === 0) {
         setExtractionFailed(true);
         toast({
@@ -38,14 +42,18 @@ export function useTaskExtraction() {
           variant: "destructive"
         });
       } else {
+        // Get recommendations from Supabase (this would include LLM enhancements in a full implementation)
+        const enhancedTasks = await getTasksWithRecommendations(tasks);
+        console.log("Enhanced tasks after recommendations:", enhancedTasks);
+        
+        setExtractedTasks(enhancedTasks);
+        
         toast({
           title: "Tasks extracted",
           description: `Successfully extracted ${tasks.length} tasks from your notes.`,
         });
         
-        console.log("🔄 Adding extracted tasks to issue log immediately:", tasks);
-        const result = await handleAddToIssueLog(tasks);
-        console.log("✅ Result of adding to issue log:", result);
+        // No longer automatically adding to issue log - user needs to review first
       }
     } catch (error) {
       console.error('Error extracting tasks:', error);

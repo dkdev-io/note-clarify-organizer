@@ -4,6 +4,8 @@ import { Task } from '@/utils/task-parser/types';
 import TaskExtractionFailed from '@/components/task-review/TaskExtractionFailed';
 import ExtractedTasksCard from './ExtractedTasksCard';
 import IssueLogCard from './IssueLogCard';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Loader2 } from 'lucide-react';
 
 interface TaskExtractionResultsProps {
   extractedTasks: Task[];
@@ -24,6 +26,17 @@ const TaskExtractionResults: React.FC<TaskExtractionResultsProps> = ({
   React.useEffect(() => {
     console.log('TaskExtractionResults received tasks:', extractedTasks);
   }, [extractedTasks]);
+
+  if (isProcessing) {
+    return (
+      <Card className="mb-6">
+        <CardContent className="flex flex-col items-center justify-center py-8">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
+          <p className="text-muted-foreground">Processing tasks...</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (extractionFailed) {
     return (
@@ -48,7 +61,19 @@ const TaskExtractionResults: React.FC<TaskExtractionResultsProps> = ({
     );
   }
   
-  return null;
+  // Display a message if no tasks were found or being processed
+  return (
+    <Card className="mb-6">
+      <CardHeader>
+        <CardTitle>No Tasks Found</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="text-muted-foreground">
+          No tasks were extracted. Try adding more details to your notes or using keywords like "todo" or bullet points.
+        </p>
+      </CardContent>
+    </Card>
+  );
 };
 
 export default TaskExtractionResults;
