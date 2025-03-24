@@ -1,12 +1,12 @@
 
-export type Step = 'connect' | 'workspace' | 'input' | 'extract' | 'process' | 'review' | 'preview' | 'complete';
+export type Step = 'connect' | 'input' | 'extract' | 'enhance' | 'process' | 'review' | 'preview' | 'complete';
 
 export interface ApiProps {
   isConnected: boolean;
   apiKey: string | null;
-  workspaces: any[] | null;
-  users: any[] | null;
+  workspaces: any[];
+  users?: any[];
   selectedWorkspaceId: string | null;
   selectedProject: string | null;
-  selectedProjectId: string | null;
+  selectedProjectId?: string | null;
 }

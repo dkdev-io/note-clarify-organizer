@@ -1,17 +1,22 @@
 import React, { useState } from 'react';
-import { Task } from '@/utils/parser';
+import { Task } from '@/utils/task-parser/types';
 import { Step, ApiProps } from './types';
 import { useToast } from "@/components/ui/use-toast";
 import TaskConverterHeader from './components/TaskConverterHeader';
 import TaskConverterStepMarkers from './components/TaskConverterStepMarkers';
 import TaskConverterContent from './components/TaskConverterContent';
 import CompletionScreen from './components/CompletionScreen';
+import { parseTextIntoTasks } from '@/utils/task-parser';
+import TaskAIEnhancer from '@/components/task-review/TaskAIEnhancer';
+import TaskReview from '@/components/task-review/TaskReviewWrapper';
+import TaskExtractor from '@/components/TaskExtractor';
 
 const TaskConverterPage = () => {
   const [step, setStep] = useState<Step>('connect');
   const [noteText, setNoteText] = useState('');
   const [extractedTasks, setExtractedTasks] = useState<Task[]>([]);
   const [selectedTasks, setSelectedTasks] = useState<Task[]>([]);
+  const [enhancedTasks, setEnhancedTasks] = useState<Task[]>([]);
   const [processedTasks, setProcessedTasks] = useState<Task[]>([]);
   const [reviewedTasks, setReviewedTasks] = useState<Task[]>([]);
   const [projectName, setProjectName] = useState<string | null>(null);
@@ -30,8 +35,8 @@ const TaskConverterPage = () => {
   const handleApiConnect = (apiKey: string, fetchedWorkspaces: any[], workspaceId?: string, project?: string) => {
     setMotionApiKey(apiKey);
     setWorkspaces(fetchedWorkspaces);
-    setSelectedWorkspaceId(workspaceId);
-    setSelectedProject(project);
+    setSelectedWorkspaceId(workspaceId || null);
+    setSelectedProject(project || null);
     setProjectName(project || null);
     setIsConnected(true);
     setStep('input');
@@ -71,15 +76,15 @@ const TaskConverterPage = () => {
     setStep('extract');
   };
 
-  // Handle moving from extraction to LLM processing
-  const handleContinueToProcess = (tasks: Task[]) => {
+  // Handle moving from extraction to AI enhancement
+  const handleContinueToEnhance = (tasks: Task[]) => {
     setSelectedTasks(tasks);
-    setStep('process');
+    setStep('enhance');
   };
 
-  // Handle moving from LLM processing to review
+  // Handle moving from AI enhancement to review
   const handleContinueToReview = (tasks: Task[]) => {
-    setProcessedTasks(tasks);
+    setEnhancedTasks(tasks);
     setStep('review');
   };
 
@@ -101,7 +106,7 @@ const TaskConverterPage = () => {
 
   // Handle completion of the workflow
   const handleComplete = () => {
-    setStep('complete' as Step);
+    setStep('complete');
     toast({
       title: "Success!",
       description: `${reviewedTasks.length} tasks have been added to Motion${projectName ? ` under project '${projectName}'` : ''}.`,
@@ -113,6 +118,7 @@ const TaskConverterPage = () => {
     setNoteText('');
     setExtractedTasks([]);
     setSelectedTasks([]);
+    setEnhancedTasks([]);
     setProcessedTasks([]);
     setReviewedTasks([]);
     // Keep project and workspace if connected to API
@@ -139,6 +145,55 @@ const TaskConverterPage = () => {
     selectedProjectId
   };
 
+  // Render the appropriate content based on step
+  const renderStepContent = () => {
+    switch (step) {
+      case 'extract':
+        return (
+          <TaskExtractor
+            rawText={noteText}
+            extractedTasks={extractedTasks}
+            projectName={projectName}
+            onBack={() => setStep('input')}
+            onContinue={handleContinueToEnhance}
+            apiProps={apiProps}
+          />
+        );
+      case 'enhance':
+        return (
+          <TaskAIEnhancer
+            tasks={selectedTasks}
+            onBack={() => setStep('extract')}
+            onContinue={handleContinueToReview}
+          />
+        );
+      case 'review':
+        return (
+          <TaskReview
+            tasks={enhancedTasks}
+            projectName={projectName}
+            onBack={() => setStep('enhance')}
+            onContinue={handleContinueToPreview}
+            apiProps={apiProps}
+          />
+        );
+      case 'complete':
+        return (
+          <CompletionScreen
+            reviewedTasks={reviewedTasks}
+            projectName={projectName}
+            isConnected={isConnected}
+            onStartOver={handleStartOver}
+            onReconnect={handleReconnect}
+          />
+        );
+      default:
+        return (
+          <TaskConverterContent />
+        );
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex flex-col px-4 py-12">
       <div className="container mx-auto max-w-3xl">
@@ -158,24 +213,11 @@ const TaskConverterPage = () => {
         )}
         
         <main className="flex-1">
-          {step === 'complete' ? (
-            <CompletionScreen 
-              reviewedTasks={reviewedTasks}
-              projectName={projectName}
-              isConnected={isConnected}
-              onStartOver={handleStartOver}
-              onReconnect={handleReconnect}
-            />
-          ) : (
-            <TaskConverterContent />
-          )}
+          {renderStepContent()}
         </main>
       </div>
     </div>
   );
 };
-
-// Import only here to avoid circular dependencies
-import { parseTextIntoTasks } from '@/utils/parser';
 
 export default TaskConverterPage;
