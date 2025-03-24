@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useToast } from "@/components/ui/use-toast";
-import { getProjectsForDropdown } from '@/utils/motion';
+import { getProjectsForDropdown, createProject } from '@/utils/motion';
 import ProjectDropdown from './ProjectDropdown';
 import ProjectActions from './ProjectActions';
 import ProjectMessages from './ProjectMessages';
