@@ -96,15 +96,32 @@ export const getTasksWithRecommendations = async (tasks: Task[]): Promise<Task[]
   }
 
   try {
-    // Get the most recently saved tasks from Supabase
-    const { data: savedTasks, error } = await supabase
+    // Call our Supabase edge function to enhance tasks with LLM
+    const { data, error } = await supabase.functions.invoke('enhance-tasks', {
+      body: { tasks }
+    });
+
+    if (error) {
+      console.error("Error invoking enhance-tasks function:", error);
+      return tasks; // Return original tasks if there's an error
+    }
+
+    console.log("Edge function response:", data);
+    
+    if (data && data.tasks) {
+      // Return the enhanced tasks with suggestions
+      return data.tasks;
+    }
+    
+    // If we don't get valid data back, fall back to getting saved tasks from Supabase
+    const { data: savedTasks, error: fetchError } = await supabase
       .from('extracted_tasks')
       .select('*')
       .order('created_at', { ascending: false })
       .limit(tasks.length);
     
-    if (error) {
-      console.error("Error fetching saved tasks from Supabase:", error);
+    if (fetchError) {
+      console.error("Error fetching saved tasks from Supabase:", fetchError);
       return tasks; // Return original tasks if there's an error
     }
 
@@ -116,7 +133,6 @@ export const getTasksWithRecommendations = async (tasks: Task[]): Promise<Task[]
     console.log("Retrieved saved tasks from Supabase:", savedTasks);
     
     // Map Supabase tasks back to our Task type format
-    // This is where we'd implement LLM recommendations in a real implementation
     const enhancedTasks: Task[] = tasks.map(task => {
       // Find the corresponding saved task
       const savedTask = savedTasks.find(st => st.title === task.title);

@@ -1,17 +1,22 @@
 
-/**
- * Type definitions for the task parser
- */
+export interface TaskSuggestions {
+  dueDate?: string | null;
+  priority?: string | null;
+  description?: string | null;
+  assignee?: string | null;
+  timeEstimate?: string | null;
+  labels?: string[] | null;
+}
 
 export interface Task {
   id: string;
   title: string;
-  description: string;
+  description: string | null;
   dueDate: string | null;
-  startDate: string | null;  // Added for Motion's start date
-  hardDeadline: boolean;     // Added for Motion's hard deadline flag
-  priority: 'low' | 'medium' | 'high' | null;
-  status: 'todo' | 'in_progress' | 'completed' | string | null;
+  startDate: string | null;
+  hardDeadline: boolean;
+  priority: "low" | "medium" | "high" | null;
+  status: string;
   assignee: string | null;
   workspace_id: string | null;
   isRecurring: boolean;
@@ -20,29 +25,16 @@ export interface Task {
   projectId: string | null;
   duration: string | null;
   timeEstimate: number | null;
-  folder: string | null;      // Added for Motion's folder organization
-  autoScheduled: boolean;     // Added for auto-scheduled flag
-  isPending: boolean;         // Added for pending status
-  schedule: string | null;    // Added for schedule preference (e.g., "Work hours")
-  labels: string[] | null;    // Added for task labels
-  customFields: Record<string, any> | null;  // Added for custom fields
+  folder: string | null;
+  autoScheduled: boolean;
+  isPending: boolean;
+  schedule: string | null;
+  labels: string[] | null;
+  customFields: Record<string, any> | null;
+  suggestions?: TaskSuggestions;
 }
 
 export interface RecurringTaskInfo {
   isRecurring: boolean;
   frequency: string | null;
-}
-
-// Ensure these validation interfaces are properly exported
-export interface TaskValidationResult {
-  valid: boolean;
-  missingFields: string[];
-}
-
-export interface MultiTaskValidationResult {
-  allValid: boolean;
-  tasksWithMissingFields: Array<{
-    task: Task;
-    missingFields: string[];
-  }>;
 }
