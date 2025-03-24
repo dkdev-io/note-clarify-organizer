@@ -101,6 +101,10 @@ const ProjectSelect: React.FC<ProjectSelectProps> = ({
     }
   };
 
+  const handleCreateNewProject = () => {
+    setShowNewProjectDialog(true);
+  };
+
   useEffect(() => {
     if (selectedProject && projects.length > 0) {
       const project = projects.find(p => p.label === selectedProject);
@@ -126,6 +130,7 @@ const ProjectSelect: React.FC<ProjectSelectProps> = ({
             selectedProjectId={selectedProjectId}
             onSelectProject={handleSelectProject}
             isLoading={isLoading}
+            onCreateNewProject={handleCreateNewProject}
           />
           <ProjectActions
             onRefresh={loadProjects}

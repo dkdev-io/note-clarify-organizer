@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Label } from "@/components/ui/label";
-import { LoaderIcon } from "lucide-react";
+import { LoaderIcon, PlusCircle } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -17,20 +17,28 @@ interface ProjectDropdownProps {
   selectedProjectId: string | null;
   onSelectProject: (projectId: string) => void;
   isLoading: boolean;
+  onCreateNewProject: () => void;
 }
 
 const ProjectDropdown: React.FC<ProjectDropdownProps> = ({
   projects,
   selectedProjectId,
   onSelectProject,
-  isLoading
+  isLoading,
+  onCreateNewProject
 }) => {
   return (
     <div className="relative flex-1">
       <Label htmlFor="project" className="mb-2 block">Select Project</Label>
       <Select
         value={selectedProjectId || undefined}
-        onValueChange={onSelectProject}
+        onValueChange={(value) => {
+          if (value === "create-new") {
+            onCreateNewProject();
+          } else {
+            onSelectProject(value);
+          }
+        }}
         disabled={isLoading}
       >
         <SelectTrigger className="w-full">
@@ -43,7 +51,7 @@ const ProjectDropdown: React.FC<ProjectDropdownProps> = ({
             <SelectValue placeholder="Select a project" />
           )}
         </SelectTrigger>
-        <SelectContent className="bg-white">
+        <SelectContent className="bg-white z-50">
           <SelectGroup>
             <SelectLabel>Projects</SelectLabel>
             {projects.map(project => (
@@ -51,6 +59,12 @@ const ProjectDropdown: React.FC<ProjectDropdownProps> = ({
                 {project.label}
               </SelectItem>
             ))}
+            <SelectItem value="create-new" className="text-primary font-medium">
+              <div className="flex items-center">
+                <PlusCircle className="h-4 w-4 mr-2" />
+                Create New Project
+              </div>
+            </SelectItem>
           </SelectGroup>
         </SelectContent>
       </Select>
