@@ -4,7 +4,6 @@ import { Step } from '../../types';
 import { ApiProps } from '../../types';
 import { processNotes } from '../noteProcessing';
 import { parseTextIntoTasks } from '@/utils/task-parser';
-import { extractPotentialNames, findUserMatches } from '@/utils/name-matching';
 
 // Handle moving from note input to task extraction
 export const handleParseText = async (
@@ -16,8 +15,7 @@ export const handleParseText = async (
   setProjectName: (name: string | null) => void,
   setExtractedTasks: (tasks: Task[]) => void,
   setStep: (step: Step) => void,
-  toast: ToastType,
-  setUnrecognizedNames?: (names: string[]) => void
+  toast: ToastType
 ) => {
   try {
     if (!text || text.trim() === '') {
@@ -36,34 +34,7 @@ export const handleParseText = async (
     const effectiveProjectName = apiProps.selectedProject || providedProjectName;
     console.log(`Effective project name: ${effectiveProjectName || 'none'}`);
     
-    // Pre-check for potential name issues if we're connected to Motion
-    if (apiProps.isConnected && apiProps.users && apiProps.users.length > 0) {
-      const potentialNames = extractPotentialNames(text);
-      console.log('Potential assignee names found in text:', potentialNames);
-      console.log('Available Motion users:', apiProps.users);
-      
-      // Check each potential name against Motion users
-      const unmatchedNames = potentialNames.filter(name => {
-        const matches = findUserMatches(name, apiProps.users || [], 0.6);
-        return matches.length === 0;
-      });
-      
-      if (unmatchedNames.length > 0) {
-        console.warn('Found unmatched names:', unmatchedNames);
-        
-        if (setUnrecognizedNames) {
-          // If this is a check for unrecognized names, return them without processing
-          setUnrecognizedNames(unmatchedNames);
-          // Don't set processing=true here so we don't show a loading spinner during name selection
-          return;
-        }
-        
-        // Continue processing with the text as is
-        // No early return, so we proceed with processing
-      }
-    }
-    
-    // If we get here, we're ready to actually process the notes
+    // Start processing
     setIsProcessing(true);
     
     const { tasks, usedFallback } = await processNotes(

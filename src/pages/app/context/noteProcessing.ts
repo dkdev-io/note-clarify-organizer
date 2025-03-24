@@ -1,8 +1,8 @@
-
 import { Task } from '@/utils/task-parser/types';
 import { parseTextIntoTasks } from '@/utils/task-parser';
 import { processNotesWithLLM } from '@/utils/llm';
 import { ToastType } from './providers';
+import { findUserMatches } from '@/utils/name-matching';
 
 // Process notes with both LLM and fallback parser
 export async function processNotes(
@@ -10,14 +10,13 @@ export async function processNotes(
   effectiveProjectName: string | null,
   toast: ToastType,
   motionUsers: any[] = []
-): Promise<{ tasks: Task[], usedFallback: boolean, unrecognizedNames?: string[] }> {
+): Promise<{ tasks: Task[], usedFallback: boolean }> {
   // Always start with the fallback parser to ensure we have results
   const fallbackTasks = parseTextIntoTasks(text, effectiveProjectName);
   console.log(`Fallback parser extracted ${fallbackTasks.length} tasks`);
   
   let tasks: Task[] = fallbackTasks;
   let usedFallback = true;
-  let unrecognizedNames: string[] | undefined = undefined;
   
   try {
     // Attempt to use the LLM processor if we have more than simple task text
@@ -41,18 +40,13 @@ export async function processNotes(
           timeoutPromise
         ]);
         
-        // Check if we have unrecognized names
-        if (llmResult.unrecognizedNames && llmResult.unrecognizedNames.length > 0) {
-          console.log('Detected unrecognized names:', llmResult.unrecognizedNames);
-          unrecognizedNames = llmResult.unrecognizedNames;
-          // Return the fallback tasks along with unrecognized names
-          return { tasks: fallbackTasks, usedFallback: true, unrecognizedNames };
-        }
+        // Process user matches automatically
+        const processedResult = handleUserMatching(llmResult.tasks, motionUsers);
         
         // If we have tasks from LLM, use them
-        if (llmResult.tasks && llmResult.tasks.length > 0) {
-          console.log(`LLM processor extracted ${llmResult.tasks.length} tasks`);
-          tasks = llmResult.tasks;
+        if (processedResult && processedResult.length > 0) {
+          console.log(`LLM processor extracted ${processedResult.length} tasks`);
+          tasks = processedResult;
           usedFallback = false;
           
           toast({
@@ -86,13 +80,7 @@ export async function processNotes(
     // Provide a helpful error message based on the type of error
     const errorMessage = error instanceof Error ? error.message : String(error);
     
-    if (errorMessage.includes('Unrecognized users')) {
-      toast({
-        title: "Unrecognized users in notes",
-        description: errorMessage,
-        variant: "destructive"
-      });
-    } else if (errorMessage.includes('exceeded your current quota') || 
+    if (errorMessage.includes('exceeded your current quota') || 
         errorMessage.includes('API key')) {
       toast({
         title: "AI service unavailable",
@@ -111,12 +99,49 @@ export async function processNotes(
     }
   }
   
+  // Process the fallback tasks as well for user matching if we're using them
   if (usedFallback) {
+    tasks = handleUserMatching(tasks, motionUsers);
+    
     toast({
       title: "Using basic task parser",
       description: `Extracted ${tasks.length} tasks using simple parsing.`
     });
   }
   
-  return { tasks, usedFallback, unrecognizedNames };
+  return { tasks, usedFallback };
+}
+
+// Helper function to automatically match users with best effort
+function handleUserMatching(tasks: Task[], users: any[]): Task[] {
+  if (!users || users.length === 0) {
+    return tasks;
+  }
+  
+  return tasks.map(task => {
+    // Skip if no assignee or already matched
+    if (!task.assignee) {
+      return task;
+    }
+    
+    // Try to find a match for the assigned name
+    const matches = findUserMatches(task.assignee, users, 0.5); // Lower threshold for better matching
+    
+    if (matches && matches.length > 0) {
+      // Use the best match (first one)
+      const bestMatch = matches[0];
+      console.log(`Auto-matched "${task.assignee}" to user "${bestMatch.name}" (id: ${bestMatch.id})`);
+      
+      // Return the task with the matched user details
+      return {
+        ...task,
+        assignee: bestMatch.name,
+        assigneeId: bestMatch.id
+      };
+    }
+    
+    // If no match found, keep the original task
+    console.log(`Couldn't find a match for "${task.assignee}", keeping as is`);
+    return task;
+  });
 }

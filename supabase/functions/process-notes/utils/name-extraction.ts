@@ -25,67 +25,66 @@ export function extractNamesFromText(text: string): string[] {
   return [...new Set(allNames)];
 }
 
-// Check if names in the text exist in the Motion users
-export function findUnrecognizedNames(extractedNames: string[], motionUsers: any[]): string[] {
+// Try to find best matches for names in the text against Motion users
+export function findNameMatches(extractedNames: string[], motionUsers: any[]): Record<string, any> {
   if (!motionUsers || !Array.isArray(motionUsers) || motionUsers.length === 0) {
-    return []; // Can't verify without user list
+    return {}; // Can't match without user list
   }
   
-  console.log('Checking names against Motion users:', extractedNames);
+  console.log('Trying to match names against Motion users:', extractedNames);
   
   const userNames = motionUsers.map(user => {
     // Get both full name and first name
     const fullName = user.name || '';
     const firstName = fullName.split(' ')[0].toLowerCase();
-    return { fullName: fullName.toLowerCase(), firstName };
+    return { 
+      user,
+      fullName: fullName.toLowerCase(), 
+      firstName,
+      id: user.id
+    };
   }).filter(name => name.firstName); // Remove empty names
   
-  return extractedNames.filter(name => {
+  const matches: Record<string, any> = {};
+  
+  extractedNames.forEach(name => {
     const nameLower = name.toLowerCase();
+    let bestMatch = null;
+    let bestScore = 0;
     
-    // Check direct match with first names
-    if (userNames.some(user => user.firstName === nameLower)) {
-      return false; // Name is recognized
-    }
-    
-    // Check full name match
-    if (userNames.some(user => user.fullName.includes(nameLower))) {
-      return false; // Name is recognized
-    }
-    
-    // Check partial matches (e.g., "Dan" could match "Daniel")
-    for (const userName of userNames) {
-      // Check if name is contained in username or vice versa
-      if (userName.firstName.includes(nameLower) || nameLower.includes(userName.firstName)) {
-        if (nameLower.length > 2) { // Avoid matching single letters
-          return false; // Name is potentially recognized
-        }
+    for (const userData of userNames) {
+      let score = 0;
+      
+      // Exact first name match is highest priority
+      if (userData.firstName === nameLower) {
+        score = 1.0;
+      } 
+      // First name contains or is contained in name
+      else if (userData.firstName.includes(nameLower) || nameLower.includes(userData.firstName)) {
+        score = 0.8;
+      }
+      // Full name contains the name
+      else if (userData.fullName.includes(nameLower)) {
+        score = 0.7;
+      }
+      
+      if (score > bestScore) {
+        bestScore = score;
+        bestMatch = userData.user;
       }
     }
     
-    return true; // Name is not recognized
+    if (bestMatch && bestScore > 0.5) {
+      matches[name] = bestMatch;
+    }
   });
+  
+  console.log('Found matches:', Object.keys(matches).length);
+  return matches;
 }
 
-// Handle name verification and return response if unrecognized names found
+// Skip user verification and accept best effort matching
 export function verifyNames(text: string, motionUsers: any[] | undefined) {
-  if (motionUsers && Array.isArray(motionUsers) && motionUsers.length > 0) {
-    const extractedNames = extractNamesFromText(text);
-    console.log('Extracted potential names from text:', extractedNames);
-    
-    const unrecognizedNames = findUnrecognizedNames(extractedNames, motionUsers);
-    
-    if (unrecognizedNames.length > 0) {
-      console.warn('Found unrecognized names:', unrecognizedNames);
-      return new Response(
-        JSON.stringify({ 
-          unrecognizedNames, 
-          tasks: [] 
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-  }
-  
+  // We no longer stop for verification, just use auto-matching
   return null;
 }

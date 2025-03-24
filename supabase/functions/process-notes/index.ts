@@ -2,7 +2,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { handleCors, corsHeaders } from "./utils/cors.ts";
-import { verifyNames } from "./utils/name-extraction.ts";
+import { extractNamesFromText, findNameMatches } from "./utils/name-extraction.ts";
 import { createErrorResponse } from "./utils/response-handler.ts";
 import { processWithOpenAI } from "./providers/openai-provider.ts";
 import { processWithHuggingFace } from "./providers/huggingface-provider.ts";
@@ -44,14 +44,16 @@ serve(async (req) => {
     console.log(`Processing notes: ${text.length} characters${projectName ? ` for project '${projectName}'` : ''}`);
     console.log(`Available Motion users: ${motionUsers ? motionUsers.length : 0}`);
 
-    // Check for unrecognized names if motionUsers provided
-    const nameVerificationResponse = verifyNames(text, motionUsers);
-    if (nameVerificationResponse) return nameVerificationResponse;
+    // Extract potential assignee names from the text
+    const extractedNames = extractNamesFromText(text);
+    
+    // Find best matches for names if Motion users are provided
+    const nameMatches = motionUsers ? findNameMatches(extractedNames, motionUsers) : {};
 
     // Try to use OpenAI, with simplified error handling and retry logic
     try {
       console.log('Attempting to process with OpenAI...');
-      const openaiResult = await processWithOpenAI(text, projectName);
+      const openaiResult = await processWithOpenAI(text, projectName, nameMatches);
       console.log('Successfully processed with OpenAI');
       return openaiResult;
     } catch (openAiError) {
@@ -65,7 +67,7 @@ serve(async (req) => {
         )) {
         try {
           console.log('Attempting fallback to Hugging Face...');
-          const huggingFaceResult = await processWithHuggingFace(text, projectName);
+          const huggingFaceResult = await processWithHuggingFace(text, projectName, nameMatches);
           console.log('Successfully processed with Hugging Face');
           return huggingFaceResult;
         } catch (hfError) {
