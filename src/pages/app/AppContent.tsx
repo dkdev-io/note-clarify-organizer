@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { useAppContext } from './context/AppContextProvider';
 import AppLayout from './components/AppLayout';
 import ConnectStep from './components/ConnectStep';
@@ -8,8 +9,14 @@ import TasksStep from './components/TasksStep';
 import CompleteStep from './components/CompleteStep';
 import { handleWorkspaceSelect } from './context/handlers/apiHandlers';
 import { Task } from '@/utils/parser';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { supabase } from '@/lib/supabase';
 
 const AppContent: React.FC = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [isAuthenticating, setIsAuthenticating] = useState(true);
+  
   const { 
     step,
     noteText,
@@ -25,6 +32,35 @@ const AppContent: React.FC = () => {
     handleReconnect,
     setStep
   } = useAppContext();
+  
+  // Check authentication state and redirect if needed
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data } = await supabase.auth.getSession();
+      setIsAuthenticating(false);
+      
+      // If no session and not on login page, redirect to login
+      if (!data.session && location.pathname !== '/login') {
+        navigate('/login', { state: { from: location } });
+      }
+    };
+    
+    checkAuth();
+    
+    // Set up auth state listener
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth state changed in AppContent:', event);
+      if (!session && location.pathname !== '/login') {
+        navigate('/login', { state: { from: location } });
+      }
+    });
+    
+    return () => {
+      if (authListener?.subscription) {
+        authListener.subscription.unsubscribe();
+      }
+    };
+  }, [navigate, location]);
   
   // State for handling unrecognized users
   const [unrecognizedUserMappings, setUnrecognizedUserMappings] = useState<Record<string, string | null>>({});
@@ -77,6 +113,15 @@ const AppContent: React.FC = () => {
   const handleTasksAddToMotion = (tasks: Task[], updatedProjectName: string | null, unassignedCount: number = 0) => {
     handleAddToMotion(tasks, updatedProjectName, unassignedCount);
   };
+
+  // If still checking authentication, show loading
+  if (isAuthenticating) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="animate-pulse">Loading...</div>
+      </div>
+    );
+  }
   
   const renderStepContent = () => {
     switch (step) {

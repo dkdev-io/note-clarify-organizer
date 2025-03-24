@@ -17,8 +17,8 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Check if the user is trying to skip authentication
-  const isSkipping = sessionStorage.getItem('skip_auth') === 'true';
+  // Force check for authentication - don't allow skipping in production
+  const isSkipping = process.env.NODE_ENV === 'development' && sessionStorage.getItem('skip_auth') === 'true';
 
   useEffect(() => {
     console.log('ProtectedRoute - checking auth, skip_auth:', isSkipping);
@@ -43,6 +43,11 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
         const { data } = await supabase.auth.getSession();
         console.log('Auth check result:', data.session ? 'Has session' : 'No session');
         setAuthenticated(!!data.session);
+        
+        // If no session, redirect to login
+        if (!data.session) {
+          console.log('No session, redirecting to login');
+        }
       } catch (error) {
         console.error('Auth check error:', error);
         setAuthenticated(false);
@@ -65,7 +70,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
         authListener.subscription.unsubscribe();
       }
     };
-  }, [isSkipping]);
+  }, [isSkipping, location]);
 
   // Show loading spinner or placeholder while checking auth
   if (loading) {
