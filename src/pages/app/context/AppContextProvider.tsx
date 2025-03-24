@@ -1,134 +1,231 @@
-
-import React, { createContext, useState, useContext, useEffect } from 'react';
-import { AppContextType } from './contextTypes';
-import { ApiProps, Step } from '../types';
+import React, { createContext, useState, useContext } from 'react';
+import { useToast } from "@/components/ui/use-toast";
 import { Task } from '@/utils/parser';
-import { useToast } from "@/hooks/use-toast";
-import { 
-  handleApiConnect as apiConnectHandler,
-  handleSkipConnect as skipConnectHandler,
-  handleStartOver as startOverHandler,
-  handleReconnect as reconnectHandler
-} from './handlers/apiHandlers';
-import {
-  handleParseText as parseTextHandler,
-  handleAddToMotion as addToMotionHandler
-} from './handlers/taskHandlers';
 
-// Create the context with a default value
-const AppContext = createContext<AppContextType | undefined>(undefined);
+interface ApiProps {
+  isConnected: boolean;
+  apiKey: string | null;
+  workspaces: any[];
+  users: any[];
+  selectedWorkspaceId: string | null;
+  selectedProject: string | null;
+  selectedProjectId: string | null;
+}
 
-// Provider component
-export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Set the initial step to 'connect' to start with the Motion connect screen
-  const [step, setStep] = useState<Step>('connect');
-  const [noteText, setNoteText] = useState('');
+interface AppContextProps {
+  step: string;
+  setStep: (step: string) => void;
+  noteText: string;
+  setNoteText: (noteText: string) => void;
+  extractedTasks: Task[];
+  setExtractedTasks: (tasks: Task[]) => void;
+  projectName: string | null;
+  setProjectName: (projectName: string | null) => void;
+  apiProps: ApiProps;
+  updateApiProps: (newProps: Partial<ApiProps>) => void;
+  handleApiConnect: (apiKey: string, workspaces: any[], workspaceId?: string, project?: string) => void;
+  handleSkipConnect: () => void;
+  handleStartOver: () => void;
+  handleReconnect: () => void;
+  isLoading: boolean;
+  setIsLoading: (isLoading: boolean) => void;
+  handleParseText: (
+    text: string, 
+    providedProjectName: string | null
+  ) => void;
+  handleAddToMotion: (tasks: Task[], projectName: string | null, unassignedCount?: number) => void;
+}
+
+const AppContext = createContext<AppContextProps | undefined>(undefined);
+
+interface AppProviderProps {
+  children: React.ReactNode;
+}
+
+async function processNotesText(text: string, projectName: string | null, motionUsers: any[] | undefined) {
+  const res = await fetch('/api/process-notes', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ text, projectName, motionUsers }),
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json();
+    console.error('Error from /api/process-notes:', errorData);
+    throw new Error(errorData.error || 'Failed to process notes');
+  }
+
+  return await res.json();
+}
+
+export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
+  const [step, setStep] = useState<string>('connect');
+  const [noteText, setNoteText] = useState<string>('');
   const [extractedTasks, setExtractedTasks] = useState<Task[]>([]);
   const [projectName, setProjectName] = useState<string | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const { toast } = useToast();
   
   // Motion API connection state
   const [apiProps, setApiProps] = useState<ApiProps>({
+    isConnected: false,
     apiKey: null,
     workspaces: [],
-    isConnected: false,
+    users: [],
     selectedWorkspaceId: null,
     selectedProject: null,
-    selectedProjectId: null,
-    users: [],
+    selectedProjectId: null
   });
-
-  // Check for proxy mode on mount to set the connection state properly
-  useEffect(() => {
-    const usingProxy = sessionStorage.getItem('using_motion_proxy') === 'true';
-    if (usingProxy) {
-      updateApiProps({
-        isConnected: true,
-        apiKey: 'proxy_mode'
-      });
-    }
-  }, []);
-
-  // Update API props
-  const updateApiProps = (props: Partial<ApiProps>) => {
-    setApiProps(prev => {
-      // If workspace is changing, clear the selected project
-      if (props.selectedWorkspaceId && props.selectedWorkspaceId !== prev.selectedWorkspaceId) {
-        return { ...prev, ...props, selectedProject: null, selectedProjectId: null };
-      }
-      return { ...prev, ...props };
-    });
-  };
   
-  // Handler functions - now using the extracted handlers
-  const handleApiConnect = (apiKey: string, fetchedWorkspaces: any[], workspaceId?: string, project?: string, users?: any[]) => {
-    apiConnectHandler(apiKey, fetchedWorkspaces, setApiProps, setProjectName, setStep, workspaceId, project, users);
+  const updateApiProps = (newProps: Partial<ApiProps>) => {
+    setApiProps(prevProps => ({
+      ...prevProps,
+      ...newProps
+    }));
+  };
+
+  const handleApiConnect = (apiKey: string, workspaces: any[], workspaceId?: string, project?: string) => {
+    updateApiProps({
+      apiKey: apiKey,
+      workspaces: workspaces,
+      selectedWorkspaceId: workspaceId || null,
+      selectedProject: project || null,
+      isConnected: true
+    });
+    setStep('workspace');
   };
 
   const handleSkipConnect = () => {
-    skipConnectHandler(setStep, updateApiProps);
-  };
-
-  const handleParseText = async (text: string, providedProjectName: string | null, setUnrecognizedNames?: (names: string[]) => void) => {
-    await parseTextHandler(
-      text, 
-      providedProjectName, 
-      setNoteText, 
-      setIsProcessing, 
-      apiProps, 
-      setProjectName, 
-      setExtractedTasks, 
-      setStep, 
-      toast,
-      setUnrecognizedNames
-    );
-  };
-
-  const handleAddToMotion = (tasks: Task[], updatedProjectName: string | null, unassignedCount: number = 0) => {
-    addToMotionHandler(tasks, updatedProjectName, setProjectName, setStep, toast, unassignedCount);
-  };
-
-  const handleStartOver = () => {
-    startOverHandler(setNoteText, setExtractedTasks, setProjectName, apiProps, setStep);
-  };
-
-  const handleReconnect = () => {
-    reconnectHandler(setStep);
+    updateApiProps({
+      isConnected: false,
+      apiKey: null,
+      workspaces: [],
+      users: [],
+      selectedWorkspaceId: null,
+      selectedProject: null,
+      selectedProjectId: null
+    });
+    setStep('input');
   };
   
-  // Create the context value
-  const contextValue: AppContextType = {
-    step,
-    setStep,
-    noteText,
-    setNoteText,
-    extractedTasks,
-    setExtractedTasks,
-    projectName,
-    setProjectName,
-    apiProps,
-    updateApiProps,
-    handleApiConnect,
-    handleSkipConnect,
-    handleParseText,
-    handleAddToMotion,
-    handleStartOver,
-    handleReconnect,
-    isProcessing
+  const handleStartOver = () => {
+    setNoteText('');
+    setExtractedTasks([]);
+    setProjectName(null);
+    setStep('input');
+  };
+  
+  const handleReconnect = () => {
+    setStep('connect');
+  };
+
+  const handleTaskParse = (
+    text: string, 
+    providedProjectName: string | null
+  ) => {
+    // Store the raw text for later reference
+    setNoteText(text);
+    
+    // Extract a project name from the provided value or text
+    const effectiveProjectName = providedProjectName || apiProps.selectedProject;
+    setProjectName(effectiveProjectName);
+    
+    // Process the text into tasks
+    console.log('Parsing text into tasks with project name:', effectiveProjectName);
+    
+    // Show a loading indicator
+    setIsLoading(true);
+    
+    // Process the text through our edge function
+    processNotesText(text, effectiveProjectName, apiProps.users)
+      .then(({ tasks, error }) => {
+        if (error) {
+          console.error('Error parsing text:', error);
+          toast({
+            title: "Error extracting tasks",
+            description: "There was a problem processing your notes. Please try again.",
+            variant: "destructive"
+          });
+          return;
+        }
+        
+        console.log('Tasks extracted:', tasks);
+        
+        if (tasks && tasks.length > 0) {
+          // Ensure tasks have project names and workspace IDs set
+          const processedTasks = tasks.map(task => ({
+            ...task,
+            project: effectiveProjectName || task.project,
+            workspace_id: apiProps.selectedWorkspaceId || task.workspace_id
+          }));
+          
+          // Store the tasks for the review step
+          setExtractedTasks(processedTasks);
+          
+          // Move to the tasks review step
+          setStep('tasks');
+          
+          toast({
+            title: "Tasks extracted",
+            description: `Successfully extracted ${tasks.length} tasks from your notes.`,
+          });
+        } else {
+          toast({
+            title: "No tasks found",
+            description: "No tasks were found in your notes. Try adding more details or keywords like 'todo'.",
+            variant: "destructive"
+          });
+        }
+      })
+      .catch(err => {
+        console.error('Error in task parsing:', err);
+        toast({
+          title: "Error extracting tasks",
+          description: "There was a problem processing your notes. Please try again.",
+          variant: "destructive"
+        });
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  };
+  
+  const handleAddToMotion = (tasks: Task[], projectName: string | null, unassignedCount: number = 0) => {
+    console.log('Adding tasks to Motion:', tasks, projectName, unassignedCount);
+    setStep('complete');
   };
 
   return (
-    <AppContext.Provider value={contextValue}>
+    <AppContext.Provider value={{
+      step,
+      setStep,
+      noteText,
+      setNoteText,
+      extractedTasks,
+      setExtractedTasks,
+      projectName,
+      setProjectName,
+      apiProps,
+      updateApiProps,
+      handleApiConnect,
+      handleSkipConnect,
+      handleStartOver,
+      handleReconnect,
+      isLoading,
+      setIsLoading,
+      handleParseText: handleTaskParse,
+      handleAddToMotion
+    }}>
       {children}
     </AppContext.Provider>
   );
 };
 
-// Hook to use the app context
 export const useAppContext = () => {
   const context = useContext(AppContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useAppContext must be used within an AppProvider');
   }
   return context;

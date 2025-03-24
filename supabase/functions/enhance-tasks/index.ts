@@ -1,10 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { corsHeaders } from "../process-notes/utils/cors.ts";
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -13,44 +10,41 @@ serve(async (req) => {
   }
 
   try {
+    // Parse request body
     const { tasks } = await req.json();
     
-    if (!tasks || !Array.isArray(tasks) || tasks.length === 0) {
+    if (!tasks || !Array.isArray(tasks)) {
+      console.error('Missing or invalid tasks array');
       return new Response(
-        JSON.stringify({ error: 'Invalid or empty tasks array provided' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+        JSON.stringify({ 
+          error: 'Valid tasks array is required',
+          tasks: [] 
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-
-    // This is where we would call the LLM to enhance tasks
-    // For now, we'll just return the tasks with mock enhancements
-    const enhancedTasks = tasks.map(task => {
-      // Example enhancements:
-      return {
-        ...task,
-        suggestions: {
-          dueDate: task.dueDate ? null : "Consider adding a due date",
-          priority: task.priority ? null : "Consider setting a priority",
-          description: (!task.description || task.description.length < 10) 
-            ? "Consider adding a more detailed description" 
-            : null
-        }
-      };
-    });
-
+    
+    console.log(`Enhancing ${tasks.length} tasks with AI`);
+    
+    // For now, just pass through the tasks without enhancement
+    // In a real implementation, you would call an AI service here
+    const enhancedTasks = tasks;
+    
     return new Response(
-      JSON.stringify({ 
-        tasks: enhancedTasks, 
-        message: 'Tasks enhanced successfully' 
-      }),
+      JSON.stringify({ tasks: enhancedTasks }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    console.error('Error in enhance-tasks function:', error);
-    
+    console.error('Error enhancing tasks with AI:', error);
     return new Response(
-      JSON.stringify({ error: error.message || 'An error occurred while enhancing tasks' }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      JSON.stringify({ 
+        error: error.message || 'Unknown error',
+        tasks: [] 
+      }),
+      { 
+        status: 200, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      }
     );
   }
 });
