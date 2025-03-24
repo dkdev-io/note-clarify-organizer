@@ -21,10 +21,12 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
   const { toast } = useToast();
 
   useEffect(() => {
+    // Check if user is already in proxy mode
     const usingProxy = sessionStorage.getItem('using_motion_proxy') === 'true';
     setIsProxyMode(usingProxy);
     
     if (usingProxy) {
+      // In proxy mode, auto-connect and move to workspace selection
       setIsKeyValid(true);
       const defaultWorkspaces = [
         { id: 'proxy-workspace-1', name: 'Default Workspace' }
@@ -32,11 +34,14 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
       
       toast({
         title: "Connected via Proxy",
-        description: "You're connected to Motion via the application proxy. No API key required.",
+        description: "You're connected to Motion via the application proxy. Now select your workspace and project.",
       });
       
-      onConnect('proxy_mode', defaultWorkspaces, 'proxy-workspace-1');
+      // Do not automatically select workspace/project in proxy mode
+      // Just provide the workspaces and let the user select
+      onConnect('proxy_mode', defaultWorkspaces);
     } else {
+      // If not in proxy mode, check for stored API key
       const storedKey = retrieveApiKey();
       if (storedKey) {
         setApiKey(storedKey);
@@ -44,7 +49,6 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
           title: "API Key Loaded",
           description: "A previously stored API key has been loaded. Click Connect to validate.",
         });
-        // Don't automatically connect here, just show the key was loaded
       }
     }
   }, [toast, onConnect]);
@@ -136,6 +140,7 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
               description: "Your Motion API key is valid. Continue to select workspace and project.",
             });
             
+            // Just pass the API key and workspaces, don't auto-select workspace/project
             onConnect(trimmedKey, fetchedWorkspaces);
           }
         })

@@ -62,6 +62,17 @@ const AppContent: React.FC = () => {
     };
   }, [navigate, location]);
   
+  // When authenticated, ensure we start with the connect step
+  useEffect(() => {
+    if (!isAuthenticating && !apiProps.isConnected) {
+      // If authenticated but not connected to Motion, set step to connect
+      setStep('connect');
+    } else if (!isAuthenticating && apiProps.isConnected && !apiProps.selectedWorkspaceId) {
+      // If connected to Motion but no workspace selected, go to workspace step
+      setStep('workspace');
+    }
+  }, [isAuthenticating, apiProps.isConnected, apiProps.selectedWorkspaceId, setStep]);
+  
   // State for handling unrecognized users
   const [unrecognizedUserMappings, setUnrecognizedUserMappings] = useState<Record<string, string | null>>({});
   

@@ -21,7 +21,7 @@ export const handleApiConnect = (
     storeApiKey(apiKey);
   }
   
-  // Just update API key and workspaces but move to workspace selection step instead
+  // Update API key and workspaces
   setApiProps({
     apiKey,
     workspaces: fetchedWorkspaces,
@@ -32,14 +32,8 @@ export const handleApiConnect = (
     users: users || [],
   });
   
-  // If connected via proxy mode with default workspace, skip to input
-  if (apiKey === 'proxy_mode' && workspaceId) {
-    setProjectName(project || null);
-    setStep('input');
-  } else {
-    // Otherwise go to workspace selection step
-    setStep('workspace');
-  }
+  // Always move to workspace selection step after connecting
+  setStep('workspace');
 };
 
 // Handle skipping API connection

@@ -20,8 +20,8 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 // Provider component
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Set the initial step to 'input' so users start with the note input screen
-  const [step, setStep] = useState<Step>('input');
+  // Set the initial step to 'connect' to start with the Motion connect screen
+  const [step, setStep] = useState<Step>('connect');
   const [noteText, setNoteText] = useState('');
   const [extractedTasks, setExtractedTasks] = useState<Task[]>([]);
   const [projectName, setProjectName] = useState<string | null>(null);
