@@ -45,8 +45,8 @@ export const extractTasksFromText = async (text: string): Promise<Task[]> => {
       const tasksForDb = tasks.map(task => ({
         title: task.title,
         description: task.description || null,
-        due_date: task.dueDate ? new Date(task.dueDate) : null,
-        start_date: task.startDate ? new Date(task.startDate) : null,
+        due_date: task.dueDate ? new Date(task.dueDate).toISOString() : null,
+        start_date: task.startDate ? new Date(task.startDate).toISOString() : null,
         hard_deadline: task.hardDeadline || false,
         priority: task.priority || null,
         status: task.status || 'todo',
@@ -67,15 +67,19 @@ export const extractTasksFromText = async (text: string): Promise<Task[]> => {
       }));
 
       console.log("Saving tasks to Supabase:", tasksForDb);
-      const { data, error } = await supabase
-        .from('extracted_tasks')
-        .insert(tasksForDb)
-        .select();
       
-      if (error) {
-        console.error("Error saving tasks to Supabase:", error);
-      } else {
-        console.log("Tasks saved to Supabase successfully:", data);
+      // Insert tasks one by one to avoid type issues
+      for (const taskData of tasksForDb) {
+        const { data, error } = await supabase
+          .from('extracted_tasks')
+          .insert(taskData)
+          .select();
+        
+        if (error) {
+          console.error("Error saving task to Supabase:", error);
+        } else {
+          console.log("Task saved to Supabase successfully:", data);
+        }
       }
     } catch (error) {
       console.error("Error preparing tasks for Supabase:", error);
@@ -113,20 +117,18 @@ export const getTasksWithRecommendations = async (tasks: Task[]): Promise<Task[]
     
     // Map Supabase tasks back to our Task type format
     // This is where we'd implement LLM recommendations in a real implementation
-    // For now, we'll just use the saved tasks as a passthrough
-    const enhancedTasks = tasks.map(task => {
+    const enhancedTasks: Task[] = tasks.map(task => {
       // Find the corresponding saved task
       const savedTask = savedTasks.find(st => st.title === task.title);
       
       if (savedTask) {
-        // Add any fields from Supabase that might be enhanced
+        // Convert any fields that need type conversion and ensure we adhere to the Task interface
         return {
           ...task,
-          // Convert any fields that need type conversion
           dueDate: savedTask.due_date || task.dueDate,
           startDate: savedTask.start_date || task.startDate,
           hardDeadline: savedTask.hard_deadline || task.hardDeadline,
-          priority: savedTask.priority || task.priority,
+          priority: (savedTask.priority as "low" | "medium" | "high" | null) || task.priority,
           status: savedTask.status || task.status,
           assignee: savedTask.assignee || task.assignee,
           description: savedTask.description || task.description

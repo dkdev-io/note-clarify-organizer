@@ -1,6 +1,4 @@
 
-// This is a skeleton for the future LLM task enhancement function
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
