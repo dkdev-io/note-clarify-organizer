@@ -1,36 +1,41 @@
 
-# Reference: https://supabase.com/docs/guides/functions/local-development
-
+# Project ID
 project_id = "fvxfmlhvxmpmbtouarcp"
 
+# API Configuration
 [api]
 port = 54321
-schemes = ["http", "https"]
-host = "127.0.0.1"
 
+# Database Configuration
 [db]
 port = 54322
 
+# Studio Configuration
 [studio]
 port = 54323
 
+# Inbucket Configuration
 [inbucket]
 port = 54324
 
+# Storage Configuration
 [storage]
 file_size_limit = "50MiB"
 
+# Auth Configuration
 [auth]
 site_url = "https://projectize.lovable.app"
 additional_redirect_urls = ["https://projectize.lovable.app", "http://localhost:3000", "http://localhost:5173"]
-auto_confirm_new_users = true
 
-[[functions]]
-name = "process-notes"
+# Function Configurations
+[functions.process-notes]
 verify_jwt = false
 import_map = "./import_map.json"
 
-[[functions]]
-name = "process-task-batch"
+[functions.process-task-batch]
+verify_jwt = false
+import_map = "./import_map.json"
+
+[functions.process-task-enhancements]
 verify_jwt = false
 import_map = "./import_map.json"
