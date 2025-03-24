@@ -41,7 +41,7 @@ const RefactoredTaskReview: React.FC<RefactoredTaskReviewProps> = ({
     setEditingTaskId(null);
   };
 
-  const handleUpdateTask = (taskId: string, field: keyof Task, value: any) => {
+  const handleUpdateTask = (taskId: string, field: keyof Task | 'deleted', value: any) => {
     if (field === 'deleted') {
       setEditedTasks(editedTasks.filter(task => task.id !== taskId));
       return;

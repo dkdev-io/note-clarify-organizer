@@ -38,27 +38,10 @@ export function useTaskWorkflow() {
   
   const handleTaskParse = (
     text: string, 
-    providedProjectName: string | null, 
-    unrecognizedUserMappingsOrCallback?: Record<string, string | null> | ((names: string[]) => void)
+    providedProjectName: string | null
   ) => {
-    // If we received user mappings as an object (not a function), store them and process
-    if (unrecognizedUserMappingsOrCallback && typeof unrecognizedUserMappingsOrCallback !== 'function') {
-      // Store the mappings
-      setUnrecognizedUserMappings(unrecognizedUserMappingsOrCallback);
-      console.log('Saved user mappings:', unrecognizedUserMappingsOrCallback);
-      
-      // Continue with task parsing using the mappings
-      handleParseText(text, providedProjectName);
-    } else {
-      // This is the initial parse or a callback for unrecognized names
-      handleParseText(
-        text, 
-        providedProjectName, 
-        typeof unrecognizedUserMappingsOrCallback === 'function' 
-          ? unrecognizedUserMappingsOrCallback 
-          : undefined
-      );
-    }
+    // Simplified to just process the tasks
+    handleParseText(text, providedProjectName);
   };
   
   const handleTasksAddToMotion = (tasks: Task[], updatedProjectName: string | null, unassignedCount: number = 0) => {

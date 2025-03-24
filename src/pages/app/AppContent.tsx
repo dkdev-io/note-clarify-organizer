@@ -6,6 +6,7 @@ import StepContentRenderer from './components/StepContentRenderer';
 import LoadingScreen from './components/LoadingScreen';
 import { useAppAuthentication } from './hooks/useAppAuthentication';
 import { useTaskWorkflow } from './hooks/useTaskWorkflow';
+import { Step } from './types';
 
 const AppContent: React.FC = () => {
   const { isAuthenticating } = useAppAuthentication();
@@ -29,10 +30,10 @@ const AppContent: React.FC = () => {
   useEffect(() => {
     if (!isAuthenticating && !apiProps.isConnected) {
       // If authenticated but not connected to Motion, set step to connect
-      setStep('connect');
+      setStep('connect' as Step);
     } else if (!isAuthenticating && apiProps.isConnected && !apiProps.selectedWorkspaceId) {
       // If connected to Motion but no workspace selected, go to workspace step
-      setStep('workspace');
+      setStep('workspace' as Step);
     }
   }, [isAuthenticating, apiProps.isConnected, apiProps.selectedWorkspaceId, setStep]);
   

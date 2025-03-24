@@ -11,7 +11,7 @@ interface TasksListProps {
   tasks: Task[];
   editingTaskId: string | null;
   onEditTask: (taskId: string) => void;
-  onUpdateTask: (taskId: string, field: keyof Task, value: any) => void;
+  onUpdateTask: (taskId: string, field: keyof Task | 'deleted', value: any) => void;
   onSaveEdit: () => void;
   onAddTask: () => void;
 }
@@ -96,7 +96,7 @@ const TasksList: React.FC<TasksListProps> = ({
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  onClick={() => onUpdateTask(task.id, 'deleted', true)}
+                  onClick={() => onUpdateTask(task.id, 'deleted' as 'deleted', true)}
                   className="h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-50"
                 >
                   <TrashIcon className="h-4 w-4" />

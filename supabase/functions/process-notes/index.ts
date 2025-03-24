@@ -1,85 +1,68 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
-import { handleCors, corsHeaders } from "./utils/cors.ts";
-import { extractNamesFromText, findNameMatches } from "./utils/name-extraction.ts";
-import { createErrorResponse } from "./utils/response-handler.ts";
-import { processWithOpenAI } from "./providers/openai-provider.ts";
+import { corsHeaders } from "./utils/cors.ts";
+import { extractNamesFromTasks } from "./utils/name-extraction.ts";
+import { handleResponse } from "./utils/response-handler.ts";
 import { processWithHuggingFace } from "./providers/huggingface-provider.ts";
+import { processWithOpenAI } from "./providers/openai-provider.ts";
+
+// Configure which provider to use
+const PROVIDER = Deno.env.get("PROVIDER") || "openai";
 
 serve(async (req) => {
-  // Handle CORS preflight requests
-  const corsResponse = handleCors(req);
-  if (corsResponse) return corsResponse;
+  // This is needed if you're planning to invoke your function from a browser.
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
 
   try {
-    // Parse request body
-    let reqBody;
-    try {
-      reqBody = await req.json();
-    } catch (e) {
-      console.error('Error parsing request body:', e);
-      return new Response(
-        JSON.stringify({ 
-          error: 'Invalid JSON in request body',
-          tasks: [] 
-        }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-    
-    const { text, projectName, motionUsers } = reqBody;
-    
+    const { text, provider = PROVIDER } = await req.json();
+
     if (!text) {
-      console.error('Missing required parameter: text');
-      return new Response(
-        JSON.stringify({ 
-          error: 'Text is required',
-          tasks: [] 
-        }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return handleResponse({
+        status: 400,
+        data: { error: "Missing 'text' parameter in request body" }
+      });
     }
-    
-    console.log(`Processing notes: ${text.length} characters${projectName ? ` for project '${projectName}'` : ''}`);
-    console.log(`Available Motion users: ${motionUsers ? motionUsers.length : 0}`);
 
-    // Extract potential assignee names from the text
-    const extractedNames = extractNamesFromText(text);
-    
-    // Find best matches for names if Motion users are provided
-    const nameMatches = motionUsers ? findNameMatches(extractedNames, motionUsers) : {};
+    console.log(`Processing text with ${provider}...`);
 
-    // Try to use OpenAI, with simplified error handling and retry logic
-    try {
-      console.log('Attempting to process with OpenAI...');
-      const openaiResult = await processWithOpenAI(text, projectName, nameMatches);
-      console.log('Successfully processed with OpenAI');
-      return openaiResult;
-    } catch (openAiError) {
-      console.error('OpenAI processing failed:', openAiError);
-      
-      // If OpenAI fails with a quota error, try Hugging Face
-      if (openAiError.message && (
-          openAiError.message.includes('quota') || 
-          openAiError.message.includes('rate limit') ||
-          openAiError.message.includes('API key')
-        )) {
-        try {
-          console.log('Attempting fallback to Hugging Face...');
-          const huggingFaceResult = await processWithHuggingFace(text, projectName, nameMatches);
-          console.log('Successfully processed with Hugging Face');
-          return huggingFaceResult;
-        } catch (hfError) {
-          console.error('Hugging Face processing also failed:', hfError);
-          throw new Error('All AI processing methods failed');
-        }
-      } else {
-        // For other errors, just throw the original error
-        throw openAiError;
+    // Process notes with the selected provider
+    let result;
+    switch(provider.toLowerCase()) {
+      case "huggingface":
+        result = await processWithHuggingFace(text);
+        break;
+      case "openai":
+      default:
+        result = await processWithOpenAI(text);
+        break;
+    }
+
+    // Extract user names for name resolution
+    if (result.tasks && Array.isArray(result.tasks)) {
+      const names = extractNamesFromTasks(result.tasks);
+      if (names.length > 0) {
+        result.unrecognizedNames = names;
       }
     }
+
+    console.log("Processing complete. Tasks found:", result.tasks?.length || 0);
+    
+    return handleResponse({
+      status: 200,
+      data: result
+    });
   } catch (error) {
-    return createErrorResponse(error);
+    console.error("Error processing notes:", error);
+    
+    return handleResponse({
+      status: 500,
+      data: { 
+        error: "Internal server error while processing notes", 
+        details: error.message 
+      }
+    });
   }
 });

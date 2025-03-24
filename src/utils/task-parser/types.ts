@@ -32,6 +32,7 @@ export interface Task {
   labels: string[] | null;
   customFields: Record<string, any> | null;
   suggestions?: TaskSuggestions;
+  deleted?: boolean; // Add this property to fix the type error
 }
 
 export interface RecurringTaskInfo {
