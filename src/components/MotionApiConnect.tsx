@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { validateMotionApiKey, fetchWorkspaces, setMotionApiKey } from '@/utils/motion';
 import { storeApiKey, retrieveApiKey, clearStoredApiKey } from '@/utils/keyStorage';
-import { ApiKeyInput, ConnectionFeatures, ConnectionActions } from './motion-connect';
+import { ApiKeyInput, ConnectionActions } from './motion-connect';
 
 interface MotionApiConnectProps {
   onConnect: (apiKey: string, workspaces: any[], selectedWorkspace?: string, selectedProject?: string) => void;
@@ -21,12 +20,10 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check if user is already in proxy mode
     const usingProxy = sessionStorage.getItem('using_motion_proxy') === 'true';
     setIsProxyMode(usingProxy);
     
     if (usingProxy) {
-      // In proxy mode, auto-connect and move to workspace selection
       setIsKeyValid(true);
       const defaultWorkspaces = [
         { id: 'proxy-workspace-1', name: 'Default Workspace' }
@@ -37,11 +34,8 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
         description: "You're connected to Motion via the application proxy. Now select your workspace and project.",
       });
       
-      // Do not automatically select workspace/project in proxy mode
-      // Just provide the workspaces and let the user select
       onConnect('proxy_mode', defaultWorkspaces);
     } else {
-      // If not in proxy mode, check for stored API key
       const storedKey = retrieveApiKey();
       if (storedKey) {
         setApiKey(storedKey);
@@ -79,8 +73,6 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
               setRememberKey={setRememberKey}
               handleClearApiKey={handleClearApiKey}
             />
-            
-            <ConnectionFeatures />
           </div>
         </CardContent>
         <CardFooter>
@@ -140,7 +132,6 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
               description: "Your Motion API key is valid. Continue to select workspace and project.",
             });
             
-            // Just pass the API key and workspaces, don't auto-select workspace/project
             onConnect(trimmedKey, fetchedWorkspaces);
           }
         })
