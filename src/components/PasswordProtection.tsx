@@ -20,10 +20,26 @@ const PasswordProtection: React.FC<PasswordProtectionProps> = ({ children }) => 
 
   // Check if already authenticated via session storage
   useEffect(() => {
-    const passwordAuth = sessionStorage.getItem('password_auth');
-    if (passwordAuth === 'true') {
-      setIsAuthenticated(true);
-    }
+    const checkAuthentication = () => {
+      const passwordAuth = localStorage.getItem('password_auth');
+      if (passwordAuth === 'true') {
+        setIsAuthenticated(true);
+      }
+    };
+    
+    // Check immediately
+    checkAuthentication();
+    
+    // Also set up an event listener for storage changes (in case of multiple tabs)
+    const handleStorageChange = () => {
+      checkAuthentication();
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -34,7 +50,8 @@ const PasswordProtection: React.FC<PasswordProtectionProps> = ({ children }) => 
     // Simulate network request with a small delay
     setTimeout(() => {
       if (password === CORRECT_PASSWORD) {
-        sessionStorage.setItem('password_auth', 'true');
+        // Store in localStorage instead of sessionStorage for persistence
+        localStorage.setItem('password_auth', 'true');
         setIsAuthenticated(true);
         toast({
           title: "Access granted",
