@@ -38,3 +38,14 @@ export interface RecurringTaskInfo {
   isRecurring: boolean;
   frequency: string | null;
 }
+
+// Add the missing interfaces
+export interface TaskValidationResult {
+  valid: boolean;
+  missingFields: string[];
+}
+
+export interface MultiTaskValidationResult {
+  allValid: boolean;
+  tasksWithMissingFields: { task: Task; missingFields: string[] }[];
+}
