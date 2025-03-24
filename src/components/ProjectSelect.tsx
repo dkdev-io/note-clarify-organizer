@@ -1,10 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { LoaderIcon, PlusCircleIcon, RefreshCw, AlertTriangleIcon } from 'lucide-react';
 import {
   Select,
@@ -15,9 +13,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getProjectsForDropdown, createProject } from '@/utils/motion';
+import { getProjectsForDropdown } from '@/utils/motion';
 import { useToast } from "@/components/ui/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import CreateProjectDialog from './motion-connect/CreateProjectDialog';
 
 interface ProjectSelectProps {
   apiKey: string | null;
@@ -34,10 +33,7 @@ const ProjectSelect: React.FC<ProjectSelectProps> = ({
 }) => {
   const [projects, setProjects] = useState<{label: string, value: string}[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [showNewProjectForm, setShowNewProjectForm] = useState(false);
-  const [newProjectName, setNewProjectName] = useState('');
-  const [newProjectDescription, setNewProjectDescription] = useState('');
-  const [isCreating, setIsCreating] = useState(false);
+  const [showNewProjectDialog, setShowNewProjectDialog] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const { toast } = useToast();
@@ -61,15 +57,12 @@ const ProjectSelect: React.FC<ProjectSelectProps> = ({
       setProjects(projectOptions);
       
       if (projectOptions.length > 0 && !selectedProject) {
-        // Pass both project name and ID
         onProjectSelect(projectOptions[0].label, projectOptions[0].value);
         setSelectedProjectId(projectOptions[0].value);
       } else if (selectedProject && projectOptions.length > 0) {
-        // Find the ID for the selected project name
         const matchingProject = projectOptions.find(p => p.label === selectedProject);
         if (matchingProject) {
           setSelectedProjectId(matchingProject.value);
-          // Make sure ID is passed along with name
           onProjectSelect(matchingProject.label, matchingProject.value);
         }
       } else if (projectOptions.length === 0) {
@@ -99,58 +92,21 @@ const ProjectSelect: React.FC<ProjectSelectProps> = ({
     }
   };
 
-  const handleCreateProject = async () => {
-    if (!newProjectName.trim() || !workspaceId) return;
+  const handleProjectCreated = (projectName: string, projectId: string) => {
+    // Add the new project to the list
+    const newProject = {
+      label: projectName,
+      value: projectId
+    };
     
-    setIsCreating(true);
-    setError(null);
-    try {
-      const result = await createProject(workspaceId, newProjectName, apiKey || undefined);
-      
-      if (result) {
-        const newProject = {
-          label: result.name,
-          value: result.id
-        };
-        
-        setProjects([...projects, newProject]);
-        onProjectSelect(newProject.label, newProject.value);
-        setSelectedProjectId(newProject.value);
-        setShowNewProjectForm(false);
-        setNewProjectName('');
-        setNewProjectDescription('');
-        
-        toast({
-          title: "Project Created",
-          description: `Project "${newProject.label}" successfully created.`,
-        });
-      } else {
-        throw new Error('Failed to create project - no response from API');
-      }
-    } catch (error) {
-      console.error('Failed to create project:', error);
-      
-      let errorMessage = "Failed to create project. Check API key permissions.";
-      if (error instanceof Error) {
-        errorMessage = error.message;
-      }
-      
-      setError(errorMessage);
-      
-      toast({
-        title: "Failed to Create Project",
-        description: errorMessage,
-        variant: "destructive"
-      });
-    } finally {
-      setIsCreating(false);
-    }
+    setProjects([...projects, newProject]);
+    onProjectSelect(projectName, projectId);
+    setSelectedProjectId(projectId);
   };
 
   const handleSelectProject = (projectId: string) => {
     const project = projects.find(p => p.value === projectId);
     if (project) {
-      // Pass both name and ID
       onProjectSelect(project.label, project.value);
       setSelectedProjectId(projectId);
     }
@@ -174,130 +130,82 @@ const ProjectSelect: React.FC<ProjectSelectProps> = ({
 
   return (
     <div className="space-y-4">
-      {!showNewProjectForm ? (
-        <div className="space-y-2">
-          <Label htmlFor="project">Select Project</Label>
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Select
-                value={selectedProjectId || undefined}
-                onValueChange={handleSelectProject}
-                disabled={isLoading}
-              >
-                <SelectTrigger className="w-full">
-                  {isLoading ? (
-                    <div className="flex items-center">
-                      <LoaderIcon className="mr-2 h-3 w-3 animate-spin" />
-                      <span>Loading projects...</span>
-                    </div>
-                  ) : (
-                    <SelectValue placeholder="Select a project">
-                      {selectedProject}
-                    </SelectValue>
-                  )}
-                </SelectTrigger>
-                <SelectContent className="bg-white">
-                  <SelectGroup>
-                    <SelectLabel>Projects</SelectLabel>
-                    {projects.map(project => (
-                      <SelectItem key={project.value} value={project.value}>
-                        {project.label}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex gap-1">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={loadProjects}
-                disabled={isLoading}
-                title="Refresh Projects"
-              >
-                <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setShowNewProjectForm(true)}
-                title="Create New Project"
-              >
-                <PlusCircleIcon className="h-4 w-4" />
-              </Button>
-            </div>
+      <div className="space-y-2">
+        <Label htmlFor="project">Select Project</Label>
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Select
+              value={selectedProjectId || undefined}
+              onValueChange={handleSelectProject}
+              disabled={isLoading}
+            >
+              <SelectTrigger className="w-full">
+                {isLoading ? (
+                  <div className="flex items-center">
+                    <LoaderIcon className="mr-2 h-3 w-3 animate-spin" />
+                    <span>Loading projects...</span>
+                  </div>
+                ) : (
+                  <SelectValue placeholder="Select a project">
+                    {selectedProject}
+                  </SelectValue>
+                )}
+              </SelectTrigger>
+              <SelectContent className="bg-white">
+                <SelectGroup>
+                  <SelectLabel>Projects</SelectLabel>
+                  {projects.map(project => (
+                    <SelectItem key={project.value} value={project.value}>
+                      {project.label}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
           </div>
-          
-          {error && (
-            <Alert variant="destructive" className="mt-2">
-              <AlertTriangleIcon className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-          
-          {projects.length === 0 && !isLoading && !error && (
-            <p className="text-sm text-amber-600 mt-1">
-              No projects found in this workspace. You can create a new one.
-            </p>
-          )}
+          <div className="flex gap-1">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={loadProjects}
+              disabled={isLoading}
+              title="Refresh Projects"
+            >
+              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setShowNewProjectDialog(true)}
+              title="Create New Project"
+            >
+              <PlusCircleIcon className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
-      ) : (
-        <Card className="border border-dashed">
-          <CardHeader className="py-3">
-            <CardTitle className="text-sm font-medium">Create New Project</CardTitle>
-          </CardHeader>
-          <CardContent className="py-2 space-y-3">
-            <div className="space-y-2">
-              <Label htmlFor="newProjectName">Project Name</Label>
-              <Input
-                id="newProjectName"
-                value={newProjectName}
-                onChange={e => setNewProjectName(e.target.value)}
-                placeholder="Enter project name"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="newProjectDescription">Description (Optional)</Label>
-              <Textarea
-                id="newProjectDescription"
-                value={newProjectDescription}
-                onChange={e => setNewProjectDescription(e.target.value)}
-                placeholder="Enter project description"
-                rows={2}
-              />
-            </div>
-          </CardContent>
-          <CardFooter className="flex justify-end gap-2 py-3">
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={() => {
-                setShowNewProjectForm(false);
-                setNewProjectName('');
-                setNewProjectDescription('');
-              }}
-              disabled={isCreating}
-            >
-              Cancel
-            </Button>
-            <Button 
-              size="sm"
-              onClick={handleCreateProject}
-              disabled={!newProjectName.trim() || isCreating}
-            >
-              {isCreating ? (
-                <>
-                  <LoaderIcon className="mr-2 h-3 w-3 animate-spin" />
-                  Creating...
-                </>
-              ) : (
-                'Create Project'
-              )}
-            </Button>
-          </CardFooter>
-        </Card>
-      )}
+        
+        {error && (
+          <Alert variant="destructive" className="mt-2">
+            <AlertTriangleIcon className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+        
+        {projects.length === 0 && !isLoading && !error && (
+          <p className="text-sm text-amber-600 mt-1">
+            No projects found in this workspace. You can create a new one.
+          </p>
+        )}
+      </div>
+
+      {/* Create Project Dialog */}
+      <CreateProjectDialog
+        open={showNewProjectDialog}
+        workspaceId={workspaceId || ''}
+        apiKey={apiKey}
+        onClose={() => setShowNewProjectDialog(false)}
+        onProjectCreated={handleProjectCreated}
+      />
     </div>
   );
 };
