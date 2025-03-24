@@ -1,10 +1,8 @@
 
 import React from 'react';
 import { useParams } from 'react-router-dom';
-import TaskExtractionFailed from '@/components/task-review/TaskExtractionFailed';
 import NotesInputCard from './NotesInputCard';
-import ExtractedTasksCard from './ExtractedTasksCard';
-import IssueLogCard from './IssueLogCard';
+import TaskExtractionResults from './TaskExtractionResults';
 import { useTaskExtraction } from '@/hooks/useTaskExtraction';
 import { useToast } from '@/hooks/use-toast';
 
@@ -60,21 +58,13 @@ const TaskConverterContent = () => {
         createAllIssueReports={createAllIssueReports}
       />
 
-      {extractionFailed ? (
-        <TaskExtractionFailed 
-          onBack={handleRetry} 
-        />
-      ) : extractedTasks.length > 0 && (
-        <div className="space-y-6">
-          <ExtractedTasksCard
-            extractedTasks={extractedTasks}
-            isProcessing={isProcessing}
-            forceAddToIssueLog={forceAddToIssueLog}
-          />
-
-          <IssueLogCard extractedTasks={extractedTasks} />
-        </div>
-      )}
+      <TaskExtractionResults
+        extractedTasks={extractedTasks}
+        extractionFailed={extractionFailed}
+        isProcessing={isProcessing}
+        forceAddToIssueLog={forceAddToIssueLog}
+        handleRetry={handleRetry}
+      />
     </div>
   );
 };

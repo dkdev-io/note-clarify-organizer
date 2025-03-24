@@ -9,6 +9,60 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      all_logs: {
+        Row: {
+          assigned_to: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          event_message: string | null
+          id: string
+          original_id: string | null
+          path: string | null
+          project_id: string | null
+          severity: string | null
+          source: string
+          status: string | null
+          timestamp: number | null
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          event_message?: string | null
+          id?: string
+          original_id?: string | null
+          path?: string | null
+          project_id?: string | null
+          severity?: string | null
+          source: string
+          status?: string | null
+          timestamp?: number | null
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          event_message?: string | null
+          id?: string
+          original_id?: string | null
+          path?: string | null
+          project_id?: string | null
+          severity?: string | null
+          source?: string
+          status?: string | null
+          timestamp?: number | null
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       API: {
         Row: {
           created_at: string
