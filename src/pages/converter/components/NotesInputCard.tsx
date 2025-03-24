@@ -2,6 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import DebugActions from './DebugActions';
 
 interface NotesInputCardProps {
   textAreaValue: string;
@@ -9,7 +10,6 @@ interface NotesInputCardProps {
   handleTextSubmit: () => Promise<void>;
   addSampleTasks: () => void;
   isProcessing: boolean;
-  addDirectTestIssue: () => Promise<void>;
   createAllIssueReports: () => Promise<void>;
 }
 
@@ -19,7 +19,6 @@ const NotesInputCard: React.FC<NotesInputCardProps> = ({
   handleTextSubmit,
   addSampleTasks,
   isProcessing,
-  addDirectTestIssue,
   createAllIssueReports
 }) => {
   return (
@@ -27,24 +26,7 @@ const NotesInputCard: React.FC<NotesInputCardProps> = ({
       <CardHeader>
         <CardTitle className="flex justify-between items-center">
           <span>Enter your notes</span>
-          <div className="space-x-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={addDirectTestIssue}
-              className="text-xs"
-            >
-              Add Test Issue Directly
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={createAllIssueReports}
-              className="text-xs"
-            >
-              Create Issue Reports
-            </Button>
-          </div>
+          <DebugActions onCreateReports={createAllIssueReports} />
         </CardTitle>
       </CardHeader>
       <CardContent>
