@@ -3,7 +3,7 @@ import React from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, InfoIcon, Trash as TrashIcon } from 'lucide-react';
+import { AlertCircle, Trash as TrashIcon } from 'lucide-react';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
 
@@ -70,15 +70,9 @@ const ApiKeyInput: React.FC<ApiKeyInputProps> = ({
           <AlertDescription>{errorMessage}</AlertDescription>
         </Alert>
       )}
-      
-      <Alert variant="default" className="mt-2 bg-blue-50 text-blue-800 border-blue-200">
-        <InfoIcon className="h-4 w-4 text-blue-500" />
-        <AlertDescription className="text-xs">
-          Connect your Motion account to automatically create tasks from your notes.
-        </AlertDescription>
-      </Alert>
     </div>
   );
 };
 
 export default ApiKeyInput;
+
