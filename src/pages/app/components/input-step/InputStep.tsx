@@ -4,7 +4,6 @@ import NoteInput from '@/components/note-input';
 import { ApiProps } from '../../types';
 import { useAppContext } from '../../context/AppContextProvider';
 import MotionAlert from './MotionAlert';
-import ProTips from './ProTips';
 
 interface InputStepProps {
   onParseTasks: (
@@ -38,8 +37,6 @@ const InputStep: React.FC<InputStepProps> = ({
         onParseTasks={handleNoteSubmit} 
         apiProps={apiProps}
       />
-      
-      <ProTips />
     </div>
   );
 };

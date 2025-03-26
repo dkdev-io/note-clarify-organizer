@@ -80,11 +80,11 @@ const SpreadsheetUpload: React.FC<SpreadsheetUploadProps> = ({ onSpreadsheetData
   };
 
   return (
-    <div className="rounded-lg bg-white p-4 border border-gray-100 shadow-sm">
-      <h3 className="font-bold text-xl mb-3">
+    <div className="rounded-lg bg-white p-4 border border-gray-100 shadow-sm mb-4">
+      <h2 className="text-xl font-bold text-left mb-3">
         <span role="img" aria-label="spreadsheet" className="mr-2">📊</span>
         Option 2: Upload Project Spreadsheet
-      </h3>
+      </h2>
       
       <div className="space-y-4">
         {!file ? (
@@ -128,7 +128,7 @@ const SpreadsheetUpload: React.FC<SpreadsheetUploadProps> = ({ onSpreadsheetData
             
             <Button 
               onClick={handleFileUpload} 
-              className="w-full mt-3"
+              className="w-full mt-3 bg-primary text-primary-foreground font-bold"
               disabled={isUploading}
             >
               {isUploading ? (

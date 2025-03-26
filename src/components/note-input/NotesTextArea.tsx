@@ -25,8 +25,8 @@ const NotesTextArea: React.FC<NotesTextAreaProps> = ({
     <Card className="bg-white bg-opacity-80 backdrop-blur-sm border border-gray-100 shadow-card">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-2xl font-medium text-gray-900">
-            <FileTextIcon className="inline-block mr-2 h-6 w-6 text-primary" />
+          <CardTitle className="text-xl font-bold text-left">
+            <FileTextIcon className="inline-block mr-2 h-5 w-5 text-primary" />
             <strong>Option 3: Paste Your Notes</strong>
           </CardTitle>
           
@@ -61,11 +61,11 @@ const NotesTextArea: React.FC<NotesTextAreaProps> = ({
         />
       </CardContent>
 
-      <CardFooter className="flex justify-end pt-2 pb-4 px-6">
+      <CardFooter className="flex justify-start pt-2 pb-4 px-6">
         <Button 
           onClick={handleSubmit}
           disabled={!noteText.trim() || isTransitioning || isSubmitting}
-          className="transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"
+          className="bg-primary text-primary-foreground font-bold transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"
         >
           {isSubmitting ? (
             <>
