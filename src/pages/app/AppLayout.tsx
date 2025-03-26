@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BadgeProps } from '@/components/ui/badge';
 import { Step } from './types';
@@ -22,7 +21,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   return (
     <header className="text-center mb-8">
       <h1 className="text-3xl font-bold text-gray-900 mb-2">
-        Projectize Step Two
+        Step One
       </h1>
       <p className="text-xl text-gray-700 mb-4">
         Connect your note taking app or paste your notes below
