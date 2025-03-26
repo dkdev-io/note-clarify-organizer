@@ -23,4 +23,10 @@ export interface Task {
   schedule?: string;
   labels?: string[] | null;
   customFields?: Record<string, any> | null;
+  suggestions?: {
+    suggestedDueDate?: string | null;
+    suggestedPriority?: string | null;
+    suggestedDescription?: string | null;
+    reasoning?: string | null;
+  };
 }

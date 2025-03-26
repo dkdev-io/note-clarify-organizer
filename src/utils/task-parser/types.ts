@@ -1,5 +1,9 @@
 
 export interface TaskSuggestions {
+  suggestedDueDate?: string | null;
+  suggestedPriority?: string | null;
+  suggestedDescription?: string | null;
+  reasoning?: string | null;
   dueDate?: string | null;
   priority?: string | null;
   description?: string | null;
