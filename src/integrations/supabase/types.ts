@@ -255,6 +255,56 @@ export type Database = {
         }
         Relationships: []
       }
+      task_suggestions: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_applied: boolean | null
+          suggested_assignee: string | null
+          suggested_description: string | null
+          suggested_due_date: string | null
+          suggested_priority: string | null
+          suggested_status: string | null
+          suggested_title: string | null
+          suggestion_reasoning: string | null
+          task_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_applied?: boolean | null
+          suggested_assignee?: string | null
+          suggested_description?: string | null
+          suggested_due_date?: string | null
+          suggested_priority?: string | null
+          suggested_status?: string | null
+          suggested_title?: string | null
+          suggestion_reasoning?: string | null
+          task_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_applied?: boolean | null
+          suggested_assignee?: string | null
+          suggested_description?: string | null
+          suggested_due_date?: string | null
+          suggested_priority?: string | null
+          suggested_status?: string | null
+          suggested_title?: string | null
+          suggestion_reasoning?: string | null
+          task_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_suggestions_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "extracted_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

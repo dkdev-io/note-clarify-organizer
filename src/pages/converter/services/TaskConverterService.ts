@@ -109,6 +109,32 @@ export const getTasksWithRecommendations = async (tasks: Task[]): Promise<Task[]
     console.log("Edge function response:", data);
     
     if (data && data.tasks) {
+      // Store suggestions in the database
+      for (const enhancedTask of data.tasks) {
+        if (enhancedTask.suggestions) {
+          try {
+            const { error: suggestionError } = await supabase
+              .from('task_suggestions')
+              .insert({
+                task_id: enhancedTask.id,
+                suggested_title: enhancedTask.suggestions.suggestedTitle || null,
+                suggested_description: enhancedTask.suggestions.suggestedDescription || null,
+                suggested_due_date: enhancedTask.suggestions.suggestedDueDate || null,
+                suggested_priority: enhancedTask.suggestions.suggestedPriority || null,
+                suggested_status: enhancedTask.suggestions.suggestedStatus || null,
+                suggested_assignee: enhancedTask.suggestions.suggestedAssignee || null,
+                suggestion_reasoning: enhancedTask.suggestions.reasoning || null
+              });
+              
+            if (suggestionError) {
+              console.error("Error saving suggestion to database:", suggestionError);
+            }
+          } catch (e) {
+            console.error("Error processing suggestion:", e);
+          }
+        }
+      }
+      
       // Return the enhanced tasks with suggestions
       return data.tasks;
     }

@@ -1,24 +1,11 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Task } from '@/utils/task-parser/types';
-import { 
-  Card, 
-  CardHeader, 
-  CardTitle, 
-  CardDescription, 
-  CardContent, 
-  CardFooter 
-} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { 
-  CheckCircle, 
-  Clock, 
-  ArrowRight, 
-  Flag, 
-  AlertCircle,
-  User
-} from 'lucide-react';
+import { CalendarIcon, CheckCircleIcon, ClipboardListIcon } from 'lucide-react';
+import TaskSuggestions from '@/components/task-review/TaskSuggestions';
 
 interface ExtractedTasksCardProps {
   extractedTasks: Task[];
@@ -31,107 +18,98 @@ const ExtractedTasksCard: React.FC<ExtractedTasksCardProps> = ({
   isProcessing,
   forceAddToIssueLog
 }) => {
+  const [editedTasks, setEditedTasks] = useState<Task[]>(extractedTasks);
+
+  // Handle applying a suggestion to a task
+  const handleApplySuggestion = (taskId: string, field: string, value: any) => {
+    setEditedTasks(prev => 
+      prev.map(task => 
+        task.id === taskId 
+          ? { ...task, [field]: value } 
+          : task
+      )
+    );
+  };
+
   return (
     <Card>
       <CardHeader>
-        <div className="flex justify-between items-start">
-          <div>
-            <CardTitle className="text-xl mb-1">Extracted Tasks</CardTitle>
-            <CardDescription>
-              Found {extractedTasks.length} task{extractedTasks.length !== 1 ? 's' : ''} in your notes
-            </CardDescription>
-          </div>
-          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-            AI Enhanced
-          </Badge>
-        </div>
+        <CardTitle className="flex items-center">
+          <ClipboardListIcon className="h-5 w-5 mr-2 text-primary" />
+          Extracted Tasks ({extractedTasks.length})
+        </CardTitle>
       </CardHeader>
+      
       <CardContent>
         <div className="space-y-4">
-          {extractedTasks.map((task, index) => (
+          {editedTasks.map(task => (
             <div 
-              key={task.id || index} 
-              className="border rounded-lg p-4 hover:bg-slate-50 transition-colors"
+              key={task.id} 
+              className="bg-white shadow-sm rounded-lg p-4 border border-gray-200"
             >
-              <div className="flex justify-between items-start mb-2">
-                <h3 className="font-medium text-lg">{task.title}</h3>
-                {task.priority && (
-                  <Badge 
-                    className={`
-                      ${task.priority === 'high' ? 'bg-red-50 text-red-700 border-red-200' : 
-                        task.priority === 'medium' ? 'bg-amber-50 text-amber-700 border-amber-200' : 
-                        'bg-green-50 text-green-700 border-green-200'}
-                    `}
-                  >
-                    <Flag className="h-3 w-3 mr-1" /> {task.priority}
-                  </Badge>
-                )}
-              </div>
-              
-              {task.description && (
-                <p className="text-gray-600 text-sm mb-3">{task.description}</p>
-              )}
-
-              <div className="flex flex-wrap gap-2 mb-2">
-                {task.dueDate && (
-                  <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                    <Clock className="h-3 w-3 mr-1" /> 
-                    Due: {new Date(task.dueDate).toLocaleDateString()}
-                  </Badge>
-                )}
-                
-                {task.assignee && (
-                  <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
-                    <User className="h-3 w-3 mr-1" /> 
-                    {task.assignee}
-                  </Badge>
-                )}
-                
-                {task.status && (
-                  <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">
-                    <CheckCircle className="h-3 w-3 mr-1" /> 
-                    {task.status}
-                  </Badge>
-                )}
-              </div>
-              
-              {/* Display LLM suggestions if available */}
-              {task.suggestions && (
-                <div className="mt-3 bg-amber-50 p-3 rounded-md border border-amber-200">
-                  <h4 className="text-sm font-medium text-amber-700 flex items-center mb-2">
-                    <AlertCircle className="h-3 w-3 mr-1" /> AI Suggestions
-                  </h4>
-                  <ul className="space-y-1 text-xs text-amber-800">
-                    {task.suggestions.dueDate && (
-                      <li className="flex items-center">
-                        <ArrowRight className="h-3 w-3 mr-1" />
-                        {task.suggestions.dueDate}
-                      </li>
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="font-medium text-gray-900">{task.title}</h3>
+                  {task.description && (
+                    <p className="text-sm text-gray-500 mt-1">{task.description}</p>
+                  )}
+                  
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {task.dueDate && (
+                      <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                        <CalendarIcon className="h-3 w-3 mr-1" />
+                        {new Date(task.dueDate).toLocaleDateString()}
+                      </Badge>
                     )}
-                    {task.suggestions.priority && (
-                      <li className="flex items-center">
-                        <ArrowRight className="h-3 w-3 mr-1" />
-                        {task.suggestions.priority}
-                      </li>
+                    
+                    {task.priority && (
+                      <Badge 
+                        variant="outline" 
+                        className={
+                          task.priority === 'high' 
+                            ? 'bg-red-50 text-red-700 border-red-200' 
+                            : task.priority === 'medium' 
+                              ? 'bg-yellow-50 text-yellow-700 border-yellow-200' 
+                              : 'bg-green-50 text-green-700 border-green-200'
+                        }
+                      >
+                        Priority: {task.priority}
+                      </Badge>
                     )}
-                    {task.suggestions.description && (
-                      <li className="flex items-center">
-                        <ArrowRight className="h-3 w-3 mr-1" />
-                        {task.suggestions.description}
-                      </li>
+                    
+                    {task.assignee && (
+                      <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+                        Assignee: {task.assignee}
+                      </Badge>
                     )}
-                  </ul>
+                  </div>
                 </div>
+              </div>
+              
+              {task.suggestions && (
+                <TaskSuggestions 
+                  task={task} 
+                  onApplySuggestion={(field, value) => handleApplySuggestion(task.id, field, value)} 
+                />
               )}
             </div>
           ))}
+          
+          {editedTasks.length === 0 && (
+            <div className="text-center py-6 text-gray-500">
+              No tasks extracted yet. Try adding more text or using different phrasing.
+            </div>
+          )}
         </div>
       </CardContent>
-      <CardFooter className="flex justify-end">
-        <Button 
-          onClick={forceAddToIssueLog} 
-          disabled={isProcessing}
+      
+      <CardFooter className="flex justify-end gap-3">
+        <Button
+          onClick={forceAddToIssueLog}
+          disabled={isProcessing || editedTasks.length === 0}
+          className="bg-primary text-primary-foreground font-bold"
         >
+          <CheckCircleIcon className="h-4 w-4 mr-2" />
           Add to Issue Log
         </Button>
       </CardFooter>

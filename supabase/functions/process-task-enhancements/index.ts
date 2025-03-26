@@ -23,16 +23,27 @@ serve(async (req) => {
     }
 
     // This function would normally call an external LLM API
-    // For now, we'll return mock-enhanced tasks
+    // For now, we'll return mock-enhanced tasks with suggestions
     const enhancedTasks = tasks.map(task => {
+      // Generate appropriate suggestions based on missing information
+      const suggestions = {
+        suggestedDueDate: task.dueDate ? null : getNextWeekday(new Date()),
+        suggestedPriority: task.priority ? null : getPriorityFromTitle(task.title),
+        suggestedDescription: (!task.description || task.description.length < 10) 
+          ? generateDescription(task.title) 
+          : null,
+        reasoning: "AI analysis suggests these improvements to make this task more actionable."
+      };
+      
+      // Only include suggestions object if we have at least one suggestion
+      const hasSuggestions = 
+        suggestions.suggestedDueDate || 
+        suggestions.suggestedPriority || 
+        suggestions.suggestedDescription;
+      
       return {
         ...task,
-        suggestedDueDate: task.dueDate ? null : "2023-12-31",
-        suggestedPriority: task.priority ? null : "medium",
-        suggestedDescription: (!task.description || task.description.length < 10) 
-          ? task.title + " - additional context and details should be added here." 
-          : null,
-        reasoning: "AI analysis detected missing information that would make this task more actionable."
+        suggestions: hasSuggestions ? suggestions : null
       };
     });
 
@@ -48,3 +59,39 @@ serve(async (req) => {
     );
   }
 });
+
+// Helper function to generate a date for next week (for suggested due dates)
+function getNextWeekday(date) {
+  const result = new Date(date);
+  result.setDate(result.getDate() + 7);
+  return result.toISOString();
+}
+
+// Helper function to guess priority based on title words
+function getPriorityFromTitle(title) {
+  const lowercaseTitle = title.toLowerCase();
+  
+  if (
+    lowercaseTitle.includes('urgent') || 
+    lowercaseTitle.includes('asap') || 
+    lowercaseTitle.includes('immediately') ||
+    lowercaseTitle.includes('critical')
+  ) {
+    return 'high';
+  }
+  
+  if (
+    lowercaseTitle.includes('soon') || 
+    lowercaseTitle.includes('next week') ||
+    lowercaseTitle.includes('important')
+  ) {
+    return 'medium';
+  }
+  
+  return 'low';
+}
+
+// Helper function to generate a simple description
+function generateDescription(title) {
+  return `Complete ${title} with necessary details and documentation.`;
+}

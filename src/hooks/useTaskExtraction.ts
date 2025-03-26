@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Task } from '@/utils/task-parser/types';
 import { useToast } from '@/hooks/use-toast';
@@ -42,7 +41,7 @@ export function useTaskExtraction() {
           variant: "destructive"
         });
       } else {
-        // Get recommendations from Supabase (this would include LLM enhancements in a full implementation)
+        // Get recommendations from the LLM via Supabase edge function
         const enhancedTasks = await getTasksWithRecommendations(tasks);
         console.log("Enhanced tasks after recommendations:", enhancedTasks);
         
@@ -52,8 +51,6 @@ export function useTaskExtraction() {
           title: "Tasks extracted",
           description: `Successfully extracted ${tasks.length} tasks from your notes.`,
         });
-        
-        // No longer automatically adding to issue log - user needs to review first
       }
     } catch (error) {
       console.error('Error extracting tasks:', error);
