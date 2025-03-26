@@ -24,7 +24,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         Step One
       </h1>
       <p className="text-xl text-gray-700 mb-4">
-        Connect your note taking app or paste your notes below
+        Connect to Motion
       </p>
       {isConnected && step !== 'connect' && step !== 'complete' && (
         <div className="mt-3 flex flex-wrap justify-center gap-2">
