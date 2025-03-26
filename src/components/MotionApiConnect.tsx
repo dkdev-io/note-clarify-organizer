@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
@@ -59,7 +60,7 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
             Connect to Motion
           </CardTitle>
           <p className="text-muted-foreground text-sm mt-1">
-            Connecting to Motion API allows you to create tasks in your Motion account
+            Connecting to Motion allows you to create tasks in your Motion account. Please connect below.
           </p>
         </CardHeader>
         <CardContent>
