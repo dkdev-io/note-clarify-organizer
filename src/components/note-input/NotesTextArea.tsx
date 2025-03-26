@@ -27,7 +27,7 @@ const NotesTextArea: React.FC<NotesTextAreaProps> = ({
         <div className="flex items-center justify-between">
           <CardTitle className="text-2xl font-medium text-gray-900">
             <FileTextIcon className="inline-block mr-2 h-6 w-6 text-primary" />
-            <strong>Option 2: Paste Your Notes Below</strong>
+            <strong>Option 3: Paste Your Notes</strong>
           </CardTitle>
           
           <TooltipProvider>
@@ -50,9 +50,6 @@ const NotesTextArea: React.FC<NotesTextAreaProps> = ({
             </Tooltip>
           </TooltipProvider>
         </div>
-        <p className="text-muted-foreground text-sm mt-1">
-          Paste your meeting notes or any text to extract tasks and project name
-        </p>
       </CardHeader>
 
       <CardContent>

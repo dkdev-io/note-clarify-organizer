@@ -81,7 +81,10 @@ const SpreadsheetUpload: React.FC<SpreadsheetUploadProps> = ({ onSpreadsheetData
 
   return (
     <div className="rounded-lg bg-white p-4 border border-gray-100 shadow-sm">
-      <h3 className="font-bold text-xl mb-3">Option 3: Upload Project Spreadsheet</h3>
+      <h3 className="font-bold text-xl mb-3">
+        <span role="img" aria-label="spreadsheet" className="mr-2">📊</span>
+        Option 2: Upload Project Spreadsheet
+      </h3>
       
       <div className="space-y-4">
         {!file ? (
