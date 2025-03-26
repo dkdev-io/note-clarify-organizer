@@ -44,7 +44,7 @@ const AppContent: React.FC = () => {
   
   return (
     <AppLayout
-      step={step}
+      step={step as Step}
       isConnected={apiProps.isConnected}
       workspaces={apiProps.workspaces}
       selectedWorkspaceId={apiProps.selectedWorkspaceId}
