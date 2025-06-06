@@ -87,8 +87,17 @@ export const AuthForm: React.FC<AuthFormProps> = ({
         </CardContent>
         <CardFooter className="flex flex-col gap-4">
           <Button 
+            type="button" 
+            variant="outline" 
+            className="w-full border-2 border-[#fbbc05] bg-[#fbbc05] hover:bg-[#fbbc05]/90 text-black font-medium text-base py-6 flex items-center justify-center gap-2 rounded-lg"
+            onClick={handleSkip}
+          >
+            <SkipForward className="h-5 w-5" />
+            Skip Authentication & Continue
+          </Button>
+          <Button 
             type="submit" 
-            className="w-full bg-[#fbbc05] hover:bg-[#fbbc05]/90 text-black font-medium text-base py-6 rounded-lg transition-all"
+            className="w-full bg-gray-600 hover:bg-gray-700 text-white font-medium text-base py-6 rounded-lg transition-all"
             disabled={isLoading}
           >
             {isLoading ? 'Processing...' : isSignUp ? 'Sign Up' : 'Login'}
@@ -100,15 +109,6 @@ export const AuthForm: React.FC<AuthFormProps> = ({
             onClick={() => setIsSignUp(!isSignUp)}
           >
             {isSignUp ? 'Already have an account? Login' : 'Need an account? Sign Up'}
-          </Button>
-          <Button 
-            type="button" 
-            variant="outline" 
-            className="w-full border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 font-medium mt-2 flex items-center justify-center gap-2 rounded-lg"
-            onClick={handleSkip}
-          >
-            <SkipForward className="h-4 w-4" />
-            Skip until auth issues fixed
           </Button>
         </CardFooter>
       </form>
