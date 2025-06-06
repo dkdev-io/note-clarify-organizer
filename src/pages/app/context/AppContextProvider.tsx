@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useContext } from 'react';
 import { useToast } from "@/components/ui/use-toast";
 import { Task } from '@/utils/parser';
@@ -61,6 +62,7 @@ async function processNotesText(text: string, projectName: string | null, motion
 }
 
 export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
+  // Initialize with 'connect' step to ensure proper workflow
   const [step, setStep] = useState<string>('connect');
   const [noteText, setNoteText] = useState<string>('');
   const [extractedTasks, setExtractedTasks] = useState<Task[]>([]);
@@ -94,6 +96,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       selectedProject: project || null,
       isConnected: true
     });
+    // Move to workspace selection after connecting
     setStep('workspace');
   };
 

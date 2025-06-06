@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,15 +27,17 @@ const WorkspaceProjectSelect: React.FC<WorkspaceProjectSelectProps> = ({
   onContinue,
   onBack
 }) => {
+  const canContinue = selectedWorkspaceId && selectedProject;
+
   return (
     <div className="w-full max-w-2xl mx-auto">
       <Card className="bg-white bg-opacity-80 backdrop-blur-sm border border-gray-100 shadow-card">
         <CardHeader>
           <CardTitle className="text-2xl font-medium text-gray-900">
-            Projectize Step One: Select Your Workspace and Project
+            Select Your Workspace and Project
           </CardTitle>
           <p className="text-muted-foreground text-sm mt-1">
-            Picking your workspace and project will help get your Projectized notes in the right spot
+            Choose your workspace and project to organize your tasks properly
           </p>
         </CardHeader>
         <CardContent>
@@ -66,10 +69,10 @@ const WorkspaceProjectSelect: React.FC<WorkspaceProjectSelectProps> = ({
           </Button>
           <Button 
             onClick={onContinue}
-            disabled={!selectedWorkspaceId}
+            disabled={!canContinue}
             className="bg-[#fbbc05] hover:bg-[#fbbc05]/90 text-black transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"
           >
-            Continue
+            Submit & Continue
           </Button>
         </CardFooter>
       </Card>

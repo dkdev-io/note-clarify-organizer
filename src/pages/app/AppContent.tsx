@@ -23,10 +23,10 @@ const AppContent: React.FC = () => {
     setStep
   } = useAppContext();
   
-  // Start directly at the input step since no auth is required
+  // Start with the connect step to ensure proper workflow
   React.useEffect(() => {
-    if (step === 'connect') {
-      setStep('input');
+    if (step !== 'connect' && step !== 'workspace' && step !== 'input' && step !== 'tasks' && step !== 'complete') {
+      setStep('connect');
     }
   }, [step, setStep]);
   
