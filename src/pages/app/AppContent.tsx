@@ -23,6 +23,13 @@ const AppContent: React.FC = () => {
     setStep
   } = useAppContext();
   
+  // Start directly at the input step since no auth is required
+  React.useEffect(() => {
+    if (step === 'connect') {
+      setStep('input');
+    }
+  }, [step, setStep]);
+  
   return (
     <AppLayout
       step={step as Step}

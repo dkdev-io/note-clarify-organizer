@@ -26,7 +26,7 @@ function App() {
             {/* Landing page as the default route */}
             <Route path="/" element={<Landing />} />
             
-            {/* App routes - no protection needed */}
+            {/* App routes - no authentication required */}
             <Route path="/app/*" element={
               <AppProvider>
                 <Routes>
