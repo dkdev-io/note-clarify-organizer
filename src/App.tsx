@@ -1,9 +1,8 @@
+
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
 import NotFound from './pages/NotFound';
-import Login from './pages/Login';
-import ProtectedRoute from './components/ProtectedRoute';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { Toaster } from './components/ui/toaster';
 import IndexRefactored from './pages/app/IndexRefactored';
@@ -27,10 +26,7 @@ function App() {
             {/* Landing page as the default route */}
             <Route path="/" element={<Landing />} />
             
-            {/* Login page - keeping for when auth is re-enabled */}
-            <Route path="/login" element={<Login />} />
-            
-            {/* App routes - temporarily removing protection */}
+            {/* App routes - no protection needed */}
             <Route path="/app/*" element={
               <AppProvider>
                 <Routes>
