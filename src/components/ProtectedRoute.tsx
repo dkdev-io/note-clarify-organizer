@@ -11,66 +11,19 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const [loading, setLoading] = useState(true);
-  const [authenticated, setAuthenticated] = useState(false);
+  // Temporarily disable authentication - always allow access
+  const [loading, setLoading] = useState(false);
+  const [authenticated, setAuthenticated] = useState(true); // Always true for now
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Force check for authentication - don't allow skipping in production
-  const isSkipping = process.env.NODE_ENV === 'development' && sessionStorage.getItem('skip_auth') === 'true';
-
+  // Skip all authentication checks temporarily
   useEffect(() => {
-    console.log('ProtectedRoute - checking auth, skip_auth:', isSkipping);
-    
-    // If skipping auth, immediately set authenticated to true
-    if (isSkipping) {
-      console.log('Skipping authentication check due to skip_auth flag');
-      setAuthenticated(true);
-      setLoading(false);
-      return;
-    }
-
-    // First check if Supabase is properly configured
-    if (!credentials.isValid) {
-      setError('Supabase configuration missing. Please ensure your Supabase project is connected through Lovable.');
-      setLoading(false);
-      return;
-    }
-
-    const checkAuth = async () => {
-      try {
-        const { data } = await supabase.auth.getSession();
-        console.log('Auth check result:', data.session ? 'Has session' : 'No session');
-        setAuthenticated(!!data.session);
-        
-        // If no session, redirect to login
-        if (!data.session) {
-          console.log('No session, redirecting to login');
-        }
-      } catch (error) {
-        console.error('Auth check error:', error);
-        setAuthenticated(false);
-        setError('Authentication check failed. Please try again.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    checkAuth();
-
-    // Set up auth state listener
-    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('Auth state changed in ProtectedRoute:', event);
-      setAuthenticated(!!session);
-    });
-
-    return () => {
-      if (authListener?.subscription) {
-        authListener.subscription.unsubscribe();
-      }
-    };
-  }, [isSkipping, location]);
+    console.log('ProtectedRoute - Auth temporarily disabled, allowing access');
+    setAuthenticated(true);
+    setLoading(false);
+  }, [location]);
 
   // Show loading spinner or placeholder while checking auth
   if (loading) {
@@ -108,14 +61,8 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     );
   }
 
-  // Render children if authenticated or skipping auth
-  if (authenticated) {
-    return <>{children}</>;
-  }
-
-  // Redirect to login if not authenticated, but pass the current location
-  // This ensures users can be redirected back to where they wanted to go after login
-  return <Navigate to="/login" state={{ from: location }} replace />;
+  // Always render children since auth is temporarily disabled
+  return <>{children}</>;
 };
 
 export default ProtectedRoute;

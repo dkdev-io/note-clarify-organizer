@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
@@ -28,32 +27,30 @@ function App() {
             {/* Landing page as the default route */}
             <Route path="/" element={<Landing />} />
             
-            {/* Login page */}
+            {/* Login page - keeping for when auth is re-enabled */}
             <Route path="/login" element={<Login />} />
             
-            {/* Protected app routes */}
+            {/* App routes - temporarily removing protection */}
             <Route path="/app/*" element={
-              <ProtectedRoute>
-                <AppProvider>
-                  <Routes>
-                    {/* Default app route redirects to converter */}
-                    <Route path="/" element={<Navigate to="/app/converter" replace />} />
-                    
-                    {/* Task converter routes */}
-                    <Route path="converter" element={<IndexRefactored />} />
-                    <Route path="converter/legacy" element={<ConverterPage />} />
-                    
-                    {/* Issue tracking routes */}
-                    <Route path="issues" element={<IssuesListPage />} />
-                    <Route path="issues/new" element={<IssueCreatePage />} />
-                    <Route path="issues/:id" element={<IssueDetailPage />} />
-                    <Route path="issues/edit/:id" element={<IssueEditPage />} />
-                    
-                    {/* Catch-all for unknown /app routes */}
-                    <Route path="*" element={<Navigate to="/app/converter" replace />} />
-                  </Routes>
-                </AppProvider>
-              </ProtectedRoute>
+              <AppProvider>
+                <Routes>
+                  {/* Default app route redirects to converter */}
+                  <Route path="/" element={<Navigate to="/app/converter" replace />} />
+                  
+                  {/* Task converter routes */}
+                  <Route path="converter" element={<IndexRefactored />} />
+                  <Route path="converter/legacy" element={<ConverterPage />} />
+                  
+                  {/* Issue tracking routes */}
+                  <Route path="issues" element={<IssuesListPage />} />
+                  <Route path="issues/new" element={<IssueCreatePage />} />
+                  <Route path="issues/:id" element={<IssueDetailPage />} />
+                  <Route path="issues/edit/:id" element={<IssueEditPage />} />
+                  
+                  {/* Catch-all for unknown /app routes */}
+                  <Route path="*" element={<Navigate to="/app/converter" replace />} />
+                </Routes>
+              </AppProvider>
             } />
             
             {/* Catch-all for 404s */}
