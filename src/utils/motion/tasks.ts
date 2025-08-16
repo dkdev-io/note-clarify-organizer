@@ -42,15 +42,15 @@ export const addTasksToMotion = async (
         const taskData: any = {
           name: task.title,
           description: task.description || "",
-          workspaceId: workspaceId,
+          workspace_id: workspaceId,
         };
         
-        // Add projectId if provided either directly or from the task
+        // Add project_id if provided either directly or from the task
         if (projectId) {
-          taskData.projectId = projectId;
+          taskData.project_id = projectId;
           console.log(`Adding task "${task.title}" to project ID: ${projectId}`);
         } else if (task.projectId) {
-          taskData.projectId = task.projectId;
+          taskData.project_id = task.projectId;
           console.log(`Adding task "${task.title}" to task's project ID: ${task.projectId}`);
         } else {
           console.log(`Adding task "${task.title}" without project ID`);
@@ -64,36 +64,36 @@ export const addTasksToMotion = async (
         // Add due date if available
         if (task.dueDate) {
           // Format the date as ISO string (YYYY-MM-DD)
-          taskData.dueDate = new Date(task.dueDate).toISOString().split('T')[0];
-          console.log(`Task due date: ${taskData.dueDate}`);
+          taskData.due_date = new Date(task.dueDate).toISOString().split('T')[0];
+          console.log(`Task due date: ${taskData.due_date}`);
           
           // Add hard deadline flag if set
           if (task.hardDeadline) {
-            taskData.hardDeadline = true;
+            taskData.hard_deadline = true;
           }
         }
         
         // Add start date if available
         if (task.startDate) {
-          taskData.startDate = new Date(task.startDate).toISOString().split('T')[0];
-          console.log(`Task start date: ${taskData.startDate}`);
+          taskData.start_date = new Date(task.startDate).toISOString().split('T')[0];
+          console.log(`Task start date: ${taskData.start_date}`);
         }
         
         // Add time estimate if available
         if (timeEstimate) {
-          taskData.timeEstimate = parseInt(timeEstimate, 10);
-          console.log(`Task time estimate: ${taskData.timeEstimate} minutes`);
+          taskData.time_estimate = parseInt(timeEstimate, 10);
+          console.log(`Task time estimate: ${taskData.time_estimate} minutes`);
         } else if (task.timeEstimate) {
-          taskData.timeEstimate = task.timeEstimate;
-          console.log(`Task time estimate from task: ${taskData.timeEstimate} minutes`);
+          taskData.time_estimate = task.timeEstimate;
+          console.log(`Task time estimate from task: ${taskData.time_estimate} minutes`);
         }
         
         // Add auto scheduling preference
-        taskData.autoScheduled = task.autoScheduled !== undefined ? task.autoScheduled : true;
+        taskData.auto_scheduled = task.autoScheduled !== undefined ? task.autoScheduled : true;
         
         // Add isPending flag
         if (task.isPending) {
-          taskData.isPending = true;
+          taskData.is_pending = true;
         }
         
         // Add schedule preference
@@ -106,9 +106,14 @@ export const addTasksToMotion = async (
           taskData.labels = task.labels;
         }
         
+        // Add assignee_id if available
+        if (task.assignee) {
+          taskData.assignee_id = task.assignee;
+        }
+        
         // Add custom fields if available
         if (task.customFields) {
-          taskData.customFields = task.customFields;
+          taskData.custom_fields = task.customFields;
         }
         
         console.log("Sending task to Motion:", taskData);
