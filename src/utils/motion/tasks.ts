@@ -117,8 +117,9 @@ export const addTasksToMotion = async (
         const response = await fetch("https://api.usemotion.com/v1/tasks", {
           method: "POST",
           headers: {
-            "Content-Type": "application/json",
-            "X-API-Key": apiKey,
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+            'X-API-Key': apiKey // Some APIs require this format
           },
           body: JSON.stringify(taskData),
         });
