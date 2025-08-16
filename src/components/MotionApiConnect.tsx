@@ -18,6 +18,7 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isProxyMode, setIsProxyMode] = useState(false);
   const [rememberKey, setRememberKey] = useState(true);
+  const [isAlreadyConnected, setIsAlreadyConnected] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -53,10 +54,30 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
           const data = await response.json();
           if (data.hasApiKey && data.apiKey) {
             setApiKey(data.apiKey);
-            toast({
-              title: "API Key Retrieved",
-              description: "Your securely stored API key has been loaded. Click Connect to validate.",
-            });
+            setIsAlreadyConnected(true);
+            setIsKeyValid(true);
+            
+            // Auto-validate and connect
+            try {
+              const fetchedWorkspaces = await fetchWorkspaces(data.apiKey);
+              toast({
+                title: "✓ Connected Successfully",
+                description: "Advancing to next step...",
+              });
+              
+              // Auto-advance after 2 seconds
+              setTimeout(() => {
+                onConnect(data.apiKey, fetchedWorkspaces);
+              }, 2000);
+            } catch (error) {
+              setIsKeyValid(false);
+              setIsAlreadyConnected(false);
+              toast({
+                title: "Connection Error",
+                description: "Please re-enter your API key to continue.",
+                variant: "destructive",
+              });
+            }
             return;
           }
         }
@@ -68,10 +89,30 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
       const storedKey = retrieveApiKey();
       if (storedKey) {
         setApiKey(storedKey);
-        toast({
-          title: "API Key Loaded",
-          description: "A previously stored API key has been loaded. Click Connect to validate.",
-        });
+        setIsAlreadyConnected(true);
+        setIsKeyValid(true);
+        
+        // Auto-validate and connect
+        try {
+          const fetchedWorkspaces = await fetchWorkspaces(storedKey);
+          toast({
+            title: "✓ Connected Successfully",
+            description: "Advancing to next step...",
+          });
+          
+          // Auto-advance after 2 seconds
+          setTimeout(() => {
+            onConnect(storedKey, fetchedWorkspaces);
+          }, 2000);
+        } catch (error) {
+          setIsKeyValid(false);
+          setIsAlreadyConnected(false);
+          toast({
+            title: "Connection Error",
+            description: "Please re-enter your API key to continue.",
+            variant: "destructive",
+          });
+        }
       }
     };
 
@@ -87,33 +128,43 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
       <Card className="bg-white bg-opacity-80 backdrop-blur-sm border border-gray-100 shadow-card">
         <CardHeader>
           <CardTitle className="text-2xl font-medium text-gray-900">
-            Connect to Motion
+            Step One
           </CardTitle>
           <p className="text-muted-foreground text-sm mt-1">
-            Connecting to Motion allows you to create tasks in your Motion account. Please connect below.
+            Connect your project management tool.
           </p>
         </CardHeader>
         <CardContent>
           <div className="space-y-6">
-            <ApiKeyInput 
-              apiKey={apiKey}
-              setApiKey={setApiKey}
-              isKeyValid={isKeyValid}
-              errorMessage={errorMessage}
-              rememberKey={rememberKey}
-              setRememberKey={setRememberKey}
-              handleClearApiKey={handleClearApiKey}
-            />
+            {isAlreadyConnected && isKeyValid ? (
+              <div className="text-center py-8">
+                <div className="text-green-600 text-6xl mb-4">✓</div>
+                <h3 className="text-xl font-medium text-gray-900 mb-2">Connected Successfully</h3>
+                <p className="text-muted-foreground">Your Motion API connection is active. Advancing to next step...</p>
+              </div>
+            ) : (
+              <ApiKeyInput 
+                apiKey={apiKey}
+                setApiKey={setApiKey}
+                isKeyValid={isKeyValid}
+                errorMessage={errorMessage}
+                rememberKey={rememberKey}
+                setRememberKey={setRememberKey}
+                handleClearApiKey={handleClearApiKey}
+              />
+            )}
           </div>
         </CardContent>
         <CardFooter>
-          <ConnectionActions 
-            apiKey={apiKey}
-            isValidating={isValidating}
-            isKeyValid={isKeyValid}
-            onSkip={onSkip}
-            onValidate={validateKey}
-          />
+          {!(isAlreadyConnected && isKeyValid) && (
+            <ConnectionActions 
+              apiKey={apiKey}
+              isValidating={isValidating}
+              isKeyValid={isKeyValid}
+              onSkip={onSkip}
+              onValidate={validateKey}
+            />
+          )}
         </CardFooter>
       </Card>
     </div>
@@ -159,11 +210,14 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
             );
           } else {
             toast({
-              title: "Successfully connected",
-              description: "Your Motion API key is valid. Continue to select workspace and project.",
+              title: "✓ Connected Successfully",
+              description: "Advancing to next step...",
             });
             
-            onConnect(trimmedKey, fetchedWorkspaces);
+            // Auto-advance after 2 seconds
+            setTimeout(() => {
+              onConnect(trimmedKey, fetchedWorkspaces);
+            }, 2000);
           }
         })
         .catch((error) => {
