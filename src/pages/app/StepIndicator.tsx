@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Step } from './types';
 import { CheckCircle, CircleDashed } from 'lucide-react';
@@ -39,7 +38,7 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({ currentStep, isConnected 
           const isLastStep = index === steps.length - 1;
           
           return (
-            <React.Fragment key={step.id}>
+            <div key={step.id} className="flex items-center">
               <div className="flex flex-col items-center">
                 <div 
                   className={cn(
@@ -73,7 +72,7 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({ currentStep, isConnected 
                   )}
                 />
               )}
-            </React.Fragment>
+            </div>
           );
         })}
       </div>

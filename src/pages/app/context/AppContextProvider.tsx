@@ -44,7 +44,7 @@ interface AppProviderProps {
 }
 
 async function processNotesText(text: string, projectName: string | null, motionUsers: any[] | undefined) {
-  const res = await fetch('/api/process-notes', {
+  const res = await fetch('/functions/v1/process-notes', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -54,7 +54,7 @@ async function processNotesText(text: string, projectName: string | null, motion
 
   if (!res.ok) {
     const errorData = await res.json();
-    console.error('Error from /api/process-notes:', errorData);
+    console.error('Error from /functions/v1/process-notes:', errorData);
     throw new Error(errorData.error || 'Failed to process notes');
   }
 
