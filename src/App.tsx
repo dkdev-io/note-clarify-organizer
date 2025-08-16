@@ -28,25 +28,23 @@ function App() {
             
             {/* App routes - no authentication required */}
             <Route path="/app/*" element={
-              <AppProvider>
-                <Routes>
-                  {/* Default app route redirects to converter */}
-                  <Route path="/" element={<Navigate to="/app/converter" replace />} />
-                  
-                  {/* Task converter routes */}
-                  <Route path="converter" element={<IndexRefactored />} />
-                  <Route path="converter/legacy" element={<ConverterPage />} />
-                  
-                  {/* Issue tracking routes */}
-                  <Route path="issues" element={<IssuesListPage />} />
-                  <Route path="issues/new" element={<IssueCreatePage />} />
-                  <Route path="issues/:id" element={<IssueDetailPage />} />
-                  <Route path="issues/edit/:id" element={<IssueEditPage />} />
-                  
-                  {/* Catch-all for unknown /app routes */}
-                  <Route path="*" element={<Navigate to="/app/converter" replace />} />
-                </Routes>
-              </AppProvider>
+              <Routes>
+                {/* Default app route redirects to converter */}
+                <Route path="/" element={<Navigate to="/app/converter" replace />} />
+                
+                {/* Task converter routes */}
+                <Route path="converter" element={<IndexRefactored />} />
+                <Route path="converter/legacy" element={<ConverterPage />} />
+                
+                {/* Issue tracking routes */}
+                <Route path="issues" element={<IssuesListPage />} />
+                <Route path="issues/new" element={<IssueCreatePage />} />
+                <Route path="issues/:id" element={<IssueDetailPage />} />
+                <Route path="issues/edit/:id" element={<IssueEditPage />} />
+                
+                {/* Catch-all for unknown /app routes */}
+                <Route path="*" element={<Navigate to="/app/converter" replace />} />
+              </Routes>
             } />
             
             {/* Catch-all for 404s */}
