@@ -19,7 +19,15 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
   const [isKeyValid, setIsKeyValid] = useState<boolean | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isProxyMode, setIsProxyMode] = useState(false);
-  const [rememberKey, setRememberKey] = useState(true);
+  const [rememberKey, setRememberKey] = useState(() => {
+    // Check if user previously chose to remember their key
+    try {
+      const remembered = localStorage.getItem('motion_remember_key');
+      return remembered === 'true';
+    } catch {
+      return false;
+    }
+  });
   const [isAlreadyConnected, setIsAlreadyConnected] = useState(false);
   const [fetchedWorkspaces, setFetchedWorkspaces] = useState<any[]>([]);
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | null>(null);
@@ -288,6 +296,9 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
         .then((fetchedWorkspaces) => {
           console.log('Fetched workspaces:', fetchedWorkspaces);
           
+          // Always save the preference, but only store the key if rememberKey is true
+          localStorage.setItem('motion_remember_key', rememberKey.toString());
+          
           if (rememberKey) {
             storeApiKey(trimmedKey);
             toast({
@@ -357,7 +368,9 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
     setApiKey('');
     setIsKeyValid(null);
     setErrorMessage(null);
+    setRememberKey(false);
     clearStoredApiKey();
+    localStorage.setItem('motion_remember_key', 'false');
     
     toast({
       title: "API Key Cleared",
