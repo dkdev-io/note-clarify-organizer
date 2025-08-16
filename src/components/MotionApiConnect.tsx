@@ -202,13 +202,25 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
                 <h3 className="text-xl font-medium text-gray-900 mb-2">Connected Successfully</h3>
                 <p className="text-muted-foreground">Your Motion API connection is active. Loading workspaces...</p>
               </div>
-            ) : showWorkspaceSelection ? (
+            ) : (
               <div className="space-y-6">
-                <div className="text-center py-4">
-                  <div className="text-green-600 text-4xl mb-2">✓</div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-1">Connected to Motion</h3>
-                  <p className="text-muted-foreground text-sm">Now select your workspace and project</p>
-                </div>
+                {showWorkspaceSelection && (
+                  <div className="text-center py-4">
+                    <div className="text-green-600 text-4xl mb-2">✓</div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-1">Connected to Motion</h3>
+                    <p className="text-muted-foreground text-sm">Now select your workspace and project</p>
+                  </div>
+                )}
+                
+                <ApiKeyInput 
+                  apiKey={apiKey}
+                  setApiKey={setApiKey}
+                  isKeyValid={isKeyValid}
+                  errorMessage={errorMessage}
+                  rememberKey={rememberKey}
+                  setRememberKey={setRememberKey}
+                  handleClearApiKey={handleClearApiKey}
+                />
                 
                 <WorkspaceSelect 
                   apiKey={apiKey} 
@@ -216,25 +228,15 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
                   onWorkspaceSelect={handleWorkspaceSelect}
                 />
                 
-                {selectedWorkspaceId && (
+                <div className="text-left">
                   <ProjectSelect
                     apiKey={apiKey}
                     workspaceId={selectedWorkspaceId}
                     selectedProject={selectedProject}
                     onProjectSelect={handleProjectSelect}
                   />
-                )}
+                </div>
               </div>
-            ) : (
-              <ApiKeyInput 
-                apiKey={apiKey}
-                setApiKey={setApiKey}
-                isKeyValid={isKeyValid}
-                errorMessage={errorMessage}
-                rememberKey={rememberKey}
-                setRememberKey={setRememberKey}
-                handleClearApiKey={handleClearApiKey}
-              />
             )}
           </div>
         </CardContent>
