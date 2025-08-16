@@ -9,9 +9,6 @@ import { Step } from './types';
 const AppContent: React.FC = () => {
   const { 
     unrecognizedUserMappings,
-    handleWorkspaceSelection,
-    handleProjectSelect,
-    handleContinueToInput,
     handleAddMore,
     handleTaskParse,
     handleTasksAddToMotion
@@ -25,7 +22,7 @@ const AppContent: React.FC = () => {
   
   // Start with the connect step to ensure proper workflow
   React.useEffect(() => {
-    if (step !== 'connect' && step !== 'workspace' && step !== 'input' && step !== 'tasks' && step !== 'complete') {
+    if (step !== 'connect' && step !== 'input' && step !== 'tasks' && step !== 'complete') {
       setStep('connect');
     }
   }, [step, setStep]);
@@ -39,9 +36,6 @@ const AppContent: React.FC = () => {
       selectedProject={apiProps.selectedProject}
     >
       <StepContentRenderer
-        handleWorkspaceSelection={handleWorkspaceSelection}
-        handleProjectSelect={handleProjectSelect}
-        handleContinueToInput={handleContinueToInput}
         handleTaskParse={handleTaskParse}
         handleTasksAddToMotion={handleTasksAddToMotion}
         handleAddMore={handleAddMore}

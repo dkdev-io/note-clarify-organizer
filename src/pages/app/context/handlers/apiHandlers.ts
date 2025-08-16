@@ -32,8 +32,8 @@ export const handleApiConnect = (
     users: users || [],
   });
   
-  // Always move to workspace selection step after connecting
-  setStep('workspace');
+  // Always move directly to input step after connecting (workspace selection is now part of connect step)
+  setStep('input');
 };
 
 // Handle skipping API connection

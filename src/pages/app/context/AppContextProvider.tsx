@@ -24,7 +24,7 @@ interface AppContextProps {
   setProjectName: (projectName: string | null) => void;
   apiProps: ApiProps;
   updateApiProps: (newProps: Partial<ApiProps>) => void;
-  handleApiConnect: (apiKey: string, workspaces: any[], workspaceId?: string, project?: string) => void;
+  handleApiConnect: (apiKey: string, workspaces: any[], workspaceId?: string, project?: string, users?: any[]) => void;
   handleSkipConnect: () => void;
   handleStartOver: () => void;
   handleReconnect: () => void;
@@ -88,16 +88,18 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     }));
   };
 
-  const handleApiConnect = (apiKey: string, workspaces: any[], workspaceId?: string, project?: string) => {
+  const handleApiConnect = (apiKey: string, workspaces: any[], workspaceId?: string, project?: string, users?: any[]) => {
     updateApiProps({
       apiKey: apiKey,
       workspaces: workspaces,
       selectedWorkspaceId: workspaceId || null,
       selectedProject: project || null,
-      isConnected: true
+      selectedProjectId: null, // Will be set by project selection
+      isConnected: true,
+      users: users || []
     });
-    // Move to workspace selection after connecting
-    setStep('workspace');
+    // Move directly to input step since workspace/project selection is now part of connect step
+    setStep('input');
   };
 
   const handleSkipConnect = () => {

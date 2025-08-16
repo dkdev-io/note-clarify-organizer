@@ -2,7 +2,6 @@
 import React from 'react';
 import { useAppContext } from '../context/AppContextProvider';
 import ConnectStep from './ConnectStep';
-import WorkspaceStep from './WorkspaceStep';
 import InputStep from './input-step';
 import TasksStep from './TasksStep';
 import CompleteStep from './CompleteStep';
@@ -10,9 +9,6 @@ import { Task } from '@/utils/parser';
 import { ApiProps } from '../types';
 
 interface StepContentRendererProps {
-  handleWorkspaceSelection: (workspaceId: string) => void;
-  handleProjectSelect: (projectName: string, projectId?: string) => void;
-  handleContinueToInput: () => void;
   handleTaskParse: (
     text: string, 
     providedProjectName: string | null, 
@@ -24,9 +20,6 @@ interface StepContentRendererProps {
 }
 
 const StepContentRenderer: React.FC<StepContentRendererProps> = ({
-  handleWorkspaceSelection,
-  handleProjectSelect,
-  handleContinueToInput,
   handleTaskParse,
   handleTasksAddToMotion,
   handleAddMore,
@@ -54,20 +47,6 @@ const StepContentRenderer: React.FC<StepContentRendererProps> = ({
         />
       );
     
-    case 'workspace':
-      return (
-        <WorkspaceStep 
-          apiKey={apiProps.apiKey}
-          workspaces={apiProps.workspaces}
-          selectedWorkspaceId={apiProps.selectedWorkspaceId || null}
-          selectedProject={apiProps.selectedProject || null}
-          onWorkspaceSelect={handleWorkspaceSelection}
-          onProjectSelect={handleProjectSelect}
-          onContinue={handleContinueToInput}
-          onBack={() => setStep('connect')}
-        />
-      );
-      
     case 'input':
       return (
         <InputStep 

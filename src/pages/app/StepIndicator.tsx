@@ -9,23 +9,12 @@ interface StepIndicatorProps {
 }
 
 const StepIndicator: React.FC<StepIndicatorProps> = ({ currentStep, isConnected }) => {
-  // Define the steps based on whether Motion API is connected
-  let steps: { id: string; label: string; key: Step }[] = [];
-
-  if (isConnected) {
-    steps = [
-      { id: '1', label: 'Connect', key: 'connect' },
-      { id: '2', label: 'Workspace', key: 'workspace' },
-      { id: '3', label: 'Input', key: 'input' },
-      { id: '4', label: 'Tasks', key: 'tasks' },
-    ];
-  } else {
-    steps = [
-      { id: '1', label: 'Connect', key: 'connect' },
-      { id: '2', label: 'Input', key: 'input' },
-      { id: '3', label: 'Tasks', key: 'tasks' },
-    ];
-  }
+  // Define the simplified 3-step flow: Connect - Input - Add
+  const steps: { id: string; label: string; key: Step }[] = [
+    { id: '1', label: 'Connect', key: 'connect' },
+    { id: '2', label: 'Input', key: 'input' },
+    { id: '3', label: 'Add', key: 'tasks' },
+  ];
 
   return (
     <div className="w-full mb-8">
@@ -82,7 +71,7 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({ currentStep, isConnected 
 
 // Helper function to determine the state of each step
 const getStepState = (stepKey: Step, currentStep: Step) => {
-  const stepOrder: Step[] = ['connect', 'workspace', 'input', 'tasks', 'complete'];
+  const stepOrder: Step[] = ['connect', 'input', 'tasks', 'complete'];
   const currentIndex = stepOrder.indexOf(currentStep);
   const stepIndex = stepOrder.indexOf(stepKey);
   

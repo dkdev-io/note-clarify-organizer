@@ -2,12 +2,14 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
-import { validateMotionApiKey, fetchWorkspaces, setMotionApiKey } from '@/utils/motion';
+import { validateMotionApiKey, fetchWorkspaces, setMotionApiKey, fetchUsers } from '@/utils/motion';
 import { storeApiKey, retrieveApiKey, clearStoredApiKey } from '@/utils/keyStorage';
 import { ApiKeyInput, ConnectionActions } from './motion-connect';
+import WorkspaceSelect from './WorkspaceSelect';
+import { ProjectSelect } from './project';
 
 interface MotionApiConnectProps {
-  onConnect: (apiKey: string, workspaces: any[], selectedWorkspace?: string, selectedProject?: string) => void;
+  onConnect: (apiKey: string, workspaces: any[], selectedWorkspace?: string, selectedProject?: string, users?: any[]) => void;
   onSkip: () => void;
 }
 
@@ -19,6 +21,11 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
   const [isProxyMode, setIsProxyMode] = useState(false);
   const [rememberKey, setRememberKey] = useState(true);
   const [isAlreadyConnected, setIsAlreadyConnected] = useState(false);
+  const [fetchedWorkspaces, setFetchedWorkspaces] = useState<any[]>([]);
+  const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | null>(null);
+  const [selectedProject, setSelectedProject] = useState<string | null>(null);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const [showWorkspaceSelection, setShowWorkspaceSelection] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -57,18 +64,16 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
             setIsAlreadyConnected(true);
             setIsKeyValid(true);
             
-            // Auto-validate and connect
+            // Auto-validate and fetch workspaces
             try {
-              const fetchedWorkspaces = await fetchWorkspaces(data.apiKey);
+              const workspaces = await fetchWorkspaces(data.apiKey);
+              setFetchedWorkspaces(workspaces);
+              setShowWorkspaceSelection(true);
+              
               toast({
                 title: "✓ Connected Successfully",
-                description: "Advancing to next step...",
+                description: "Please select your workspace and project below.",
               });
-              
-              // Auto-advance after 2 seconds
-              setTimeout(() => {
-                onConnect(data.apiKey, fetchedWorkspaces);
-              }, 2000);
             } catch (error) {
               setIsKeyValid(false);
               setIsAlreadyConnected(false);
@@ -92,18 +97,16 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
         setIsAlreadyConnected(true);
         setIsKeyValid(true);
         
-        // Auto-validate and connect
+        // Auto-validate and fetch workspaces
         try {
-          const fetchedWorkspaces = await fetchWorkspaces(storedKey);
+          const workspaces = await fetchWorkspaces(storedKey);
+          setFetchedWorkspaces(workspaces);
+          setShowWorkspaceSelection(true);
+          
           toast({
             title: "✓ Connected Successfully",
-            description: "Advancing to next step...",
+            description: "Please select your workspace and project below.",
           });
-          
-          // Auto-advance after 2 seconds
-          setTimeout(() => {
-            onConnect(storedKey, fetchedWorkspaces);
-          }, 2000);
         } catch (error) {
           setIsKeyValid(false);
           setIsAlreadyConnected(false);
@@ -119,6 +122,61 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
     checkForStoredApiKey();
   }, [toast, onConnect]);
 
+  const handleWorkspaceSelect = async (workspaceId: string) => {
+    setSelectedWorkspaceId(workspaceId);
+    
+    // Fetch users for the selected workspace
+    if (apiKey) {
+      try {
+        const users = await fetchUsers(workspaceId, apiKey);
+        // Store users for later use if needed
+      } catch (error) {
+        console.error('Failed to fetch users for workspace:', error);
+      }
+    }
+  };
+
+  const handleProjectSelect = (projectName: string, projectId?: string) => {
+    setSelectedProject(projectName);
+    setSelectedProjectId(projectId || null);
+  };
+
+  const handleClearConnection = () => {
+    setIsAlreadyConnected(false);
+    setIsKeyValid(null);
+    setShowWorkspaceSelection(false);
+    setSelectedWorkspaceId(null);
+    setSelectedProject(null);
+    setApiKey('');
+    clearStoredApiKey();
+  };
+
+  const handleSubmitSelection = async () => {
+    if (!selectedWorkspaceId || !selectedProject || !apiKey) return;
+    
+    try {
+      // Fetch users for the selected workspace
+      const users = await fetchUsers(selectedWorkspaceId, apiKey);
+      
+      // Call the onConnect callback with all the data
+      onConnect(apiKey, fetchedWorkspaces, selectedWorkspaceId, selectedProject, users);
+      
+      toast({
+        title: "Setup Complete",
+        description: "Successfully connected to Motion with your selected workspace and project.",
+      });
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      // Still proceed even if users fetch fails
+      onConnect(apiKey, fetchedWorkspaces, selectedWorkspaceId, selectedProject, []);
+      
+      toast({
+        title: "Setup Complete",
+        description: "Successfully connected to Motion. User list may be limited.",
+      });
+    }
+  };
+
   if (isProxyMode) {
     return null;
   }
@@ -130,11 +188,34 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
         </CardHeader>
         <CardContent>
           <div className="space-y-6">
-            {isAlreadyConnected && isKeyValid ? (
+            {isAlreadyConnected && isKeyValid && !showWorkspaceSelection ? (
               <div className="text-center py-8">
                 <div className="text-green-600 text-6xl mb-4">✓</div>
                 <h3 className="text-xl font-medium text-gray-900 mb-2">Connected Successfully</h3>
-                <p className="text-muted-foreground">Your Motion API connection is active. Advancing to next step...</p>
+                <p className="text-muted-foreground">Your Motion API connection is active. Loading workspaces...</p>
+              </div>
+            ) : showWorkspaceSelection ? (
+              <div className="space-y-6">
+                <div className="text-center py-4">
+                  <div className="text-green-600 text-4xl mb-2">✓</div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-1">Connected to Motion</h3>
+                  <p className="text-muted-foreground text-sm">Now select your workspace and project</p>
+                </div>
+                
+                <WorkspaceSelect 
+                  apiKey={apiKey} 
+                  selectedWorkspaceId={selectedWorkspaceId}
+                  onWorkspaceSelect={handleWorkspaceSelect}
+                />
+                
+                {selectedWorkspaceId && (
+                  <ProjectSelect
+                    apiKey={apiKey}
+                    workspaceId={selectedWorkspaceId}
+                    selectedProject={selectedProject}
+                    onProjectSelect={handleProjectSelect}
+                  />
+                )}
               </div>
             ) : (
               <ApiKeyInput 
@@ -150,7 +231,7 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
           </div>
         </CardContent>
         <CardFooter>
-          {!(isAlreadyConnected && isKeyValid) && (
+          {!showWorkspaceSelection && !(isAlreadyConnected && isKeyValid) && (
             <ConnectionActions 
               apiKey={apiKey}
               isValidating={isValidating}
@@ -158,6 +239,24 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
               onSkip={onSkip}
               onValidate={validateKey}
             />
+          )}
+          
+          {showWorkspaceSelection && (
+            <div className="flex justify-between pt-2 pb-4 px-6 w-full">
+              <button 
+                onClick={handleClearConnection}
+                className="text-sm text-gray-500 hover:text-gray-700"
+              >
+                Use different API key
+              </button>
+              <button 
+                onClick={handleSubmitSelection}
+                disabled={!selectedWorkspaceId || !selectedProject}
+                className="bg-[#fbbc05] hover:bg-[#fbbc05]/90 text-black px-6 py-2 rounded-md transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Submit & Continue
+              </button>
+            </div>
           )}
         </CardFooter>
       </Card>
@@ -203,15 +302,14 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
               "Make sure you have at least one workspace in your Motion account."
             );
           } else {
+            // Show workspace selection instead of auto-advancing
+            setFetchedWorkspaces(fetchedWorkspaces);
+            setShowWorkspaceSelection(true);
+            
             toast({
               title: "✓ Connected Successfully",
-              description: "Advancing to next step...",
+              description: "Please select your workspace and project below.",
             });
-            
-            // Auto-advance after 2 seconds
-            setTimeout(() => {
-              onConnect(trimmedKey, fetchedWorkspaces);
-            }, 2000);
           }
         })
         .catch((error) => {
