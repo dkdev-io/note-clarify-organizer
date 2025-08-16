@@ -195,9 +195,59 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       });
   };
   
-  const handleAddToMotion = (tasks: Task[], projectName: string | null, unassignedCount: number = 0) => {
+  const handleAddToMotion = async (tasks: Task[], projectName: string | null, unassignedCount: number = 0) => {
     console.log('Adding tasks to Motion:', tasks, projectName, unassignedCount);
-    setStep('complete');
+    
+    // Don't proceed if not connected to Motion API
+    if (!apiProps.isConnected || !apiProps.apiKey) {
+      console.log('Not connected to Motion API, skipping task creation');
+      setStep('complete');
+      return;
+    }
+
+    setIsLoading(true);
+    
+    try {
+      // Import the addTasksToMotion function
+      const { addTasksToMotion } = await import('@/utils/motion/tasks');
+      
+      // Call the Motion API with the selected project ID
+      const result = await addTasksToMotion(
+        tasks,
+        apiProps.selectedWorkspaceId,
+        apiProps.apiKey,
+        apiProps.selectedProjectId // Ensure the selected project ID is passed
+      );
+      
+      if (result.success) {
+        toast({
+          title: "Tasks added successfully",
+          description: result.message,
+        });
+      } else {
+        toast({
+          title: "Some tasks failed to add",
+          description: result.message,
+          variant: "destructive"
+        });
+      }
+      
+      // Show any specific errors
+      if (result.errors && result.errors.length > 0) {
+        console.error('Task creation errors:', result.errors);
+      }
+      
+    } catch (error) {
+      console.error('Error adding tasks to Motion:', error);
+      toast({
+        title: "Error adding tasks",
+        description: "There was a problem adding your tasks to Motion. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+      setStep('complete');
+    }
   };
 
   return (
