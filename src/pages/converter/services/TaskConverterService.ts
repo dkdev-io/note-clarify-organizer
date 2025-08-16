@@ -31,62 +31,82 @@ export const checkForIssueLogCommand = (text: string): boolean => {
 
 export const extractTasksFromText = async (text: string): Promise<Task[]> => {
   if (!text || text.trim() === '') {
+    console.log("Empty text provided for task extraction");
     return [];
   }
   
-  console.log("Extracting tasks from text:", text.substring(0, 100) + "...");
-  const tasks = parseTextIntoTasks(text);
-  console.log("Extracted tasks:", tasks);
+  console.log("=== TASK EXTRACTION DEBUG ===");
+  console.log("Full input text:", text);
+  console.log("Text length:", text.length);
+  console.log("Text trim length:", text.trim().length);
   
-  // Store tasks in Supabase for persistence and later LLM review
-  if (tasks.length > 0) {
-    try {
-      // Convert tasks to the format for Supabase
-      const tasksForDb = tasks.map(task => ({
-        title: task.title,
-        description: task.description || null,
-        due_date: task.dueDate ? new Date(task.dueDate).toISOString() : null,
-        start_date: task.startDate ? new Date(task.startDate).toISOString() : null,
-        hard_deadline: task.hardDeadline || false,
-        priority: task.priority || null,
-        status: task.status || 'todo',
-        assignee: task.assignee || null,
-        workspace_id: task.workspace_id || null,
-        is_recurring: task.isRecurring || false,
-        frequency: task.frequency || null,
-        project: task.project || null,
-        project_id: task.projectId || null,
-        duration: task.duration || null,
-        time_estimate: task.timeEstimate || null,
-        folder: task.folder || null,
-        auto_scheduled: task.autoScheduled || true,
-        is_pending: task.isPending || false,
-        schedule: task.schedule || null,
-        labels: task.labels || null,
-        custom_fields: task.customFields || null
-      }));
-
-      console.log("Saving tasks to Supabase:", tasksForDb);
-      
-      // Insert tasks one by one to avoid type issues
-      for (const taskData of tasksForDb) {
-        const { data, error } = await supabase
-          .from('extracted_tasks')
-          .insert(taskData)
-          .select();
-        
-        if (error) {
-          console.error("Error saving task to Supabase:", error);
-        } else {
-          console.log("Task saved to Supabase successfully:", data);
-        }
-      }
-    } catch (error) {
-      console.error("Error preparing tasks for Supabase:", error);
+  try {
+    const tasks = parseTextIntoTasks(text);
+    console.log("parseTextIntoTasks returned:", tasks);
+    console.log("Number of tasks extracted:", tasks.length);
+    
+    if (tasks.length === 0) {
+      console.log("No tasks found - checking input text format");
+      const lines = text.split(/\r?\n/);
+      console.log("Lines in text:", lines);
+      lines.forEach((line, index) => {
+        console.log(`Line ${index}:`, JSON.stringify(line));
+      });
     }
+    
+    // Store tasks in Supabase for persistence and later LLM review
+    if (tasks.length > 0) {
+      try {
+        // Convert tasks to the format for Supabase
+        const tasksForDb = tasks.map(task => ({
+          title: task.title,
+          description: task.description || null,
+          due_date: task.dueDate ? new Date(task.dueDate).toISOString() : null,
+          start_date: task.startDate ? new Date(task.startDate).toISOString() : null,
+          hard_deadline: task.hardDeadline || false,
+          priority: task.priority || null,
+          status: task.status || 'todo',
+          assignee: task.assignee || null,
+          workspace_id: task.workspace_id || null,
+          is_recurring: task.isRecurring || false,
+          frequency: task.frequency || null,
+          project: task.project || null,
+          project_id: task.projectId || null,
+          duration: task.duration || null,
+          time_estimate: task.timeEstimate || null,
+          folder: task.folder || null,
+          auto_scheduled: task.autoScheduled || true,
+          is_pending: task.isPending || false,
+          schedule: task.schedule || null,
+          labels: task.labels || null,
+          custom_fields: task.customFields || null
+        }));
+
+        console.log("Saving tasks to Supabase:", tasksForDb);
+        
+        // Insert tasks one by one to avoid type issues
+        for (const taskData of tasksForDb) {
+          const { data, error } = await supabase
+            .from('extracted_tasks')
+            .insert(taskData)
+            .select();
+          
+          if (error) {
+            console.error("Error saving task to Supabase:", error);
+          } else {
+            console.log("Task saved to Supabase successfully:", data);
+          }
+        }
+      } catch (error) {
+        console.error("Error preparing tasks for Supabase:", error);
+      }
+    }
+    
+    return tasks;
+  } catch (error) {
+    console.error("Error in parseTextIntoTasks:", error);
+    throw error;
   }
-  
-  return tasks;
 };
 
 // Add a new function to get tasks with LLM recommendations

@@ -35,7 +35,10 @@ export const parseTextIntoTasks = (text: string, defaultProjectName: string | nu
     /^\s*\d+\.\s+/,                                    // Numbered lists
     /\b(?:todo|to-do|action item|task)s?\b:?\s*/i,    // Explicit task indicators
     /\b(?:need|needs) to\b/i,                         // Need to statements
-    /\b(?:should|must|will have to|going to)\b/i      // Obligation indicators
+    /\b(?:should|must|will have to|going to)\b/i,     // Obligation indicators
+    /\b(?:will|shall)\s+\w+/i,                        // Future actions like "will do", "will finish"
+    /\bby\s+(?:january|february|march|april|may|june|july|august|september|october|november|december|\d{1,2}|\w+day)/i, // Deadline indicators
+    /\w+\s+will\s+/i                                   // Pattern like "Dan will"
   ];
   
   const tasks: Task[] = [];
@@ -44,11 +47,21 @@ export const parseTextIntoTasks = (text: string, defaultProjectName: string | nu
   let isFirstLine = true;
   
   for (const line of lines) {
-    let isTaskLine = taskIndicators.some(regex => regex.test(line));
+    let isTaskLine = taskIndicators.some((regex, index) => {
+      const matches = regex.test(line);
+      if (matches) {
+        console.log(`Line "${line}" matched indicator ${index}: ${regex}`);
+      }
+      return matches;
+    });
     let taskText = line;
     
+    console.log(`Processing line: "${line}"`);
+    console.log(`Is task line: ${isTaskLine}`);
+    
     // Skip very short lines unless they're clearly tasks
-    if (!isTaskLine && line.length < 15) {
+    if (!isTaskLine && line.length < 10) {
+      console.log("Skipping short line");
       isFirstLine = false;
       continue;
     }

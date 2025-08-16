@@ -30,10 +30,15 @@ export function useTaskExtraction() {
     setExtractionFailed(false);
 
     try {
+      console.log("=== TASK EXTRACTION HOOK DEBUG ===");
+      console.log("Input text:", text);
+      
       // Extract tasks from the text and store them in Supabase
       const tasks = await extractTasksFromText(text);
+      console.log("Tasks returned from extractTasksFromText:", tasks);
       
       if (tasks.length === 0) {
+        console.log("No tasks found, setting extraction failed");
         setExtractionFailed(true);
         toast({
           title: "No tasks found",
@@ -41,6 +46,7 @@ export function useTaskExtraction() {
           variant: "destructive"
         });
       } else {
+        console.log("Tasks found, proceeding to get recommendations");
         // Get recommendations from the LLM via Supabase edge function
         const enhancedTasks = await getTasksWithRecommendations(tasks);
         console.log("Enhanced tasks after recommendations:", enhancedTasks);
@@ -57,7 +63,7 @@ export function useTaskExtraction() {
       setExtractionFailed(true);
       toast({
         title: "Error extracting tasks",
-        description: "Something went wrong while extracting tasks.",
+        description: "There was a problem processing your notes. Please try again.",
         variant: "destructive"
       });
     } finally {
