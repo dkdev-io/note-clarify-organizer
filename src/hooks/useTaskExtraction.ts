@@ -46,12 +46,8 @@ export function useTaskExtraction() {
           variant: "destructive"
         });
       } else {
-        console.log("Tasks found, proceeding to get recommendations");
-        // Get recommendations from the LLM via Supabase edge function
-        const enhancedTasks = await getTasksWithRecommendations(tasks);
-        console.log("Enhanced tasks after recommendations:", enhancedTasks);
-        
-        setExtractedTasks(enhancedTasks);
+        console.log("Tasks found, setting extracted tasks");
+        setExtractedTasks(tasks);
         
         toast({
           title: "Tasks extracted",
