@@ -127,12 +127,6 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
     <div className="w-full max-w-2xl mx-auto">
       <Card className="bg-white bg-opacity-80 backdrop-blur-sm border border-gray-100 shadow-card">
         <CardHeader>
-          <CardTitle className="text-2xl font-medium text-gray-900">
-            Step One
-          </CardTitle>
-          <p className="text-muted-foreground text-sm mt-1">
-            Connect your project management tool.
-          </p>
         </CardHeader>
         <CardContent>
           <div className="space-y-6">

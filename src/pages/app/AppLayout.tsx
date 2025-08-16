@@ -22,10 +22,10 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   return (
     <header className="text-center mb-8">
       <h1 className="text-3xl font-bold text-gray-900 mb-2">
-        Step Two
+        Step One
       </h1>
       <p className="text-xl text-gray-700 mb-4">
-        Add your meeting info
+        Connect your project management tool.
       </p>
       {isConnected && step !== 'connect' && step !== 'complete' && (
         <div className="mt-3 flex flex-wrap justify-center gap-2">

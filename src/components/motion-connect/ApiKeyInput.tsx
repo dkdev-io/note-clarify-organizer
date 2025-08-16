@@ -28,7 +28,7 @@ const ApiKeyInput: React.FC<ApiKeyInputProps> = ({
 }) => {
   return (
     <div className="space-y-2">
-      <Label htmlFor="apiKey">Motion API Key</Label>
+      <Label htmlFor="apiKey">Connect to Motion.</Label>
       <div className="flex gap-2">
         <Input
           id="apiKey"
