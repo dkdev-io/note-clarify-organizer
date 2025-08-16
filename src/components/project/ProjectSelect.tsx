@@ -28,12 +28,16 @@ const ProjectSelect: React.FC<ProjectSelectProps> = ({
   const { toast } = useToast();
 
   useEffect(() => {
-    if (workspaceId) {
+    if (workspaceId && apiKey && apiKey.trim()) {
       setProjects([]);
       setSelectedProjectId(null);
       loadProjects();
+    } else {
+      setProjects([]);
+      setSelectedProjectId(null);
+      setError(null);
     }
-  }, [workspaceId]);
+  }, [workspaceId, apiKey]);
 
   const loadProjects = async () => {
     if (!workspaceId) return;
@@ -117,25 +121,27 @@ const ProjectSelect: React.FC<ProjectSelectProps> = ({
     }
   }, [selectedProject, projects]);
 
-  if (!apiKey || !workspaceId) {
-    return null;
-  }
+  const isDisabled = !apiKey || !apiKey.trim() || !workspaceId;
 
   return (
     <div className="space-y-4">
       <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-medium">Select Project</span>
+          {isDisabled && <span className="text-sm text-muted-foreground">Select workspace first</span>}
+        </div>
         <div className="flex gap-2">
           <ProjectDropdown
             projects={projects}
             selectedProjectId={selectedProjectId}
-            onSelectProject={handleSelectProject}
-            isLoading={isLoading}
-            onCreateNewProject={handleCreateNewProject}
+            onSelectProject={isDisabled ? () => {} : handleSelectProject}
+            isLoading={isLoading && !isDisabled}
+            onCreateNewProject={isDisabled ? () => {} : handleCreateNewProject}
           />
           <ProjectActions
-            onRefresh={loadProjects}
-            onCreateNew={() => setShowNewProjectDialog(true)}
-            isLoading={isLoading}
+            onRefresh={isDisabled ? () => {} : loadProjects}
+            onCreateNew={isDisabled ? () => {} : () => setShowNewProjectDialog(true)}
+            isLoading={isLoading && !isDisabled}
           />
         </div>
         

@@ -31,8 +31,11 @@ const WorkspaceSelect: React.FC<WorkspaceSelectProps> = ({
   const { toast } = useToast();
 
   useEffect(() => {
-    if (apiKey) {
+    if (apiKey && apiKey.trim()) {
       loadWorkspaces();
+    } else {
+      setWorkspaces([]);
+      setError(null);
     }
   }, [apiKey]);
 
@@ -126,9 +129,7 @@ const WorkspaceSelect: React.FC<WorkspaceSelectProps> = ({
     window.open('https://app.usemotion.com/settings/developers/api-keys', '_blank');
   };
 
-  if (!apiKey) {
-    return null;
-  }
+  const isDisabled = !apiKey || !apiKey.trim();
 
   return (
     <div className="space-y-4">
@@ -136,15 +137,16 @@ const WorkspaceSelect: React.FC<WorkspaceSelectProps> = ({
         <div className="space-y-2">
           <div className="flex justify-between items-center">
             <Label htmlFor="workspace">Select Workspace</Label>
+            {isDisabled && <span className="text-sm text-muted-foreground">Enter API key first</span>}
           </div>
           
           <WorkspaceList
             workspaces={workspaces}
             selectedWorkspaceId={selectedWorkspaceId}
-            onWorkspaceSelect={onWorkspaceSelect}
-            onRefresh={loadWorkspaces}
-            onCreateNew={() => setShowNewWorkspaceForm(true)}
-            isLoading={isLoading}
+            onWorkspaceSelect={isDisabled ? () => {} : onWorkspaceSelect}
+            onRefresh={isDisabled ? () => {} : loadWorkspaces}
+            onCreateNew={isDisabled ? () => {} : () => setShowNewWorkspaceForm(true)}
+            isLoading={isLoading && !isDisabled}
           />
           
           <WorkspaceError 
