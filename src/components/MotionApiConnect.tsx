@@ -191,8 +191,10 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
 
   return (
     <div className="w-full max-w-2xl mx-auto">
-      <Card className="bg-white bg-opacity-80 backdrop-blur-sm border border-gray-100 shadow-card">
-        <CardHeader>
+      <Card className="bg-card border shadow-card">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl font-bold text-gray-900">Step One</CardTitle>
+          <p className="text-lg text-muted-foreground mt-2">Connect to Motion</p>
         </CardHeader>
         <CardContent>
           <div className="space-y-6">
@@ -251,18 +253,17 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
             />
           )}
           
-          {showWorkspaceSelection && (
-            <div className="flex justify-between pt-2 pb-4 px-6 w-full">
+          {showWorkspaceSelection && selectedWorkspaceId && selectedProject && (
+            <div className="flex justify-between items-center pt-2 pb-4 px-6 w-full">
               <button 
                 onClick={handleClearConnection}
-                className="text-sm text-gray-500 hover:text-gray-700"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 Use different API key
               </button>
               <button 
                 onClick={handleSubmitSelection}
-                disabled={!selectedWorkspaceId || !selectedProject}
-                className="bg-[#fbbc05] hover:bg-[#fbbc05]/90 text-black px-6 py-2 rounded-md transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2 rounded-md transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] font-medium"
               >
                 Submit & Continue
               </button>
