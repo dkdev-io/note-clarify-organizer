@@ -21,22 +21,50 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
   const { toast } = useToast();
 
   useEffect(() => {
-    const usingProxy = sessionStorage.getItem('using_motion_proxy') === 'true';
-    setIsProxyMode(usingProxy);
-    
-    if (usingProxy) {
-      setIsKeyValid(true);
-      const defaultWorkspaces = [
-        { id: 'proxy-workspace-1', name: 'Default Workspace' }
-      ];
+    const checkForStoredApiKey = async () => {
+      const usingProxy = sessionStorage.getItem('using_motion_proxy') === 'true';
+      setIsProxyMode(usingProxy);
       
-      toast({
-        title: "Connected via Proxy",
-        description: "You're connected to Motion via the application proxy. Now select your workspace and project.",
-      });
-      
-      onConnect('proxy_mode', defaultWorkspaces);
-    } else {
+      if (usingProxy) {
+        setIsKeyValid(true);
+        const defaultWorkspaces = [
+          { id: 'proxy-workspace-1', name: 'Default Workspace' }
+        ];
+        
+        toast({
+          title: "Connected via Proxy",
+          description: "You're connected to Motion via the application proxy. Now select your workspace and project.",
+        });
+        
+        onConnect('proxy_mode', defaultWorkspaces);
+        return;
+      }
+
+      // Try to get API key from Supabase secrets first
+      try {
+        const response = await fetch('/functions/v1/get-motion-api-key', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.hasApiKey && data.apiKey) {
+            setApiKey(data.apiKey);
+            toast({
+              title: "API Key Retrieved",
+              description: "Your securely stored API key has been loaded. Click Connect to validate.",
+            });
+            return;
+          }
+        }
+      } catch (error) {
+        console.log('No stored API key found in secure storage, checking local storage...');
+      }
+
+      // Fallback to localStorage
       const storedKey = retrieveApiKey();
       if (storedKey) {
         setApiKey(storedKey);
@@ -45,7 +73,9 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
           description: "A previously stored API key has been loaded. Click Connect to validate.",
         });
       }
-    }
+    };
+
+    checkForStoredApiKey();
   }, [toast, onConnect]);
 
   if (isProxyMode) {
