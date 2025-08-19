@@ -7,6 +7,7 @@ import TaskConverterHeader from './components/TaskConverterHeader';
 import TaskConverterStepMarkers from './components/TaskConverterStepMarkers';
 import TaskConverterContent from './components/TaskConverterContent';
 import CompletionScreen from './components/CompletionScreen';
+import MotionApiConnect from '@/components/MotionApiConnect';
 import { parseTextIntoTasks } from '@/utils/task-parser';
 import TaskAIEnhancer from '@/components/task-review/TaskAIEnhancer';
 import TaskReview from '@/components/task-review/TaskReviewWrapper';
@@ -40,14 +41,17 @@ const TaskConverterPage = () => {
   }, [extractedTasks]);
   
   // Handle API connection
-  const handleApiConnect = (apiKey: string, fetchedWorkspaces: any[], workspaceId?: string, project?: string) => {
+  const handleApiConnect = (apiKey: string, fetchedWorkspaces: any[], workspaceId?: string, project?: string, users?: any[]) => {
+    console.log('TaskConverterPage - handleApiConnect called with:', { apiKey, fetchedWorkspaces, workspaceId, project, users });
     setMotionApiKey(apiKey);
     setWorkspaces(fetchedWorkspaces);
     setSelectedWorkspaceId(workspaceId || null);
     setSelectedProject(project || null);
     setProjectName(project || null);
+    setUsers(users || []);
     setIsConnected(true);
     setStep('input');
+    console.log('TaskConverterPage - step set to input');
   };
 
   // Handle skipping API connection
@@ -158,6 +162,17 @@ const TaskConverterPage = () => {
   // Render the appropriate content based on step
   const renderStepContent = () => {
     switch (step) {
+      case 'connect':
+        return (
+          <MotionApiConnect
+            onConnect={handleApiConnect}
+            onSkip={handleSkipConnect}
+          />
+        );
+      case 'input':
+        return (
+          <TaskConverterContent onParseText={handleParseText} />
+        );
       case 'extract':
         console.log('Rendering extract step with tasks:', extractedTasks); // Debug log
         return (
@@ -200,7 +215,7 @@ const TaskConverterPage = () => {
         );
       default:
         return (
-          <TaskConverterContent />
+          <TaskConverterContent onParseText={handleParseText} />
         );
     }
   };

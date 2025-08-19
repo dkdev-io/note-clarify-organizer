@@ -179,7 +179,7 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
       onConnect(apiKey, fetchedWorkspaces, selectedWorkspaceId, selectedProject, []);
       
       toast({
-        title: "Setup Complete",
+        title: "Setup Complete", 
         description: "Successfully connected to Motion. User list may be limited.",
       });
     }
