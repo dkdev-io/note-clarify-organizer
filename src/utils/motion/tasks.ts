@@ -42,15 +42,15 @@ export const addTasksToMotion = async (
         const taskData: any = {
           name: task.title,
           description: task.description || "",
-          workspace_id: workspaceId,
+          workspaceId: workspaceId,
         };
         
-        // Add project_id if provided either directly or from the task
+        // Add projectId if provided either directly or from the task
         if (projectId) {
-          taskData.project_id = projectId;
+          taskData.projectId = projectId;
           console.log(`Adding task "${task.title}" to project ID: ${projectId}`);
         } else if (task.projectId) {
-          taskData.project_id = task.projectId;
+          taskData.projectId = task.projectId;
           console.log(`Adding task "${task.title}" to task's project ID: ${task.projectId}`);
         } else {
           console.log(`Adding task "${task.title}" without project ID`);
