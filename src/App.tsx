@@ -33,8 +33,8 @@ function App() {
                 <Route path="/" element={<Navigate to="/app/converter" replace />} />
                 
                 {/* Task converter routes */}
-                <Route path="converter" element={<IndexRefactored />} />
-                <Route path="converter/legacy" element={<ConverterPage />} />
+                <Route path="converter" element={<ConverterPage />} />
+                <Route path="converter/legacy" element={<IndexRefactored />} />
                 
                 {/* Issue tracking routes */}
                 <Route path="issues" element={<IssuesListPage />} />

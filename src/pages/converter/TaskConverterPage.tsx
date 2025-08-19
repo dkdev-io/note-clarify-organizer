@@ -62,31 +62,51 @@ const TaskConverterPage = () => {
 
   // Handle moving from note input to task extraction
   const handleParseText = (text: string, providedProjectName: string | null) => {
+    console.log('=== TaskConverterPage.handleParseText called ===');
+    console.log('Text:', text);
+    console.log('Provided project name:', providedProjectName);
+    
     setNoteText(text);
     
     // Use the selected project from Motion API if available, otherwise use provided name
     const effectiveProjectName = selectedProject || providedProjectName;
+    console.log('Effective project name:', effectiveProjectName);
     
-    const tasks = parseTextIntoTasks(text, effectiveProjectName);
-    console.log('Tasks after parsing:', tasks); // Debug log
-    
-    // Extract project name from tasks if not provided
-    const extractedProjectName = tasks.find(task => task.project)?.project || effectiveProjectName || null;
-    setProjectName(extractedProjectName);
-    
-    // If connected to API, enhance tasks with workspace IDs
-    if (isConnected && selectedWorkspaceId) {
-      const tasksWithWorkspace = tasks.map(task => ({
-        ...task,
-        workspace_id: selectedWorkspaceId,
-        project: extractedProjectName || task.project
-      }));
-      setExtractedTasks(tasksWithWorkspace);
-    } else {
-      setExtractedTasks(tasks);
+    try {
+      const tasks = parseTextIntoTasks(text, effectiveProjectName);
+      console.log('Tasks after parsing:', tasks); // Debug log
+      
+      // Extract project name from tasks if not provided
+      const extractedProjectName = tasks.find(task => task.project)?.project || effectiveProjectName || null;
+      setProjectName(extractedProjectName);
+      
+      // If connected to API, enhance tasks with workspace IDs
+      if (isConnected && selectedWorkspaceId) {
+        const tasksWithWorkspace = tasks.map(task => ({
+          ...task,
+          workspace_id: selectedWorkspaceId,
+          project: extractedProjectName || task.project
+        }));
+        setExtractedTasks(tasksWithWorkspace);
+      } else {
+        setExtractedTasks(tasks);
+      }
+      
+      console.log('Setting step to extract');
+      setStep('extract');
+      
+      toast({
+        title: "Tasks extracted",
+        description: `Successfully extracted ${tasks.length} tasks from your notes.`,
+      });
+    } catch (error) {
+      console.error('Error in TaskConverterPage.handleParseText:', error);
+      toast({
+        title: "Error extracting tasks", 
+        description: "There was a problem processing your notes. Please try again.",
+        variant: "destructive"
+      });
     }
-    
-    setStep('extract');
   };
 
   // Handle moving from extraction to AI enhancement
