@@ -3,10 +3,11 @@
  * Date parsing utilities for extracting due dates from text
  */
 
-// Function to extract dates from text including hour-based and day-based specifications
 export const extractDate = (text: string): string | null => {
   // Define a fixed date for relative date calculations if needed
-  const baseDate = new Date(2025, 2, 8); // March 8, 2025
+  const baseDate = new Date(); // Use current date instead of fixed date
+  
+  console.log("extractDate called with text:", text);
   
   // Hour-based deadline patterns
   const hourBasedPatterns = [
@@ -44,6 +45,7 @@ export const extractDate = (text: string): string | null => {
   for (const pattern of hourBasedPatterns) {
     const match = text.match(pattern);
     if (match) {
+      console.log("Hour-based pattern matched:", pattern, "in text:", text);
       let hours = 24; // Default for "24 hours" or "one day"
       
       if (match[1]) {
@@ -53,7 +55,9 @@ export const extractDate = (text: string): string | null => {
       if (!isNaN(hours)) {
         const deadline = new Date(baseDate);
         deadline.setHours(deadline.getHours() + hours);
-        return deadline.toISOString().split('T')[0];
+        const result = deadline.toISOString().split('T')[0];
+        console.log("Extracted hour-based deadline:", result);
+        return result;
       }
     }
   }
@@ -62,6 +66,7 @@ export const extractDate = (text: string): string | null => {
   for (const pattern of dayBasedPatterns) {
     const match = text.match(pattern);
     if (match && match[1]) {
+      console.log("Day-based pattern matched:", pattern, "in text:", text);
       let days;
       
       // Convert written numbers to digits
@@ -78,7 +83,9 @@ export const extractDate = (text: string): string | null => {
       if (!isNaN(days)) {
         const deadline = new Date(baseDate);
         deadline.setDate(deadline.getDate() + days);
-        return deadline.toISOString().split('T')[0];
+        const result = deadline.toISOString().split('T')[0];
+        console.log("Extracted day-based deadline:", result);
+        return result;
       }
     }
   }
