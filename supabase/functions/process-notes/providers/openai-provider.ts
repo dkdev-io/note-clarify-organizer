@@ -101,10 +101,8 @@ export async function processWithOpenAI(
         });
       }
       
-      return new Response(
-        JSON.stringify(parsedResponse),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      console.log("OpenAI response processed successfully");
+      return parsedResponse;
     } catch (error) {
       clearTimeout(timeoutId);
       if (error.name === 'AbortError') {

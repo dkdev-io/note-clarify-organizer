@@ -41,8 +41,58 @@ export const extractTasksFromText = async (text: string): Promise<Task[]> => {
   console.log("Text trim length:", text.trim().length);
   
   try {
+    // First, try AI-based extraction using the Supabase function
+    console.log("Attempting AI extraction via Supabase function...");
+    
+    const response = await supabase.functions.invoke('process-notes', {
+      body: { text, provider: 'openai' }
+    });
+    
+    if (response.error) {
+      console.error("Supabase function error:", response.error);
+      throw new Error(`AI extraction failed: ${response.error.message}`);
+    }
+    
+    if (response.data && response.data.tasks && Array.isArray(response.data.tasks)) {
+      console.log("AI extraction successful, found tasks:", response.data.tasks.length);
+      
+      // Convert AI tasks to our Task format
+      const aiTasks: Task[] = response.data.tasks.map((task: any, index: number) => ({
+        id: `ai-${Date.now()}-${index}`,
+        title: task.title || 'Untitled Task',
+        description: task.description || '',
+        dueDate: task.dueDate || null,
+        startDate: null,
+        hardDeadline: false,
+        priority: task.priority || 'medium',
+        status: task.status || 'todo',
+        assignee: task.assignee || null,
+        workspace_id: null,
+        isRecurring: false,
+        frequency: null,
+        project: task.project || 'Default Project',
+        projectId: null,
+        duration: null,
+        timeEstimate: null,
+        folder: null,
+        autoScheduled: true,
+        isPending: false,
+        schedule: "Work hours",
+        labels: null,
+        customFields: null
+      }));
+      
+      if (aiTasks.length > 0) {
+        console.log("Successfully converted AI tasks:", aiTasks);
+        return aiTasks;
+      }
+    }
+    
+    console.log("AI extraction returned no tasks, falling back to local parsing...");
+    
+    // Fallback to local parsing if AI doesn't find anything
     const tasks = parseTextIntoTasks(text);
-    console.log("parseTextIntoTasks returned:", tasks);
+    console.log("Local parseTextIntoTasks returned:", tasks);
     console.log("Number of tasks extracted:", tasks.length);
     
     if (tasks.length === 0) {
@@ -56,8 +106,18 @@ export const extractTasksFromText = async (text: string): Promise<Task[]> => {
     
     return tasks;
   } catch (error) {
-    console.error("Error in parseTextIntoTasks:", error);
-    throw error;
+    console.error("Error in task extraction:", error);
+    
+    // If AI fails, try local parsing as fallback
+    console.log("AI extraction failed, attempting local parsing fallback...");
+    try {
+      const tasks = parseTextIntoTasks(text);
+      console.log("Fallback parsing returned:", tasks.length, "tasks");
+      return tasks;
+    } catch (localError) {
+      console.error("Local parsing also failed:", localError);
+      throw error; // Throw the original AI error
+    }
   }
 };
 
