@@ -18,6 +18,8 @@ class MotionApiCache {
   private pendingRequests = new Map<string, PendingRequest>();
   private readonly CACHE_DURATION = 60000; // 1 minute cache
   private readonly CLEANUP_INTERVAL = 300000; // 5 minutes cleanup
+  private rateLimitedUntil = 0; // Timestamp when rate limiting should end
+  private readonly RATE_LIMIT_COOLDOWN = 300000; // 5 minutes cooldown after rate limit
   
   constructor() {
     // Cleanup expired cache entries periodically
@@ -42,6 +44,13 @@ class MotionApiCache {
 
   async get<T>(key: string, fetcher: () => Promise<T>): Promise<T> {
     const now = Date.now();
+    
+    // Check if we're in rate limit cooldown
+    if (this.rateLimitedUntil > now) {
+      const remainingTime = Math.ceil((this.rateLimitedUntil - now) / 1000);
+      console.log(`API is rate limited, ${remainingTime} seconds remaining in cooldown`);
+      throw new Error(`API rate limited. Please wait ${remainingTime} seconds before trying again.`);
+    }
     
     // Check if we have a valid cache entry
     const cached = this.cache.get(key);
@@ -90,6 +99,13 @@ class MotionApiCache {
       this.pendingRequests.delete(key);
       return data;
     } catch (error) {
+      // Check if this is a rate limiting error
+      if (error && typeof error === 'object' && 'message' in error && 
+          (error.message.includes('429') || error.message.includes('rate limit'))) {
+        console.log('Rate limit detected, entering cooldown period');
+        this.rateLimitedUntil = now + this.RATE_LIMIT_COOLDOWN;
+      }
+      
       // On error, mark as not loading but keep old data if available
       this.cache.set(key, {
         data: cached?.data || null,

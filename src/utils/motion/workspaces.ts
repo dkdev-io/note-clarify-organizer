@@ -38,9 +38,9 @@ export const fetchWorkspaces = async (apiKey?: string): Promise<any[]> => {
   const cacheKey = `workspaces-${usedKey.substring(0, 10)}`;
   
   return motionApiCache.get(cacheKey, async () => {
-    // Add retry logic for rate limiting
+    // Add retry logic for rate limiting with circuit breaker
     let retryCount = 0;
-    const maxRetries = 3;
+    const maxRetries = 2; // Reduced retries to prevent flooding
     
     while (retryCount < maxRetries) {
       try {
@@ -57,12 +57,8 @@ export const fetchWorkspaces = async (apiKey?: string): Promise<any[]> => {
         console.log('Workspace fetch response status:', response.status);
         
         if (response.status === 429) {
-          // Rate limited, wait longer with exponential backoff
-          const waitTime = Math.min(Math.pow(2, retryCount) * 2000, 10000); // Max 10 seconds
-          console.log(`Rate limited on workspace fetch, waiting ${waitTime}ms before retry ${retryCount + 1}/${maxRetries}`);
-          await new Promise(resolve => setTimeout(resolve, waitTime));
-          retryCount++;
-          continue;
+          // Rate limited, throw error immediately to trigger circuit breaker
+          throw new Error(`Motion API rate limit exceeded (429). Too many requests. Please wait a few minutes before trying again.`);
         }
         
         if (response.ok) {

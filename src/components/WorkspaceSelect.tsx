@@ -79,7 +79,11 @@ const WorkspaceSelect: React.FC<WorkspaceSelectProps> = ({
       
       let errorMessage = "Failed to load workspaces. Please check your API key and try again.";
       if (error instanceof Error) {
-        errorMessage = error.message;
+        if (error.message.includes('rate limit') || error.message.includes('429')) {
+          errorMessage = "Motion API rate limit exceeded. Please wait 5 minutes before trying again.";
+        } else {
+          errorMessage = error.message;
+        }
       }
       
       setError(errorMessage);
