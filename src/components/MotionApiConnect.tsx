@@ -56,48 +56,40 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
         return;
       }
 
-      // Try to get API key from Supabase secrets first
-      try {
-        const response = await fetch('/functions/v1/get-motion-api-key', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-        });
-
-        if (response.ok) {
-          let data;
-          try {
-            data = await response.json();
-          } catch (jsonError) {
-            console.log('Response is not JSON, skipping stored key check');
-            throw new Error('Invalid response format');
-          }
-          
-          if (data.hasApiKey && data.apiKey) {
-            setApiKey(data.apiKey);
-            setIsAlreadyConnected(true);
-            setIsKeyValid(true);
-            
-            // Just set the API key, don't fetch workspaces yet
-            // Workspaces will be fetched during validation
-            return;
-          }
-        }
-      } catch (error) {
-        console.log('No stored API key found in secure storage, checking local storage...');
-      }
-
-      // Fallback to localStorage
+      // Only check localStorage for stored API key
       const storedKey = retrieveApiKey();
       if (storedKey) {
         setApiKey(storedKey);
         setIsAlreadyConnected(true);
-        setIsKeyValid(true);
         
-        // Just set the API key, don't fetch workspaces yet
-        // Workspaces will be fetched during validation
+        // Validate the stored key immediately
+        await validateStoredKey(storedKey);
+      }
+    };
+
+    const validateStoredKey = async (key: string) => {
+      try {
+        setIsValidating(true);
+        await validateMotionApiKey(key);
+        const workspaces = await fetchWorkspaces(key);
+        
+        setIsKeyValid(true);
+        setFetchedWorkspaces(workspaces);
+        setShowWorkspaceSelection(true);
+        
+        toast({
+          title: "✓ Connected Successfully",
+          description: "Using your saved API key. Please select your workspace and project.",
+        });
+      } catch (error) {
+        console.error('Stored API key validation failed:', error);
+        setIsKeyValid(false);
+        setIsAlreadyConnected(false);
+        clearStoredApiKey();
+        
+        setErrorMessage("Your saved API key is no longer valid. Please enter a new one.");
+      } finally {
+        setIsValidating(false);
       }
     };
 
