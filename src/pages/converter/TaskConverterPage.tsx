@@ -113,7 +113,7 @@ const TaskConverterPage = () => {
   };
 
   // Handle adding tasks to Motion (from review step)
-  const handleAddToMotion = (tasks: Task[], updatedProjectName?: string) => {
+  const handleAddToMotion = async (tasks: Task[], updatedProjectName?: string) => {
     if (updatedProjectName) {
       setProjectName(updatedProjectName);
       // Update all tasks with the project name
@@ -126,12 +126,48 @@ const TaskConverterPage = () => {
       setReviewedTasks(tasks);
     }
     
-    // Add tasks to Motion here and show completion
-    setStep('complete');
-    toast({
-      title: "Success!",
-      description: `${tasks.length} tasks have been added to Motion${updatedProjectName ? ` under project '${updatedProjectName}'` : ''}.`,
-    });
+    // Actually add tasks to Motion if connected
+    if (isConnected && motionApiKey && selectedWorkspaceId) {
+      try {
+        const { addTasksToMotion } = await import('@/utils/motion/tasks');
+        
+        const result = await addTasksToMotion(
+          tasks,
+          selectedWorkspaceId,
+          motionApiKey,
+          selectedProjectId,
+          undefined // timeEstimate
+        );
+        
+        if (result.success) {
+          setStep('complete');
+          toast({
+            title: "Success!",
+            description: result.message,
+          });
+        } else {
+          toast({
+            title: "Error adding tasks",
+            description: result.message,
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error('Error adding tasks to Motion:', error);
+        toast({
+          title: "Error",
+          description: "Failed to add tasks to Motion. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } else {
+      // Just show completion for non-connected mode
+      setStep('complete');
+      toast({
+        title: "Tasks Reviewed",
+        description: `${tasks.length} tasks have been reviewed${updatedProjectName ? ` under project '${updatedProjectName}'` : ''}.`,
+      });
+    }
   };
 
 

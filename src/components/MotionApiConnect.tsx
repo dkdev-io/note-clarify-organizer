@@ -62,11 +62,19 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
+            'Accept': 'application/json',
           },
         });
 
         if (response.ok) {
-          const data = await response.json();
+          let data;
+          try {
+            data = await response.json();
+          } catch (jsonError) {
+            console.log('Response is not JSON, skipping stored key check');
+            throw new Error('Invalid response format');
+          }
+          
           if (data.hasApiKey && data.apiKey) {
             setApiKey(data.apiKey);
             setIsAlreadyConnected(true);

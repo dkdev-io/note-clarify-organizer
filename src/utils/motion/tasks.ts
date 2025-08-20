@@ -118,16 +118,43 @@ export const addTasksToMotion = async (
         
         console.log("Sending task to Motion:", taskData);
         
-        // Call the Motion API to create the task
-        const response = await fetch("https://api.usemotion.com/v1/tasks", {
-          method: "POST",
-          headers: {
-            'Authorization': `Bearer ${apiKey}`,
-            'Content-Type': 'application/json',
-            'X-API-Key': apiKey // Some APIs require this format
-          },
-          body: JSON.stringify(taskData),
-        });
+        // Add rate limiting with retry logic
+        let retryCount = 0;
+        const maxRetries = 3;
+        let response;
+        
+        while (retryCount < maxRetries) {
+          try {
+            response = await fetch("https://api.usemotion.com/v1/tasks", {
+              method: "POST",
+              headers: {
+                'X-API-Key': apiKey,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+              },
+              body: JSON.stringify(taskData),
+            });
+            
+            if (response.status === 429) {
+              // Rate limited, wait and retry
+              const waitTime = Math.pow(2, retryCount) * 1000; // Exponential backoff
+              console.log(`Rate limited on task creation, waiting ${waitTime}ms before retry ${retryCount + 1}/${maxRetries}`);
+              await new Promise(resolve => setTimeout(resolve, waitTime));
+              retryCount++;
+              continue;
+            }
+            
+            break; // Success or non-rate-limit error, exit retry loop
+          } catch (fetchError) {
+            if (retryCount === maxRetries - 1) {
+              throw fetchError;
+            }
+            retryCount++;
+            const waitTime = Math.pow(2, retryCount) * 1000;
+            console.log(`Fetch error on task creation, waiting ${waitTime}ms before retry ${retryCount}/${maxRetries}`);
+            await new Promise(resolve => setTimeout(resolve, waitTime));
+          }
+        }
         
         if (!response.ok) {
           const errorData = await response.json();
@@ -148,6 +175,11 @@ export const addTasksToMotion = async (
           task: task.title,
           error: err instanceof Error ? err.message : "Unknown error",
         });
+      }
+      
+      // Add delay between task creation to avoid rate limiting
+      if (tasks.indexOf(task) < tasks.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 500)); // 500ms delay between tasks
       }
     }
     
