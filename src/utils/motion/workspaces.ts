@@ -4,49 +4,40 @@
  */
 
 import { getApiKey, isUsingProxyMode } from './api-core';
-
-// Cache to prevent repeated API calls
-let workspaceCache: { [key: string]: any[] } = {};
-let lastFetchTime: { [key: string]: number } = {};
-const CACHE_DURATION = 30000; // 30 seconds
+import { motionApiCache } from './api-cache';
 
 // Fetch workspaces from Motion API
 export const fetchWorkspaces = async (apiKey?: string): Promise<any[]> => {
-  try {
-    const usedKey = getApiKey(apiKey);
-    
-    // If we're in proxy mode, return mock workspaces
-    if (usedKey === 'proxy_mode' || isUsingProxyMode()) {
-      console.log('Using proxy mode, returning mock workspaces');
-      return [
-        {
-          id: 'proxy-workspace-1',
-          name: 'Default Workspace'
-        },
-        {
-          id: 'proxy-workspace-2',
-          name: 'Marketing'
-        },
-        {
-          id: 'proxy-workspace-3',
-          name: 'Development'
-        }
-      ];
-    }
-    
-    if (!usedKey) {
-      console.error('No API key provided for fetching workspaces');
-      return [];
-    }
-    
-    // Check cache first
-    const now = Date.now();
-    const cacheKey = usedKey.substring(0, 10); // Use first 10 chars as cache key
-    if (workspaceCache[cacheKey] && lastFetchTime[cacheKey] && (now - lastFetchTime[cacheKey]) < CACHE_DURATION) {
-      console.log('Returning cached workspaces');
-      return workspaceCache[cacheKey];
-    }
-    
+  const usedKey = getApiKey(apiKey);
+  
+  // If we're in proxy mode, return mock workspaces
+  if (usedKey === 'proxy_mode' || isUsingProxyMode()) {
+    console.log('Using proxy mode, returning mock workspaces');
+    return [
+      {
+        id: 'proxy-workspace-1',
+        name: 'Default Workspace'
+      },
+      {
+        id: 'proxy-workspace-2', 
+        name: 'Marketing'
+      },
+      {
+        id: 'proxy-workspace-3',
+        name: 'Development'
+      }
+    ];
+  }
+  
+  if (!usedKey) {
+    console.error('No API key provided for fetching workspaces');
+    return [];
+  }
+
+  // Use cache to prevent duplicate API calls
+  const cacheKey = `workspaces-${usedKey.substring(0, 10)}`;
+  
+  return motionApiCache.get(cacheKey, async () => {
     // Add retry logic for rate limiting
     let retryCount = 0;
     const maxRetries = 3;
@@ -66,8 +57,8 @@ export const fetchWorkspaces = async (apiKey?: string): Promise<any[]> => {
         console.log('Workspace fetch response status:', response.status);
         
         if (response.status === 429) {
-          // Rate limited, wait and retry
-          const waitTime = Math.pow(2, retryCount) * 1000;
+          // Rate limited, wait longer with exponential backoff
+          const waitTime = Math.min(Math.pow(2, retryCount) * 2000, 10000); // Max 10 seconds
           console.log(`Rate limited on workspace fetch, waiting ${waitTime}ms before retry ${retryCount + 1}/${maxRetries}`);
           await new Promise(resolve => setTimeout(resolve, waitTime));
           retryCount++;
@@ -91,10 +82,6 @@ export const fetchWorkspaces = async (apiKey?: string): Promise<any[]> => {
             workspaces = [];
           }
           
-          // Cache the result
-          workspaceCache[cacheKey] = workspaces;
-          lastFetchTime[cacheKey] = now;
-          
           return workspaces;
         } else {
           if (response.status === 401) {
@@ -110,15 +97,12 @@ export const fetchWorkspaces = async (apiKey?: string): Promise<any[]> => {
           throw fetchError;
         }
         retryCount++;
-        const waitTime = Math.pow(2, retryCount) * 1000;
+        const waitTime = Math.min(Math.pow(2, retryCount) * 2000, 10000);
         console.log(`Fetch error on workspace fetch, waiting ${waitTime}ms before retry ${retryCount}/${maxRetries}`);
         await new Promise(resolve => setTimeout(resolve, waitTime));
       }
     }
-  } catch (error) {
-    console.error('Exception during workspaces fetch:', error);
-    throw error;
-  }
+  });
 };
 
 // Format workspaces for dropdown selection
