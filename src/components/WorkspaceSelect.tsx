@@ -28,16 +28,20 @@ const WorkspaceSelect: React.FC<WorkspaceSelectProps> = ({
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [lastApiKey, setLastApiKey] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
-    if (apiKey && apiKey.trim()) {
+    // Only fetch if API key changed and is valid
+    if (apiKey && apiKey.trim() && apiKey !== lastApiKey) {
+      setLastApiKey(apiKey);
       loadWorkspaces();
-    } else {
+    } else if (!apiKey || !apiKey.trim()) {
       setWorkspaces([]);
       setError(null);
+      setLastApiKey(null);
     }
-  }, [apiKey]);
+  }, [apiKey, lastApiKey]);
 
   const loadWorkspaces = async () => {
     setIsLoading(true);

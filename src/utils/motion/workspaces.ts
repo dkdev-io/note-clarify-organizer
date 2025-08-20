@@ -5,6 +5,11 @@
 
 import { getApiKey, isUsingProxyMode } from './api-core';
 
+// Cache to prevent repeated API calls
+let workspaceCache: { [key: string]: any[] } = {};
+let lastFetchTime: { [key: string]: number } = {};
+const CACHE_DURATION = 30000; // 30 seconds
+
 // Fetch workspaces from Motion API
 export const fetchWorkspaces = async (apiKey?: string): Promise<any[]> => {
   try {
@@ -34,42 +39,80 @@ export const fetchWorkspaces = async (apiKey?: string): Promise<any[]> => {
       return [];
     }
     
-    const response = await fetch('https://api.usemotion.com/v1/workspaces', {
-      method: 'GET',
-      headers: {
-        'X-API-Key': usedKey,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      // Don't include credentials for cross-origin API calls
-      mode: 'cors',
-    });
+    // Check cache first
+    const now = Date.now();
+    const cacheKey = usedKey.substring(0, 10); // Use first 10 chars as cache key
+    if (workspaceCache[cacheKey] && lastFetchTime[cacheKey] && (now - lastFetchTime[cacheKey]) < CACHE_DURATION) {
+      console.log('Returning cached workspaces');
+      return workspaceCache[cacheKey];
+    }
     
-    console.log('Workspace fetch response status:', response.status);
+    // Add retry logic for rate limiting
+    let retryCount = 0;
+    const maxRetries = 3;
     
-    if (response.ok) {
-      const data = await response.json();
-      console.log('Workspaces fetched successfully:', data);
-      
-      // Check if the response has a workspaces property
-      if (data && data.workspaces && Array.isArray(data.workspaces)) {
-        console.log('Found workspaces array in response:', data.workspaces.length);
-        return data.workspaces;
-      } else {
-        // If response is already an array, return it
-        if (Array.isArray(data)) {
-          return data;
+    while (retryCount < maxRetries) {
+      try {
+        const response = await fetch('https://api.usemotion.com/v1/workspaces', {
+          method: 'GET',
+          headers: {
+            'X-API-Key': usedKey,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          mode: 'cors',
+        });
+        
+        console.log('Workspace fetch response status:', response.status);
+        
+        if (response.status === 429) {
+          // Rate limited, wait and retry
+          const waitTime = Math.pow(2, retryCount) * 1000;
+          console.log(`Rate limited on workspace fetch, waiting ${waitTime}ms before retry ${retryCount + 1}/${maxRetries}`);
+          await new Promise(resolve => setTimeout(resolve, waitTime));
+          retryCount++;
+          continue;
         }
-        console.error('Unexpected response format, no workspaces array found:', data);
-        return [];
-      }
-    } else {
-      if (response.status === 401) {
-        console.error('Unauthorized when fetching workspaces. API key may be invalid or missing permissions');
-        throw new Error("Authentication failed: Your API key doesn't have permission to access workspaces. Check your API key permissions in Motion settings.");
-      } else {
-        console.error(`Failed to fetch workspaces with status: ${response.status}`);
-        throw new Error(`Failed to fetch workspaces with status: ${response.status}`);
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Workspaces fetched successfully:', data);
+          
+          let workspaces = [];
+          // Check if the response has a workspaces property
+          if (data && data.workspaces && Array.isArray(data.workspaces)) {
+            console.log('Found workspaces array in response:', data.workspaces.length);
+            workspaces = data.workspaces;
+          } else if (Array.isArray(data)) {
+            // If response is already an array, use it
+            workspaces = data;
+          } else {
+            console.error('Unexpected response format, no workspaces array found:', data);
+            workspaces = [];
+          }
+          
+          // Cache the result
+          workspaceCache[cacheKey] = workspaces;
+          lastFetchTime[cacheKey] = now;
+          
+          return workspaces;
+        } else {
+          if (response.status === 401) {
+            console.error('Unauthorized when fetching workspaces. API key may be invalid or missing permissions');
+            throw new Error("Authentication failed: Your API key doesn't have permission to access workspaces. Check your API key permissions in Motion settings.");
+          } else {
+            console.error(`Failed to fetch workspaces with status: ${response.status}`);
+            throw new Error(`Failed to fetch workspaces with status: ${response.status}`);
+          }
+        }
+      } catch (fetchError) {
+        if (retryCount === maxRetries - 1) {
+          throw fetchError;
+        }
+        retryCount++;
+        const waitTime = Math.pow(2, retryCount) * 1000;
+        console.log(`Fetch error on workspace fetch, waiting ${waitTime}ms before retry ${retryCount}/${maxRetries}`);
+        await new Promise(resolve => setTimeout(resolve, waitTime));
       }
     }
   } catch (error) {
