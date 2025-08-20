@@ -17,9 +17,6 @@ const TaskConverterPage = () => {
   const [step, setStep] = useState<Step>('connect');
   const [noteText, setNoteText] = useState('');
   const [extractedTasks, setExtractedTasks] = useState<Task[]>([]);
-  const [selectedTasks, setSelectedTasks] = useState<Task[]>([]);
-  const [enhancedTasks, setEnhancedTasks] = useState<Task[]>([]);
-  const [processedTasks, setProcessedTasks] = useState<Task[]>([]);
   const [reviewedTasks, setReviewedTasks] = useState<Task[]>([]);
   const [projectName, setProjectName] = useState<string | null>(null);
   const { toast } = useToast();
@@ -109,21 +106,14 @@ const TaskConverterPage = () => {
     }
   };
 
-  // Handle moving from extraction to AI enhancement
-  const handleContinueToEnhance = (tasks: Task[]) => {
-    console.log('Continuing to enhance with tasks:', tasks); // Debug log
-    setSelectedTasks(tasks);
-    setStep('enhance');
-  };
-
-  // Handle moving from AI enhancement to review
+  // Handle moving from extraction to review
   const handleContinueToReview = (tasks: Task[]) => {
-    setEnhancedTasks(tasks);
+    console.log('Continuing to review with tasks:', tasks);
     setStep('review');
   };
 
-  // Handle moving from review to preview
-  const handleContinueToPreview = (tasks: Task[], updatedProjectName?: string) => {
+  // Handle adding tasks to Motion (from review step)
+  const handleAddToMotion = (tasks: Task[], updatedProjectName?: string) => {
     if (updatedProjectName) {
       setProjectName(updatedProjectName);
       // Update all tasks with the project name
@@ -135,25 +125,20 @@ const TaskConverterPage = () => {
     } else {
       setReviewedTasks(tasks);
     }
-    setStep('preview');
-  };
-
-  // Handle completion of the workflow
-  const handleComplete = () => {
+    
+    // Add tasks to Motion here and show completion
     setStep('complete');
     toast({
       title: "Success!",
-      description: `${reviewedTasks.length} tasks have been added to Motion${projectName ? ` under project '${projectName}'` : ''}.`,
+      description: `${tasks.length} tasks have been added to Motion${updatedProjectName ? ` under project '${updatedProjectName}'` : ''}.`,
     });
   };
+
 
   // Handle starting over
   const handleStartOver = () => {
     setNoteText('');
     setExtractedTasks([]);
-    setSelectedTasks([]);
-    setEnhancedTasks([]);
-    setProcessedTasks([]);
     setReviewedTasks([]);
     // Keep project and workspace if connected to API
     if (!isConnected) {
@@ -194,32 +179,24 @@ const TaskConverterPage = () => {
           <TaskConverterContent onParseText={handleParseText} />
         );
       case 'extract':
-        console.log('Rendering extract step with tasks:', extractedTasks); // Debug log
+        console.log('Rendering extract step with tasks:', extractedTasks);
         return (
           <TaskExtractor
             rawText={noteText}
             extractedTasks={extractedTasks}
             projectName={projectName}
             onBack={() => setStep('input')}
-            onContinue={handleContinueToEnhance}
-            apiProps={apiProps}
-          />
-        );
-      case 'enhance':
-        return (
-          <TaskAIEnhancer
-            tasks={selectedTasks}
-            onBack={() => setStep('extract')}
             onContinue={handleContinueToReview}
+            apiProps={apiProps}
           />
         );
       case 'review':
         return (
           <TaskReview
-            tasks={enhancedTasks}
+            tasks={extractedTasks}
             projectName={projectName}
-            onBack={() => setStep('enhance')}
-            onContinue={handleContinueToPreview}
+            onBack={() => setStep('extract')}
+            onContinue={handleAddToMotion}
             apiProps={apiProps}
           />
         );

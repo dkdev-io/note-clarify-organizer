@@ -13,9 +13,7 @@ const TaskConverterStepMarkers: React.FC<TaskConverterStepMarkersProps> = ({ ste
     { key: 'connect', label: 'Connect API', icon: <LinkIcon className="h-4 w-4" /> },
     { key: 'input', label: 'Input Notes', icon: <ClipboardIcon className="h-4 w-4" /> },
     { key: 'extract', label: 'Extract Tasks', icon: <ArrowRightIcon className="h-4 w-4" /> },
-    { key: 'enhance', label: 'AI Enhance', icon: <BrainIcon className="h-4 w-4" /> },
-    { key: 'review', label: 'Review', icon: <EditIcon className="h-4 w-4" /> },
-    { key: 'preview', label: 'Add to Motion', icon: <CheckIcon className="h-4 w-4" /> },
+    { key: 'review', label: 'Review & Add', icon: <CheckIcon className="h-4 w-4" /> },
   ];
 
   const currentStepIndex = steps.findIndex(s => s.key === step);
