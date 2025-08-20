@@ -83,14 +83,14 @@ const TaskEditForm: React.FC<TaskEditFormProps> = ({
             Priority
           </Label>
           <Select 
-            value={task.priority || ''}
-            onValueChange={(value) => onUpdate('priority', value === '' ? null : value)}
+            value={task.priority || 'none'}
+            onValueChange={(value) => onUpdate('priority', value === 'none' ? null : value)}
           >
             <SelectTrigger id="priority" className="w-full">
               <SelectValue placeholder="Select priority" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">None</SelectItem>
+              <SelectItem value="none">None</SelectItem>
               <SelectItem value="high">High</SelectItem>
               <SelectItem value="medium">Medium</SelectItem>
               <SelectItem value="low">Low</SelectItem>

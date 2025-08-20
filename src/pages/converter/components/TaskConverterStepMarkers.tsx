@@ -29,7 +29,7 @@ const TaskConverterStepMarkers: React.FC<TaskConverterStepMarkersProps> = ({ ste
           const isCurrent = s.key === step;
           
           return (
-            <React.Fragment key={`step-${s.key}`}>
+            <div key={`step-${s.key}`}>
               {index > 0 && (
                 // Only show connection lines between visible steps
                 (!(isConnected && (s.key === 'connect' || steps[index-1].key === 'connect') && step !== 'connect')) && (
@@ -66,7 +66,7 @@ const TaskConverterStepMarkers: React.FC<TaskConverterStepMarkersProps> = ({ ste
                   {s.label}
                 </span>
               </div>
-            </React.Fragment>
+            </div>
           );
         })}
       </div>
