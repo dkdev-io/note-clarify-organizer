@@ -15,33 +15,34 @@ interface WorkspaceSelectProps {
   apiKey: string | null;
   selectedWorkspaceId: string | null;
   onWorkspaceSelect: (workspaceId: string) => void;
+  workspaces?: {label: string, value: string}[]; // Accept workspaces from parent
 }
 
 const WorkspaceSelect: React.FC<WorkspaceSelectProps> = ({ 
   apiKey, 
   selectedWorkspaceId, 
-  onWorkspaceSelect 
+  onWorkspaceSelect,
+  workspaces: externalWorkspaces = []
 }) => {
-  const [workspaces, setWorkspaces] = useState<{label: string, value: string}[]>([]);
+  // Use workspaces from parent if provided, otherwise use internal state
+  const [workspaces, setWorkspaces] = useState<{label: string, value: string}[]>(externalWorkspaces);
   const [isLoading, setIsLoading] = useState(false);
   const [showNewWorkspaceForm, setShowNewWorkspaceForm] = useState(false);
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [lastApiKey, setLastApiKey] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
-    // Only fetch if API key changed and is valid
-    if (apiKey && apiKey.trim() && apiKey !== lastApiKey) {
-      setLastApiKey(apiKey);
-      loadWorkspaces();
+    // Update internal workspaces when external workspaces change
+    if (externalWorkspaces.length > 0) {
+      setWorkspaces(externalWorkspaces);
+      setError(null);
     } else if (!apiKey || !apiKey.trim()) {
       setWorkspaces([]);
       setError(null);
-      setLastApiKey(null);
     }
-  }, [apiKey, lastApiKey]);
+  }, [externalWorkspaces, apiKey]);
 
   const loadWorkspaces = async () => {
     setIsLoading(true);

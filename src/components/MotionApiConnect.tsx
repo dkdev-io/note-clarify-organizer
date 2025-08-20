@@ -80,25 +80,8 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
             setIsAlreadyConnected(true);
             setIsKeyValid(true);
             
-            // Auto-validate and fetch workspaces
-            try {
-              const workspaces = await fetchWorkspaces(data.apiKey);
-              setFetchedWorkspaces(workspaces);
-              setShowWorkspaceSelection(true);
-              
-              toast({
-                title: "✓ Connected Successfully",
-                description: "Please select your workspace and project below.",
-              });
-            } catch (error) {
-              setIsKeyValid(false);
-              setIsAlreadyConnected(false);
-              toast({
-                title: "Connection Error",
-                description: "Please re-enter your API key to continue.",
-                variant: "destructive",
-              });
-            }
+            // Just set the API key, don't fetch workspaces yet
+            // Workspaces will be fetched during validation
             return;
           }
         }
@@ -113,25 +96,8 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
         setIsAlreadyConnected(true);
         setIsKeyValid(true);
         
-        // Auto-validate and fetch workspaces
-        try {
-          const workspaces = await fetchWorkspaces(storedKey);
-          setFetchedWorkspaces(workspaces);
-          setShowWorkspaceSelection(true);
-          
-          toast({
-            title: "✓ Connected Successfully",
-            description: "Please select your workspace and project below.",
-          });
-        } catch (error) {
-          setIsKeyValid(false);
-          setIsAlreadyConnected(false);
-          toast({
-            title: "Connection Error",
-            description: "Please re-enter your API key to continue.",
-            variant: "destructive",
-          });
-        }
+        // Just set the API key, don't fetch workspaces yet
+        // Workspaces will be fetched during validation
       }
     };
 
@@ -236,6 +202,7 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
                   apiKey={apiKey} 
                   selectedWorkspaceId={selectedWorkspaceId}
                   onWorkspaceSelect={handleWorkspaceSelect}
+                  workspaces={fetchedWorkspaces.map(ws => ({ label: ws.name, value: ws.id }))}
                 />
                 
                 <div className="text-left">
@@ -304,11 +271,16 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
           console.log('API key is valid, fetching workspaces...');
           return fetchWorkspaces(trimmedKey);
         })
-        .then((fetchedWorkspaces) => {
-          console.log('Fetched workspaces:', fetchedWorkspaces);
+        .then((workspaces) => {
+          console.log('Fetched workspaces:', workspaces);
           
-          // Always save the preference, but only store the key if rememberKey is true
+          // Store workspaces and show selection
+          setFetchedWorkspaces(workspaces);
+          setShowWorkspaceSelection(true);
+          
+          // Always save the preference, only store key if rememberKey is true
           localStorage.setItem('motion_remember_key', rememberKey.toString());
+          
           
           if (rememberKey) {
             storeApiKey(trimmedKey);
@@ -318,16 +290,12 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
             });
           }
           
-          if (fetchedWorkspaces.length === 0) {
+          if (workspaces.length === 0) {
             setErrorMessage(
               "Your API key is valid, but no workspaces were found. " +
               "Make sure you have at least one workspace in your Motion account."
             );
           } else {
-            // Show workspace selection instead of auto-advancing
-            setFetchedWorkspaces(fetchedWorkspaces);
-            setShowWorkspaceSelection(true);
-            
             toast({
               title: "✓ Connected Successfully",
               description: "Please select your workspace and project below.",
