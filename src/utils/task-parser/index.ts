@@ -104,7 +104,7 @@ export const parseTextIntoTasks = (text: string, defaultProjectName: string | nu
       // Extract task information first to properly identify assignees, dates, etc.
       const dueDate = extractDate(subtaskText);
       const priority = extractPriority(subtaskText);
-      const assignee = extractAssignee(subtaskText);
+      const assignee = extractAssignee(subtaskText, "Me");
       console.log("Extracted assignee:", assignee);
       const status = extractStatus(subtaskText);
       const recurring = isRecurringTask(subtaskText);

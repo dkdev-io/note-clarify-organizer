@@ -77,6 +77,7 @@ const TasksStep: React.FC<TasksStepProps> = ({
       onBack={onBack}
       onAddToMotion={handleAddToMotion}
       apiProps={apiProps}
+      skipReview={true}
     />
   );
 };

@@ -3,9 +3,9 @@
  * Utilities for extracting task assignee from text
  */
 
-// Function to extract assignee from text
-export const extractAssignee = (text: string): string | null => {
-  if (!text) return null;
+// Function to extract assignee from text, with fallback to default user
+export const extractAssignee = (text: string, defaultUser?: string): string | null => {
+  if (!text) return defaultUser || null;
   
   // Patterns for different ways to mention assignees
   const assigneePatterns = [
@@ -56,5 +56,6 @@ export const extractAssignee = (text: string): string | null => {
     return nameCandidate;
   }
   
-  return null;
+  // If no explicit assignee found, return default user
+  return defaultUser || null;
 };

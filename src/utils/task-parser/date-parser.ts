@@ -107,8 +107,8 @@ export const extractDate = (text: string): string | null => {
     // Format: Month Day format with or without year
     /\b(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s+(\d{1,2})(?:st|nd|rd|th)?(?:,?\s+(\d{4}))?\b/i,
     
-    // Format: Day of week (next Monday, this Friday)
-    /(?:(?:this|next)\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday))/i,
+    // Format: Day of week (next Monday, this Friday, after Saturday)
+    /(?:(?:this|next|after)\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday))/i,
     
     // Format: Relative dates (tomorrow, next week)
     /\b(?:tomorrow|today|next week)\b/i
@@ -182,7 +182,7 @@ export const extractDate = (text: string): string | null => {
             resultDate.setDate(baseDate.getDate() + 1);
           } else if (/next week/i.test(match[0])) {
             resultDate.setDate(baseDate.getDate() + 7);
-          } else if (/this|next/i.test(match[0]) && /(monday|tuesday|wednesday|thursday|friday|saturday|sunday)/i.test(match[0])) {
+         } else if (/this|next|after/i.test(match[0]) && /(monday|tuesday|wednesday|thursday|friday|saturday|sunday)/i.test(match[0])) {
             const dayOfWeekMatch = match[0].match(/(monday|tuesday|wednesday|thursday|friday|saturday|sunday)/i);
             if (dayOfWeekMatch) {
               const dayOfWeek = dayOfWeekMatch[1].toLowerCase();
@@ -192,8 +192,12 @@ export const extractDate = (text: string): string | null => {
               let daysToAdd = (targetDay - baseDate.getDay() + 7) % 7;
               if (/next/i.test(match[0])) {
                 daysToAdd += 7;
-              }
-              if (daysToAdd === 0) {
+              } else if (/after/i.test(match[0])) {
+                // "after Saturday" means the very next Saturday
+                if (daysToAdd === 0) {
+                  daysToAdd = 7; // If today is the target day, go to next occurrence
+                }
+              } else if (daysToAdd === 0) {
                 daysToAdd = 7; // If "this Sunday" and today is Sunday, go to next Sunday
               }
               

@@ -16,6 +16,7 @@ interface TasksReviewProps {
   onBack: () => void;
   onAddToMotion: (tasks: Task[], projectName: string | null) => void;
   apiProps: any;
+  skipReview?: boolean;
 }
 
 const TasksReview: React.FC<TasksReviewProps> = ({
@@ -24,7 +25,8 @@ const TasksReview: React.FC<TasksReviewProps> = ({
   projectName,
   onBack,
   onAddToMotion,
-  apiProps
+  apiProps,
+  skipReview = false
 }) => {
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
@@ -49,7 +51,12 @@ const TasksReview: React.FC<TasksReviewProps> = ({
   };
 
   const handleContinue = () => {
-    onAddToMotion(tasks, currentProjectName);
+    if (skipReview) {
+      // Skip review - go directly to completion
+      onAddToMotion(tasks, currentProjectName);
+    } else {
+      onAddToMotion(tasks, currentProjectName);
+    }
   };
 
   const handleProjectNameChange = (name: string | null) => {

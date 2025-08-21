@@ -119,7 +119,17 @@ function handleUserMatching(tasks: Task[], users: any[]): Task[] {
   }
   
   return tasks.map(task => {
-    // Skip if no assignee or already matched
+    // If no assignee, set to the current user
+    if (!task.assignee && users.length > 0) {
+      const currentUser = users[0]; // Assume first user is the current user
+      return {
+        ...task,
+        assignee: currentUser.name || "Me",
+        assigneeId: currentUser.id
+      };
+    }
+    
+    // Skip if already matched
     if (!task.assignee) {
       return task;
     }
