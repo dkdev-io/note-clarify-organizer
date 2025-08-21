@@ -97,7 +97,6 @@ const NoteInput: React.FC<NoteInputProps> = ({ onParseTasks, apiProps }) => {
   return (
     <div className={`w-full max-w-2xl mx-auto transition-all duration-500 ${isTransitioning ? 'opacity-0 translate-x-10' : 'opacity-100 translate-x-0'}`}>
       <NoteInputHeader />
-      <IntegrationOptions />
       
       {/* Add Spreadsheet Upload component */}
       <div className="mb-4">

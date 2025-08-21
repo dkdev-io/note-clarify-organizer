@@ -15,6 +15,7 @@ export function useTaskExtractor({
 }: UseTaskExtractorProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedTasks, setSelectedTasks] = useState<Task[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
   useEffect(() => {
@@ -24,7 +25,8 @@ export function useTaskExtractor({
     // Make sure extractedTasks is an array before proceeding
     const tasksArray = Array.isArray(extractedTasks) ? extractedTasks : [];
     
-    // Select all tasks by default
+    // Set tasks and select all by default
+    setTasks([...tasksArray]);
     setSelectedTasks([...tasksArray]);
     
     // Simulate processing delay for a smoother UX
@@ -43,6 +45,15 @@ export function useTaskExtractor({
     }
   };
 
+  const updateTask = (updatedTask: Task) => {
+    const updatedTasks = tasks.map(t => t.id === updatedTask.id ? updatedTask : t);
+    setTasks(updatedTasks);
+    
+    // Update selected tasks as well
+    const updatedSelectedTasks = selectedTasks.map(t => t.id === updatedTask.id ? updatedTask : t);
+    setSelectedTasks(updatedSelectedTasks);
+  };
+
   const handleContinue = () => {
     setIsTransitioning(true);
     setTimeout(() => {
@@ -59,9 +70,11 @@ export function useTaskExtractor({
 
   return {
     isLoading,
+    tasks,
     selectedTasks,
     isTransitioning,
     toggleTask,
+    updateTask,
     handleContinue,
     handleBack
   };

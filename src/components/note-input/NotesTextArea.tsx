@@ -27,7 +27,7 @@ const NotesTextArea: React.FC<NotesTextAreaProps> = ({
         <div className="flex items-center justify-between">
           <CardTitle className="text-xl font-bold text-left">
             <FileTextIcon className="inline-block mr-2 h-5 w-5 text-primary" />
-            <strong>Option 3: Paste Your Notes</strong>
+            <strong>Paste Your Notes</strong>
           </CardTitle>
           
           <TooltipProvider>

@@ -39,9 +39,11 @@ const TaskExtractor: React.FC<TaskExtractorProps> = ({
 }) => {
   const {
     isLoading,
+    tasks,
     selectedTasks,
     isTransitioning,
     toggleTask,
+    updateTask,
     handleContinue,
     handleBack
   } = useTaskExtractor({
@@ -72,7 +74,7 @@ const TaskExtractor: React.FC<TaskExtractorProps> = ({
           <TaskHeader 
             projectName={projectName}
             selectedTasksCount={selectedTasks.length}
-            totalTasksCount={extractedTasks.length}
+            totalTasksCount={tasks.length}
             sourceType={spreadsheetSource ? "spreadsheet" : "notes"}
           />
         </CardHeader>
@@ -82,10 +84,11 @@ const TaskExtractor: React.FC<TaskExtractorProps> = ({
             <TasksLoading />
           ) : (
             <TasksList 
-              tasks={extractedTasks}
+              tasks={tasks}
               selectedTasks={selectedTasks}
               toggleTask={toggleTask}
               onBack={() => handleBack(onBack)}
+              onUpdateTask={updateTask}
             />
           )}
         </CardContent>

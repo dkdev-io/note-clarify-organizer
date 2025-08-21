@@ -190,6 +190,16 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
                   handleClearApiKey={handleClearApiKey}
                 />
                 
+                {!showWorkspaceSelection && !(isAlreadyConnected && isKeyValid) && (
+                  <ConnectionActions 
+                    apiKey={apiKey}
+                    isValidating={isValidating}
+                    isKeyValid={isKeyValid}
+                    onSkip={onSkip}
+                    onValidate={validateKey}
+                  />
+                )}
+                
                 <WorkspaceSelect 
                   apiKey={apiKey} 
                   selectedWorkspaceId={selectedWorkspaceId}
@@ -210,16 +220,6 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
           </div>
         </CardContent>
         <CardFooter>
-          {!showWorkspaceSelection && !(isAlreadyConnected && isKeyValid) && (
-            <ConnectionActions 
-              apiKey={apiKey}
-              isValidating={isValidating}
-              isKeyValid={isKeyValid}
-              onSkip={onSkip}
-              onValidate={validateKey}
-            />
-          )}
-          
           {showWorkspaceSelection && selectedWorkspaceId && selectedProject && (
             <div className="flex justify-between items-center pt-2 pb-4 px-6 w-full">
               <button 
