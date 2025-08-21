@@ -14,7 +14,7 @@ interface StepContentRendererProps {
     providedProjectName: string | null, 
     unrecognizedUserMappingsOrCallback?: Record<string, string | null> | ((names: string[]) => void)
   ) => void;
-  handleTasksAddToMotion: (tasks: Task[], updatedProjectName: string | null, unassignedCount?: number) => void;
+  handleTasksAddToMotion: (tasks: Task[], updatedProjectName: string | null, unassignedCount?: number, apiProps?: ApiProps) => void;
   handleAddMore: () => void;
   unrecognizedUserMappings: Record<string, string | null>;
 }

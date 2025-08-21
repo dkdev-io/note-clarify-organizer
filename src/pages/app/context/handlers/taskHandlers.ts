@@ -104,12 +104,13 @@ export const handleParseText = async (
 };
 
 // Handle adding tasks to Motion
-export const handleAddToMotion = (
+export const handleAddToMotion = async (
   tasks: Task[], 
   updatedProjectName: string | null,
   setProjectName: (name: string | null) => void,
   setStep: (step: Step) => void,
   toast: ToastType,
+  apiProps: ApiProps,
   unassignedTaskCount: number = 0
 ) => {
   if (updatedProjectName) {
@@ -117,16 +118,64 @@ export const handleAddToMotion = (
   }
   
   console.log('Adding to Motion with project name:', updatedProjectName, tasks);
-  setStep('complete');
   
-  let message = `${tasks.length} tasks have been added to Motion${updatedProjectName ? ` under project '${updatedProjectName}'` : ''}.`;
-  
-  if (unassignedTaskCount > 0) {
-    message += ` (${unassignedTaskCount} tasks were added without assignment)`;
+  // Actually add tasks to Motion if connected
+  if (apiProps.isConnected && apiProps.apiKey && apiProps.selectedWorkspaceId) {
+    try {
+      const { addTasksToMotion } = await import('@/utils/motion/tasks');
+      
+      const result = await addTasksToMotion(
+        tasks,
+        apiProps.selectedWorkspaceId,
+        apiProps.apiKey,
+        apiProps.selectedProjectId,
+        undefined // timeEstimate
+      );
+      
+      if (result.success) {
+        setStep('complete');
+        let message = result.message;
+        
+        if (unassignedTaskCount > 0) {
+          message += ` (${unassignedTaskCount} tasks were added without assignment)`;
+        }
+        
+        toast({
+          title: "Success!",
+          description: message,
+        });
+      } else {
+        toast({
+          title: "Error adding tasks",
+          description: result.message,
+          variant: "destructive",
+        });
+        
+        // Log detailed errors for debugging
+        if (result.errors) {
+          console.error('Motion API errors:', result.errors);
+        }
+      }
+    } catch (error) {
+      console.error('Error adding tasks to Motion:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add tasks to Motion. Please try again.",
+        variant: "destructive",
+      });
+    }
+  } else {
+    // Just show completion for non-connected mode
+    setStep('complete');
+    let message = `${tasks.length} tasks have been reviewed${updatedProjectName ? ` under project '${updatedProjectName}'` : ''}.`;
+    
+    if (unassignedTaskCount > 0) {
+      message += ` (${unassignedTaskCount} tasks were marked without assignment)`;
+    }
+    
+    toast({
+      title: "Tasks Reviewed",
+      description: message,
+    });
   }
-  
-  toast({
-    title: "Success!",
-    description: message,
-  });
 };

@@ -9,7 +9,7 @@ interface TasksStepProps {
   initialTasks: Task[];
   projectName: string | null;
   onBack: () => void;
-  onAddToMotion: (tasks: Task[], projectName: string | null, unassignedCount: number) => void;
+  onAddToMotion: (tasks: Task[], projectName: string | null, unassignedCount: number, apiProps: ApiProps) => void;
   apiProps: ApiProps;
   unrecognizedUserMappings?: Record<string, string | null>;
 }
@@ -66,7 +66,7 @@ const TasksStep: React.FC<TasksStepProps> = ({
     }));
     
     console.log('Adding tasks with project name:', updatedProjectName, tasksWithProject);
-    onAddToMotion(tasksWithProject, updatedProjectName, countUnassignedTasks());
+    onAddToMotion(tasksWithProject, updatedProjectName, countUnassignedTasks(), apiProps);
   };
 
   return (

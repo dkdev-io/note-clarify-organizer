@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useAppContext } from '../context/AppContextProvider';
 import { handleWorkspaceSelect } from '../context/handlers/apiHandlers';
 import { Task } from '@/utils/parser';
+import { ApiProps } from '../types';
 
 export function useTaskWorkflow() {
   const { 
@@ -44,8 +45,8 @@ export function useTaskWorkflow() {
     handleParseText(text, providedProjectName);
   };
   
-  const handleTasksAddToMotion = (tasks: Task[], updatedProjectName: string | null, unassignedCount: number = 0) => {
-    handleAddToMotion(tasks, updatedProjectName, unassignedCount);
+  const handleTasksAddToMotion = (tasks: Task[], updatedProjectName: string | null, unassignedCount: number = 0, passedApiProps?: ApiProps) => {
+    handleAddToMotion(tasks, updatedProjectName, unassignedCount, passedApiProps || apiProps);
   };
 
   return {
