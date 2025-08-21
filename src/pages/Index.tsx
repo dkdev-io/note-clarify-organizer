@@ -58,13 +58,13 @@ const Index = () => {
   };
 
   // Handle moving from note input to task extraction
-  const handleParseText = (text: string, providedProjectName: string | null) => {
+  const handleParseText = async (text: string, providedProjectName: string | null) => {
     setNoteText(text);
     
     // Use the selected project from Motion API if available, otherwise use provided name
     const effectiveProjectName = selectedProject || providedProjectName;
     
-    const tasks = parseTextIntoTasks(text, effectiveProjectName);
+    const tasks = await parseTextIntoTasks(text, effectiveProjectName);
     
     // Extract project name from tasks if not provided
     const extractedProjectName = tasks.find(task => task.project)?.project || effectiveProjectName || null;

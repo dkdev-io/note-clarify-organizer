@@ -44,7 +44,7 @@ const TaskConverterContent: React.FC<TaskConverterContentProps> = ({ onParseText
       setExtractionFailed(false);
       
       try {
-        const tasks = parseTextIntoTasks(textAreaValue);
+        const tasks = await parseTextIntoTasks(textAreaValue);
         if (tasks.length === 0) {
           setExtractionFailed(true);
           toast({

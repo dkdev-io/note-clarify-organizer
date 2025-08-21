@@ -9,10 +9,11 @@ export async function processNotes(
   text: string,
   effectiveProjectName: string | null,
   toast: ToastType,
-  motionUsers: any[] = []
+  motionUsers: any[] = [],
+  apiKey?: string
 ): Promise<{ tasks: Task[], usedFallback: boolean }> {
   // Always start with the fallback parser to ensure we have results
-  const fallbackTasks = parseTextIntoTasks(text, effectiveProjectName);
+  const fallbackTasks = await parseTextIntoTasks(text, effectiveProjectName, apiKey);
   console.log(`Fallback parser extracted ${fallbackTasks.length} tasks`);
   
   let tasks: Task[] = fallbackTasks;
@@ -119,14 +120,23 @@ function handleUserMatching(tasks: Task[], users: any[]): Task[] {
   }
   
   return tasks.map(task => {
-    // If no assignee, set to the current user
-    if (!task.assignee && users.length > 0) {
-      const currentUser = users[0]; // Assume first user is the current user
-      return {
-        ...task,
-        assignee: currentUser.name || "Me",
-        assigneeId: currentUser.id
-      };
+    // If no assignee, try to set to the current user
+    if (!task.assignee) {
+      // If we have users, try to use the first one (current user)
+      if (users.length > 0) {
+        const currentUser = users[0]; // Assume first user is the current user
+        return {
+          ...task,
+          assignee: currentUser.name || "Me",
+          assigneeId: currentUser.id
+        };
+      } else {
+        // If no users available, keep default assignee from parser
+        return {
+          ...task,
+          assignee: task.assignee || "Me"
+        };
+      }
     }
     
     // Skip if already matched

@@ -84,14 +84,13 @@ const EditableTaskCard: React.FC<EditableTaskCardProps> = ({
                 <div>
                   <label className="text-xs text-muted-foreground">Priority</label>
                   <Select 
-                    value={editedTask.priority || ''} 
+                    value={editedTask.priority || 'medium'} 
                     onValueChange={(value) => setEditedTask({ ...editedTask, priority: value as any })}
                   >
                     <SelectTrigger className="text-sm">
                       <SelectValue placeholder="Select priority" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">None</SelectItem>
                       <SelectItem value="low">Low</SelectItem>
                       <SelectItem value="medium">Medium</SelectItem>
                       <SelectItem value="high">High</SelectItem>

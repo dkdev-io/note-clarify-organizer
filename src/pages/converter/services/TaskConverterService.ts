@@ -91,7 +91,7 @@ export const extractTasksFromText = async (text: string): Promise<Task[]> => {
     console.log("AI extraction returned no tasks, falling back to local parsing...");
     
     // Fallback to local parsing if AI doesn't find anything
-    const tasks = parseTextIntoTasks(text);
+    const tasks = await parseTextIntoTasks(text);
     console.log("Local parseTextIntoTasks returned:", tasks);
     console.log("Number of tasks extracted:", tasks.length);
     
@@ -111,7 +111,7 @@ export const extractTasksFromText = async (text: string): Promise<Task[]> => {
     // If AI fails, try local parsing as fallback
     console.log("AI extraction failed, attempting local parsing fallback...");
     try {
-      const tasks = parseTextIntoTasks(text);
+      const tasks = await parseTextIntoTasks(text);
       console.log("Fallback parsing returned:", tasks.length, "tasks");
       return tasks;
     } catch (localError) {

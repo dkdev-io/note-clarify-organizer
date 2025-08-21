@@ -58,7 +58,7 @@ const TaskConverterPage = () => {
   };
 
   // Handle moving from note input to task extraction
-  const handleParseText = (text: string, providedProjectName: string | null) => {
+  const handleParseText = async (text: string, providedProjectName: string | null) => {
     console.log('=== TaskConverterPage.handleParseText called ===');
     console.log('Text:', text);
     console.log('Provided project name:', providedProjectName);
@@ -70,7 +70,7 @@ const TaskConverterPage = () => {
     console.log('Effective project name:', effectiveProjectName);
     
     try {
-      const tasks = parseTextIntoTasks(text, effectiveProjectName);
+      const tasks = await parseTextIntoTasks(text, effectiveProjectName);
       console.log('Tasks after parsing:', tasks); // Debug log
       
       // Extract project name from tasks if not provided

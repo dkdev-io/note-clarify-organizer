@@ -7,17 +7,22 @@ import { Task } from './types';
 import { generateId, convertToTaskLanguage, filterMeetingChatter, isIntroductionText } from './utils';
 import { extractDate } from './date-parser';
 import { extractPriority, extractAssignee, extractStatus, isRecurringTask, extractProjectName, extractDuration } from './metadata-extractor';
+import { getCurrentUserName } from '../motion/current-user';
 import { splitIntoSubtasks, cleanupTaskTitle } from './task-text-processor';
 import { validateTask, validateTasks } from './task-validator';
 import { refineTask } from './task-editor';
 import { tasksToCSV, downloadTasksAsCSV } from './export';
 
 // Main function to parse text into potential tasks
-export const parseTextIntoTasks = (text: string, defaultProjectName: string | null = null): Task[] => {
+export const parseTextIntoTasks = async (text: string, defaultProjectName: string | null = null, apiKey?: string): Promise<Task[]> => {
   if (!text.trim()) return [];
   
   // Enhanced logging for debugging
   console.log("Starting text parsing with:", text.substring(0, 100) + "...");
+  
+  // Get current user name for default assignment
+  const currentUserName = await getCurrentUserName(apiKey);
+  console.log("Current user name for assignment:", currentUserName);
   
   // Extract a project name first from the overall text or use the provided default
   const extractedProjectName = extractProjectName(text);
@@ -104,7 +109,7 @@ export const parseTextIntoTasks = (text: string, defaultProjectName: string | nu
       // Extract task information first to properly identify assignees, dates, etc.
       const dueDate = extractDate(subtaskText);
       const priority = extractPriority(subtaskText);
-      const assignee = extractAssignee(subtaskText, "Me");
+      const assignee = extractAssignee(subtaskText, currentUserName);
       console.log("Extracted assignee:", assignee);
       const status = extractStatus(subtaskText);
       const recurring = isRecurringTask(subtaskText);

@@ -41,7 +41,8 @@ export const handleParseText = async (
       text, 
       effectiveProjectName, 
       toast,
-      apiProps.users || []
+      apiProps.users || [],
+      apiProps.apiKey
     );
     
     // If we still have no tasks, show an error
@@ -85,7 +86,7 @@ export const handleParseText = async (
     
     // Use fallback parsing as a last resort
     try {
-      const fallbackTasks = parseTextIntoTasks(text, providedProjectName);
+      const fallbackTasks = await parseTextIntoTasks(text, providedProjectName, apiProps.apiKey);
       if (fallbackTasks.length > 0) {
         setExtractedTasks(fallbackTasks);
         setStep('tasks');

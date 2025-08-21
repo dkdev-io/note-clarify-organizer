@@ -56,6 +56,6 @@ export const extractAssignee = (text: string, defaultUser?: string): string | nu
     return nameCandidate;
   }
   
-  // If no explicit assignee found, return default user
+  // If no explicit assignee found, return default user (current Motion user)
   return defaultUser || null;
 };
