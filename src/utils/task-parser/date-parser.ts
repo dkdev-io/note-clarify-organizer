@@ -92,6 +92,9 @@ export const extractDate = (text: string): string | null => {
 
   // Expanded date patterns recognition
   const datePatterns = [
+    // Format: Ordinal dates (22nd, 23rd, 1st, 2nd, etc.) - this should come first for priority
+    /\b(\d{1,2})(?:st|nd|rd|th)\b/i,
+    
     // Format: by/due/on/for month day, year
     /(?:by|due|on|for|deadline|before)\s+(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s+(\d{1,2})(?:st|nd|rd|th)?(?:,?\s+(\d{4}))?/i,
     
@@ -152,6 +155,22 @@ export const extractDate = (text: string): string | null => {
           
           const date = new Date(`${monthStr} ${dayStr}, ${yearStr}`);
           if (!isNaN(date.getTime())) {
+            return date.toISOString().split('T')[0];
+          }
+        }
+        // Ordinal dates (22nd, 23rd, etc.) - assume current month if no month specified
+        else if (/^\d{1,2}(?:st|nd|rd|th)$/.test(match[0])) {
+          const day = parseInt(match[1], 10);
+          
+          if (day >= 1 && day <= 31) {
+            const date = new Date(baseDate.getFullYear(), baseDate.getMonth(), day);
+            
+            // If the date is in the past, assume next month
+            if (date < baseDate) {
+              date.setMonth(date.getMonth() + 1);
+            }
+            
+            console.log("Extracted ordinal date:", date.toISOString().split('T')[0]);
             return date.toISOString().split('T')[0];
           }
         }
