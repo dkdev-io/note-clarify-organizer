@@ -7,7 +7,6 @@ interface ConnectionActionsProps {
   apiKey: string;
   isValidating: boolean;
   isKeyValid: boolean | null;
-  onSkip: () => void;
   onValidate: () => void;
 }
 
@@ -15,17 +14,10 @@ const ConnectionActions: React.FC<ConnectionActionsProps> = ({
   apiKey,
   isValidating,
   isKeyValid,
-  onSkip,
   onValidate
 }) => {
   return (
-    <div className="flex justify-between pt-2 pb-4 px-6">
-      <Button 
-        variant="outline" 
-        onClick={onSkip}
-      >
-        Skip for now
-      </Button>
+    <div className="flex justify-end pt-2 pb-4 px-6">
       <Button 
         onClick={onValidate}
         disabled={!apiKey.trim() || isValidating || isKeyValid === true}

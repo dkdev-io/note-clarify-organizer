@@ -195,7 +195,6 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
                     apiKey={apiKey}
                     isValidating={isValidating}
                     isKeyValid={isKeyValid}
-                    onSkip={onSkip}
                     onValidate={validateKey}
                   />
                 )}
