@@ -23,6 +23,7 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
   const [rateLimitRetryTime, setRateLimitRetryTime] = useState<Date | null>(null);
   const validateStoredKeyRef = useRef<((key: string) => Promise<void>) | null>(null);
   const isCheckingStoredKey = useRef(false);
+  const isRateLimitedRef = useRef(false);
   const [rememberKey, setRememberKey] = useState(() => {
     // Check if user previously chose to remember their key
     try {
@@ -73,13 +74,15 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
 
       // Only check localStorage for stored API key
       const storedKey = retrieveApiKey();
-      if (storedKey && !isRateLimited) { // Don't re-validate if we're rate limited
+      if (storedKey && !isRateLimitedRef.current) { // Don't re-validate if we're rate limited
         console.log('Found stored key, validating...');
         setApiKey(storedKey);
         setIsAlreadyConnected(true);
         
         // Validate the stored key immediately
         await validateStoredKey(storedKey);
+      } else if (isRateLimitedRef.current) {
+        console.log('Skipping validation - currently rate limited');
       }
       
       isCheckingStoredKey.current = false;
@@ -110,6 +113,7 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
         const errorMessage = error?.message?.toLowerCase() || '';
         if (errorMessage.includes('429') || errorMessage.includes('rate limit')) {
           setIsRateLimited(true);
+          isRateLimitedRef.current = true;
           const retryTime = new Date(Date.now() + 60000); // Wait 1 minute
           setRateLimitRetryTime(retryTime);
           
@@ -136,7 +140,7 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
     validateStoredKeyRef.current = validateStoredKey;
 
     checkForStoredApiKey();
-  }, [onConnect, isRateLimited]); // Added isRateLimited to dependencies
+  }, [onConnect]); // Don't depend on isRateLimited to avoid re-runs
 
   const handleWorkspaceSelect = async (workspaceId: string) => {
     setSelectedWorkspaceId(workspaceId);
@@ -164,6 +168,9 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
     setSelectedWorkspaceId(null);
     setSelectedProject(null);
     setApiKey('');
+    setIsRateLimited(false);
+    isRateLimitedRef.current = false;
+    setRateLimitRetryTime(null);
     clearStoredApiKey();
   };
 
@@ -222,6 +229,7 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
                   <button
                     onClick={() => {
                       setIsRateLimited(false);
+                      isRateLimitedRef.current = false;
                       setRateLimitRetryTime(null);
                       if (apiKey && validateStoredKeyRef.current) {
                         validateStoredKeyRef.current(apiKey);
