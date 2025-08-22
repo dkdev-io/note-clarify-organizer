@@ -14,7 +14,7 @@ import TaskReview from '@/components/task-review/TaskReviewWrapper';
 import TaskExtractor from '@/components/TaskExtractor';
 
 const TaskConverterPage = () => {
-  const [step, setStep] = useState<Step>('input');
+  const [step, setStep] = useState<Step>('connect');
   const [noteText, setNoteText] = useState('');
   const [extractedTasks, setExtractedTasks] = useState<Task[]>([]);
   const [reviewedTasks, setReviewedTasks] = useState<Task[]>([]);
