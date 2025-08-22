@@ -112,19 +112,17 @@ const TaskConverterPage = () => {
     setStep('review');
   };
 
-  // Handle adding tasks to Motion (from review step)
+  // Handle adding tasks to Motion (direct from extract step)
   const handleAddToMotion = async (tasks: Task[], updatedProjectName?: string) => {
+    const finalTasks = updatedProjectName 
+      ? tasks.map(task => ({ ...task, project: updatedProjectName }))
+      : tasks;
+    
     if (updatedProjectName) {
       setProjectName(updatedProjectName);
-      // Update all tasks with the project name
-      const updatedTasks = tasks.map(task => ({
-        ...task,
-        project: updatedProjectName
-      }));
-      setReviewedTasks(updatedTasks);
-    } else {
-      setReviewedTasks(tasks);
     }
+    
+    setReviewedTasks(finalTasks);
     
     // Actually add tasks to Motion - fetch workspace if not connected
     if (motionApiKey) {
@@ -147,7 +145,7 @@ const TaskConverterPage = () => {
         }
         
         const result = await addTasksToMotion(
-          tasks,
+          finalTasks,
           workspaceId,
           motionApiKey,
           selectedProjectId,
@@ -166,6 +164,11 @@ const TaskConverterPage = () => {
             description: result.message,
             variant: "destructive",
           });
+          
+          // Log detailed errors for debugging
+          if (result.errors) {
+            console.error('Motion API errors:', result.errors);
+          }
         }
       } catch (error) {
         console.error('Error adding tasks to Motion:', error);
@@ -180,7 +183,7 @@ const TaskConverterPage = () => {
       setStep('complete');
       toast({
         title: "Tasks Reviewed",
-        description: `${tasks.length} tasks have been reviewed${updatedProjectName ? ` under project '${updatedProjectName}'` : ''}.`,
+        description: `${finalTasks.length} tasks have been reviewed${updatedProjectName ? ` under project '${updatedProjectName}'` : ''}.`,
       });
     }
   };
@@ -237,16 +240,6 @@ const TaskConverterPage = () => {
             extractedTasks={extractedTasks}
             projectName={projectName}
             onBack={() => setStep('input')}
-            onContinue={handleContinueToReview}
-            apiProps={apiProps}
-          />
-        );
-      case 'review':
-        return (
-          <TaskReview
-            tasks={extractedTasks}
-            projectName={projectName}
-            onBack={() => setStep('extract')}
             onContinue={handleAddToMotion}
             apiProps={apiProps}
           />

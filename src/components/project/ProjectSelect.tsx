@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useToast } from "@/components/ui/use-toast";
 import { getProjectsForDropdown, createProject } from '@/utils/motion';
@@ -6,27 +5,29 @@ import ProjectDropdown from './ProjectDropdown';
 import ProjectActions from './ProjectActions';
 import ProjectMessages from './ProjectMessages';
 import CreateProjectDialog from '../motion-connect/CreateProjectDialog';
-
 interface ProjectSelectProps {
   apiKey: string | null;
   workspaceId: string | null;
   selectedProject: string | null;
   onProjectSelect: (projectName: string, projectId?: string) => void;
 }
-
 const ProjectSelect: React.FC<ProjectSelectProps> = ({
   apiKey,
   workspaceId,
   selectedProject,
   onProjectSelect
 }) => {
-  const [projects, setProjects] = useState<{label: string, value: string}[]>([]);
+  const [projects, setProjects] = useState<{
+    label: string;
+    value: string;
+  }[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showNewProjectDialog, setShowNewProjectDialog] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
-  const { toast } = useToast();
-
+  const {
+    toast
+  } = useToast();
   useEffect(() => {
     if (workspaceId && apiKey && apiKey.trim()) {
       setProjects([]);
@@ -38,17 +39,14 @@ const ProjectSelect: React.FC<ProjectSelectProps> = ({
       setError(null);
     }
   }, [workspaceId, apiKey]);
-
   const loadProjects = async () => {
     if (!workspaceId) return;
-    
     setIsLoading(true);
     setError(null);
     try {
       const projectOptions = await getProjectsForDropdown(workspaceId, apiKey);
       console.log('Loaded projects:', projectOptions);
       setProjects(projectOptions);
-      
       if (projectOptions.length > 0 && !selectedProject) {
         onProjectSelect(projectOptions[0].label, projectOptions[0].value);
         setSelectedProjectId(projectOptions[0].value);
@@ -64,39 +62,32 @@ const ProjectSelect: React.FC<ProjectSelectProps> = ({
       }
     } catch (error) {
       console.error('Failed to load projects:', error);
-      
       let errorMessage = "Failed to load projects from Motion API.";
       if (error instanceof Error) {
         errorMessage = error.message;
       }
-      
       setError(errorMessage);
-      
       toast({
         title: "Failed to load projects",
         description: errorMessage,
         variant: "destructive"
       });
-      
       onProjectSelect('', undefined);
       setSelectedProjectId(null);
     } finally {
       setIsLoading(false);
     }
   };
-
   const handleProjectCreated = (projectName: string, projectId: string) => {
     // Add the new project to the list
     const newProject = {
       label: projectName,
       value: projectId
     };
-    
     setProjects([...projects, newProject]);
     onProjectSelect(projectName, projectId);
     setSelectedProjectId(projectId);
   };
-
   const handleSelectProject = (projectId: string) => {
     const project = projects.find(p => p.value === projectId);
     if (project) {
@@ -104,11 +95,9 @@ const ProjectSelect: React.FC<ProjectSelectProps> = ({
       setSelectedProjectId(projectId);
     }
   };
-
   const handleCreateNewProject = () => {
     setShowNewProjectDialog(true);
   };
-
   useEffect(() => {
     if (selectedProject && projects.length > 0) {
       const project = projects.find(p => p.label === selectedProject);
@@ -120,48 +109,20 @@ const ProjectSelect: React.FC<ProjectSelectProps> = ({
       }
     }
   }, [selectedProject, projects]);
-
   const isDisabled = !apiKey || !apiKey.trim() || !workspaceId;
-
-  return (
-    <div className="space-y-4">
+  return <div className="space-y-4">
       <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <span className="text-sm font-medium">Select Project</span>
-          {isDisabled && <span className="text-sm text-muted-foreground">Select workspace first</span>}
-        </div>
+        
         <div className="flex gap-2">
-          <ProjectDropdown
-            projects={projects}
-            selectedProjectId={selectedProjectId}
-            onSelectProject={isDisabled ? () => {} : handleSelectProject}
-            isLoading={isLoading && !isDisabled}
-            onCreateNewProject={isDisabled ? () => {} : handleCreateNewProject}
-          />
-          <ProjectActions
-            onRefresh={isDisabled ? () => {} : loadProjects}
-            onCreateNew={isDisabled ? () => {} : () => setShowNewProjectDialog(true)}
-            isLoading={isLoading && !isDisabled}
-          />
+          <ProjectDropdown projects={projects} selectedProjectId={selectedProjectId} onSelectProject={isDisabled ? () => {} : handleSelectProject} isLoading={isLoading && !isDisabled} onCreateNewProject={isDisabled ? () => {} : handleCreateNewProject} />
+          <ProjectActions onRefresh={isDisabled ? () => {} : loadProjects} onCreateNew={isDisabled ? () => {} : () => setShowNewProjectDialog(true)} isLoading={isLoading && !isDisabled} />
         </div>
         
-        <ProjectMessages
-          error={error}
-          isLoading={isLoading}
-          projectsCount={projects.length}
-        />
+        <ProjectMessages error={error} isLoading={isLoading} projectsCount={projects.length} />
       </div>
 
       {/* Create Project Dialog */}
-      <CreateProjectDialog
-        open={showNewProjectDialog}
-        workspaceId={workspaceId || ''}
-        apiKey={apiKey}
-        onClose={() => setShowNewProjectDialog(false)}
-        onProjectCreated={handleProjectCreated}
-      />
-    </div>
-  );
+      <CreateProjectDialog open={showNewProjectDialog} workspaceId={workspaceId || ''} apiKey={apiKey} onClose={() => setShowNewProjectDialog(false)} onProjectCreated={handleProjectCreated} />
+    </div>;
 };
-
 export default ProjectSelect;

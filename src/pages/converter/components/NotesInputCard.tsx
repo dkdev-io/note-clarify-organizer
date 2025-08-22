@@ -41,15 +41,9 @@ const NotesInputCard: React.FC<NotesInputCardProps> = ({
         <Button 
           onClick={handleTextSubmit}
           disabled={isProcessing}
+          className="bg-primary text-primary-foreground hover:bg-primary/90"
         >
-          {isProcessing ? 'Processing...' : 'Extract Tasks & Add to Issue Log'}
-        </Button>
-        <Button 
-          variant="outline" 
-          onClick={addSampleTasks}
-          disabled={isProcessing}
-        >
-          Add Sample Tasks
+          {isProcessing ? 'Processing...' : 'Submit'}
         </Button>
       </CardFooter>
     </Card>
