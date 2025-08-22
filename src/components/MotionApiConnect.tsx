@@ -9,7 +9,7 @@ import WorkspaceSelect from './WorkspaceSelect';
 import { ProjectSelect } from './project';
 
 interface MotionApiConnectProps {
-  onConnect: (apiKey: string, workspaces: any[], selectedWorkspace?: string, selectedProject?: string, users?: any[]) => void;
+  onConnect: (apiKey: string, workspaces: any[], selectedWorkspace?: string, selectedProject?: string, users?: any[], projectId?: string) => void;
   onSkip: () => void;
 }
 
@@ -133,7 +133,7 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
       const users = await fetchUsers(selectedWorkspaceId, apiKey);
       
       // Call the onConnect callback with all the data
-      onConnect(apiKey, fetchedWorkspaces, selectedWorkspaceId, selectedProject, users);
+      onConnect(apiKey, fetchedWorkspaces, selectedWorkspaceId, selectedProject, users, selectedProjectId || undefined);
       
       toast({
         title: "Setup Complete",
@@ -142,7 +142,7 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
     } catch (error) {
       console.error('Error fetching users:', error);
       // Still proceed even if users fetch fails
-      onConnect(apiKey, fetchedWorkspaces, selectedWorkspaceId, selectedProject, []);
+      onConnect(apiKey, fetchedWorkspaces, selectedWorkspaceId, selectedProject, [], selectedProjectId || undefined);
       
       toast({
         title: "Setup Complete", 

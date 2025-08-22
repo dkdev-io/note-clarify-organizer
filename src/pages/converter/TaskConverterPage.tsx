@@ -38,17 +38,18 @@ const TaskConverterPage = () => {
   }, [extractedTasks]);
   
   // Handle API connection
-  const handleApiConnect = (apiKey: string, fetchedWorkspaces: any[], workspaceId?: string, project?: string, users?: any[]) => {
-    console.log('TaskConverterPage - handleApiConnect called with:', { apiKey, fetchedWorkspaces, workspaceId, project, users });
+  const handleApiConnect = (apiKey: string, fetchedWorkspaces: any[], workspaceId?: string, project?: string, users?: any[], projectId?: string) => {
+    console.log('TaskConverterPage - handleApiConnect called with:', { apiKey, fetchedWorkspaces, workspaceId, project, users, projectId });
     setMotionApiKey(apiKey);
     setWorkspaces(fetchedWorkspaces);
     setSelectedWorkspaceId(workspaceId || null);
     setSelectedProject(project || null);
+    setSelectedProjectId(projectId || null);
     setProjectName(project || null);
     setUsers(users || []);
     setIsConnected(true);
     setStep('input');
-    console.log('TaskConverterPage - step set to input');
+    console.log('TaskConverterPage - step set to input, projectId:', projectId);
   };
 
   // Handle skipping API connection
