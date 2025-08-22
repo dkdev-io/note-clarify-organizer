@@ -83,9 +83,23 @@ export const addTasksToMotionService = async (
       timeEstimate: timeEstimate
     });
     
+    // Ensure we have a workspace ID - fetch if needed
+    let workspaceId = apiProps.selectedWorkspaceId;
+    if (!workspaceId && apiProps.apiKey) {
+      console.log('No workspace selected in service, fetching workspaces...');
+      const { fetchWorkspaces } = await import('@/utils/motion/workspaces');
+      const workspaces = await fetchWorkspaces(apiProps.apiKey);
+      if (workspaces.length > 0) {
+        workspaceId = workspaces[0].id;
+        console.log('Using first workspace in service:', workspaces[0].name, workspaceId);
+      } else {
+        throw new Error('No workspaces found in Motion account');
+      }
+    }
+    
     const result = await addTasksToMotion(
       tasksWithProject, 
-      apiProps.selectedWorkspaceId, 
+      workspaceId, 
       apiProps.apiKey || undefined,
       projectId,
       timeEstimate

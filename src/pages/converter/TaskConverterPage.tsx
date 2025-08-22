@@ -126,14 +126,29 @@ const TaskConverterPage = () => {
       setReviewedTasks(tasks);
     }
     
-    // Actually add tasks to Motion if connected
-    if (isConnected && motionApiKey && selectedWorkspaceId) {
+    // Actually add tasks to Motion - fetch workspace if not connected
+    if (motionApiKey) {
       try {
         const { addTasksToMotion } = await import('@/utils/motion/tasks');
+        const { fetchWorkspaces } = await import('@/utils/motion/workspaces');
+        
+        let workspaceId = selectedWorkspaceId;
+        
+        // If not connected/no workspace selected, fetch first workspace
+        if (!workspaceId) {
+          console.log('No workspace selected, fetching workspaces...');
+          const workspaces = await fetchWorkspaces(motionApiKey);
+          if (workspaces.length > 0) {
+            workspaceId = workspaces[0].id;
+            console.log('Using first workspace:', workspaces[0].name, workspaceId);
+          } else {
+            throw new Error('No workspaces found in Motion account');
+          }
+        }
         
         const result = await addTasksToMotion(
           tasks,
-          selectedWorkspaceId,
+          workspaceId,
           motionApiKey,
           selectedProjectId,
           undefined // timeEstimate

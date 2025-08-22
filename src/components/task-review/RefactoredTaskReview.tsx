@@ -110,25 +110,15 @@ const RefactoredTaskReview: React.FC<RefactoredTaskReviewProps> = ({
           rawText=""
         />
         
-        {editingTaskId && (
-          <TaskEditForm 
-            task={editedTasks.find(t => t.id === editingTaskId)!}
-            onSave={handleSaveTask}
-            onUpdate={(field, value) => handleUpdateTask(editingTaskId, field, value)}
-            apiProps={apiProps}
-          />
-        )}
-        
-        {!editingTaskId && (
-          <TasksList 
-            tasks={editedTasks}
-            editingTaskId={editingTaskId}
-            onEditTask={handleEditTask}
-            onUpdateTask={handleUpdateTask}
-            onSaveEdit={handleSaveTask}
-            onAddTask={handleAddTask}
-          />
-        )}
+        <TasksList 
+          tasks={editedTasks}
+          editingTaskId={editingTaskId}
+          onEditTask={handleEditTask}
+          onUpdateTask={handleUpdateTask}
+          onSaveEdit={handleSaveTask}
+          onAddTask={handleAddTask}
+          apiProps={apiProps}
+        />
         
         <TaskReviewFooter 
           onBack={handleBack}

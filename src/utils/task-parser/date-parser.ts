@@ -3,11 +3,20 @@
  * Date parsing utilities for extracting due dates from text
  */
 
+import { parseNaturalLanguageDate } from './enhanced-date-parser';
+
 export const extractDate = (text: string): string | null => {
+  // Try enhanced parser first for better natural language understanding
+  const enhancedResult = parseNaturalLanguageDate(text);
+  if (enhancedResult) {
+    console.log("Enhanced parser found date:", enhancedResult, "from text:", text);
+    return enhancedResult;
+  }
+  
   // Define a fixed date for relative date calculations if needed
   const baseDate = new Date(); // Use current date instead of fixed date
   
-  console.log("extractDate called with text:", text);
+  console.log("extractDate fallback parser called with text:", text);
   
   // Hour-based deadline patterns
   const hourBasedPatterns = [

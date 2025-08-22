@@ -5,6 +5,7 @@
 
 import { getApiKey, isUsingProxyMode } from './api-core';
 import { Task } from '../task-parser/types'; // Make sure to import from the correct path
+import { getCurrentUser } from './current-user';
 
 // Add tasks to Motion
 export const addTasksToMotion = async (
@@ -31,6 +32,15 @@ export const addTasksToMotion = async (
   }
 
   try {
+    // Get current user for default assignment
+    let currentUser = null;
+    try {
+      currentUser = await getCurrentUser(apiKey);
+      console.log('Current Motion user:', currentUser);
+    } catch (error) {
+      console.log('Could not fetch current user, tasks will be unassigned');
+    }
+    
     // Create an array to store any errors that occur
     const errors: any[] = [];
     const successfulTasks: Task[] = [];
@@ -38,7 +48,7 @@ export const addTasksToMotion = async (
     // Process tasks in sequence to avoid rate limiting
     for (const task of tasks) {
       try {
-        // Prepare task data with proper field names for the Motion API
+        // Prepare task data with CORRECT field names for the Motion API
         const taskData: any = {
           name: task.title,
           description: task.description || "",
@@ -55,50 +65,38 @@ export const addTasksToMotion = async (
         } else {
           console.log(`Adding task "${task.title}" without project ID`);
         }
-        
-        // Add folder if available
-        if (task.folder) {
-          taskData.folder = task.folder;
-        }
 
-        // Add due date if available
+        // Add due date if available - CORRECT FIELD NAME: dueDate
         if (task.dueDate) {
-          // Format the date as ISO string (YYYY-MM-DD)
-          taskData.due_date = new Date(task.dueDate).toISOString().split('T')[0];
-          console.log(`Task due date: ${taskData.due_date}`);
-          
-          // Add hard deadline flag if set
-          if (task.hardDeadline) {
-            taskData.hard_deadline = true;
-          }
+          // Format as ISO 8601 string
+          taskData.dueDate = new Date(task.dueDate).toISOString();
+          console.log(`Task due date: ${taskData.dueDate}`);
         }
         
-        // Add start date if available
-        if (task.startDate) {
-          taskData.start_date = new Date(task.startDate).toISOString().split('T')[0];
-          console.log(`Task start date: ${taskData.start_date}`);
-        }
-        
-        // Add time estimate if available
+        // Add duration (time estimate) if available - CORRECT FIELD NAME: duration
         if (timeEstimate) {
-          taskData.time_estimate = parseInt(timeEstimate, 10);
-          console.log(`Task time estimate: ${taskData.time_estimate} minutes`);
+          taskData.duration = parseInt(timeEstimate, 10);
+          console.log(`Task duration: ${taskData.duration} minutes`);
         } else if (task.timeEstimate) {
-          taskData.time_estimate = task.timeEstimate;
-          console.log(`Task time estimate from task: ${taskData.time_estimate} minutes`);
+          taskData.duration = task.timeEstimate;
+          console.log(`Task duration from task: ${taskData.duration} minutes`);
         }
         
-        // Add auto scheduling preference
-        taskData.auto_scheduled = task.autoScheduled !== undefined ? task.autoScheduled : true;
-        
-        // Add isPending flag
-        if (task.isPending) {
-          taskData.is_pending = true;
+        // Add auto scheduling preference - must be object or null
+        if (task.autoScheduled !== undefined) {
+          taskData.autoScheduled = task.autoScheduled ? {} : null;
         }
         
-        // Add schedule preference
-        if (task.schedule) {
-          taskData.schedule = task.schedule;
+        // Add priority if available (ASAP, HIGH, MEDIUM, LOW)
+        if (task.priority) {
+          const priorityMap: { [key: string]: string } = {
+            'high': 'HIGH',
+            'medium': 'MEDIUM', 
+            'low': 'LOW',
+            'asap': 'ASAP'
+          };
+          taskData.priority = priorityMap[task.priority.toLowerCase()] || 'MEDIUM';
+          console.log(`Task priority: ${taskData.priority}`);
         }
         
         // Add labels if available
@@ -106,17 +104,23 @@ export const addTasksToMotion = async (
           taskData.labels = task.labels;
         }
         
-        // Add assignee_id if available
+        // Add assigneeId - CORRECT FIELD NAME: assigneeId (not assignee_id)
         if (task.assignee) {
-          taskData.assignee_id = task.assignee;
+          // If a specific assignee is mentioned, use them
+          taskData.assigneeId = task.assignee;
+          console.log(`Task "${task.title}" assigned to: ${task.assignee}`);
+        } else if (currentUser && currentUser.id) {
+          // If no assignee specified, assign to current Motion user
+          taskData.assigneeId = currentUser.id;
+          console.log(`Task "${task.title}" auto-assigned to current user: ${currentUser.name || currentUser.id}`);
+        } else {
+          console.log(`Task "${task.title}" will be unassigned`);
         }
         
-        // Add custom fields if available
-        if (task.customFields) {
-          taskData.custom_fields = task.customFields;
-        }
-        
-        console.log("Sending task to Motion:", taskData);
+        console.error("🚨🚨🚨 SENDING TASK TO MOTION 🚨🚨🚨");
+        console.error("Task data:", taskData);
+        console.error("API Key:", apiKey ? (apiKey.substring(0, 5) + "..." + apiKey.substring(apiKey.length - 5)) : "NULL");
+        console.error("🚨 FULL REQUEST BODY:", JSON.stringify(taskData, null, 2));
         
         // Add rate limiting with retry logic
         let retryCount = 0;
@@ -125,7 +129,10 @@ export const addTasksToMotion = async (
         
         while (retryCount < maxRetries) {
           try {
-            response = await fetch("https://api.usemotion.com/v1/tasks", {
+            const requestUrl = "https://api.usemotion.com/v1/tasks";
+            console.log(`Making POST request to: ${requestUrl}`);
+            
+            response = await fetch(requestUrl, {
               method: "POST",
               headers: {
                 'X-API-Key': apiKey,
@@ -134,6 +141,8 @@ export const addTasksToMotion = async (
               },
               body: JSON.stringify(taskData),
             });
+            
+            console.log(`Response status: ${response.status} ${response.statusText}`);
             
             if (response.status === 429) {
               // Rate limited, wait and retry
@@ -157,8 +166,18 @@ export const addTasksToMotion = async (
         }
         
         if (!response.ok) {
-          const errorData = await response.json();
-          console.error("Error creating task:", errorData);
+          let errorData;
+          try {
+            errorData = await response.json();
+          } catch (e) {
+            errorData = await response.text();
+          }
+          console.error("🚨🚨🚨 MOTION API ERROR 🚨🚨🚨");
+          console.error("Status:", response.status);
+          console.error("Status Text:", response.statusText);
+          console.error("Error Data:", errorData);
+          console.error("Task Title:", task.title);
+          console.error("Request Body:", taskData);
           errors.push({
             task: task.title,
             error: errorData,
@@ -166,7 +185,8 @@ export const addTasksToMotion = async (
           });
         } else {
           const responseData = await response.json();
-          console.log("Success creating task:", responseData);
+          console.log("✅ Success creating task:", responseData);
+          console.log("Task ID in Motion:", responseData.id);
           successfulTasks.push(task);
         }
       } catch (err) {

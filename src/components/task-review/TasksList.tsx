@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PencilIcon, TrashIcon, Calendar, CheckCircleIcon, FlagIcon, UserIcon } from 'lucide-react';
 import { format } from 'date-fns';
+import TaskEditForm from './TaskEditForm';
 
 interface TasksListProps {
   tasks: Task[];
@@ -14,6 +15,7 @@ interface TasksListProps {
   onUpdateTask: (taskId: string, field: keyof Task | 'deleted', value: any) => void;
   onSaveEdit: () => void;
   onAddTask: () => void;
+  apiProps?: any;
 }
 
 const TasksList: React.FC<TasksListProps> = ({
@@ -22,7 +24,8 @@ const TasksList: React.FC<TasksListProps> = ({
   onEditTask,
   onUpdateTask,
   onSaveEdit,
-  onAddTask
+  onAddTask,
+  apiProps
 }) => {
   if (!tasks || tasks.length === 0) {
     return (
@@ -48,36 +51,44 @@ const TasksList: React.FC<TasksListProps> = ({
       <div className="divide-y divide-gray-100">
         {tasks.map((task) => (
           <div key={task.id} className="py-4 first:pt-0 last:pb-0">
-            <div className="flex items-start justify-between group">
-              <div className="flex-1">
-                <h3 className="font-medium text-gray-900">{task.title}</h3>
-                {task.description && (
-                  <p className="text-sm text-muted-foreground mt-1">{task.description}</p>
-                )}
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {task.dueDate && (
-                    <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-[10px]">
-                      <Calendar className="h-3 w-3 mr-1" />
-                      {format(new Date(task.dueDate), 'MMM d, yyyy')}
-                    </Badge>
+            {editingTaskId === task.id ? (
+              <TaskEditForm 
+                task={task}
+                onSave={onSaveEdit}
+                onUpdate={(field, value) => onUpdateTask(task.id, field, value)}
+                apiProps={apiProps}
+              />
+            ) : (
+              <div className="flex items-start justify-between group">
+                <div className="flex-1">
+                  <h3 className="font-medium text-gray-900">{task.title}</h3>
+                  {task.description && (
+                    <p className="text-sm text-muted-foreground mt-1">{task.description}</p>
                   )}
-                  {task.priority && (
-                    <Badge 
-                      variant="outline" 
-                      className={`text-[10px] ${
-                        task.priority === 'high' 
-                          ? 'bg-red-50 text-red-700 border-red-200' 
-                          : task.priority === 'medium' 
-                            ? 'bg-yellow-50 text-yellow-700 border-yellow-200' 
-                            : 'bg-green-50 text-green-700 border-green-200'
-                      }`}
-                    >
-                      <FlagIcon className="h-3 w-3 mr-1" />
-                      {task.priority}
-                    </Badge>
-                  )}
-                  {task.assignee && (
-                    <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 text-[10px]">
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {task.dueDate && (
+                      <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-[10px]">
+                        <Calendar className="h-3 w-3 mr-1" />
+                        {format(new Date(task.dueDate), 'MMM d, yyyy')}
+                      </Badge>
+                    )}
+                    {task.priority && (
+                      <Badge 
+                        variant="outline" 
+                        className={`text-[10px] ${
+                          task.priority === 'high' 
+                            ? 'bg-red-50 text-red-700 border-red-200' 
+                            : task.priority === 'medium' 
+                              ? 'bg-yellow-50 text-yellow-700 border-yellow-200' 
+                              : 'bg-green-50 text-green-700 border-green-200'
+                        }`}
+                      >
+                        <FlagIcon className="h-3 w-3 mr-1" />
+                        {task.priority}
+                      </Badge>
+                    )}
+                    {task.assignee && (
+                      <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 text-[10px]">
                       <UserIcon className="h-3 w-3 mr-1" />
                       {task.assignee}
                     </Badge>
@@ -103,6 +114,7 @@ const TasksList: React.FC<TasksListProps> = ({
                 </Button>
               </div>
             </div>
+            )}
           </div>
         ))}
       </div>

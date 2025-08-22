@@ -3,9 +3,11 @@
  */
 
 import { extractAssignee } from './metadata-extractor';
+import { shouldKeepAsSingleTask } from './text-preprocessor';
 
 // Improved function to split text into sub-tasks if needed
 export const splitIntoSubtasks = (text: string): string[] => {
+  console.log('🔍 splitIntoSubtasks input:', text);
   const tasks: string[] = [];
   
   // Fix for the Danny/Jennifer pattern that was causing issues
@@ -62,13 +64,26 @@ export const splitIntoSubtasks = (text: string): string[] => {
     }
   }
   
+  // Check if this text should be kept as a single task
+  if (shouldKeepAsSingleTask(text)) {
+    return [text];
+  }
+  
   // Look for sequences - splitting by various patterns
   const potentialTasks: string[] = [];
   
-  // Split by period 
+  // Split by period only if it makes sense
   const sequencesByPeriod = text.split(/\.\s+/).filter(s => s.trim().length > 0);
   if (sequencesByPeriod.length > 1) {
-    potentialTasks.push(...sequencesByPeriod);
+    // Check if splitting by period actually creates valid separate tasks
+    const allLookLikeTasks = sequencesByPeriod.every(s => 
+      s.length > 10 && // Not too short
+      /\b(?:will|should|must|need|needs|has to|have to|going to|finish|complete|deliver|send|meet)\b/i.test(s) // Contains action words
+    );
+    
+    if (allLookLikeTasks) {
+      potentialTasks.push(...sequencesByPeriod);
+    }
   }
   
   // Look for "and then" or similar sequence indicators
@@ -152,82 +167,18 @@ export const splitIntoSubtasks = (text: string): string[] => {
   }
   
   // If we didn't find multiple tasks, return the original text in an array
+  console.log('🔍 splitIntoSubtasks output:', [text]);
   return [text];
 };
 
-// Function to clean up task titles by removing names, dates, durations, etc.
+// Function to preserve user input exactly as typed - no cleaning
 export const cleanupTaskTitle = (
   title: string, 
   assignee: string | null, 
   dueDate: string | null, 
   duration: string | null = null
 ): string => {
-  let cleanTitle = title;
-  
-  // Remove assignee name from title if present
-  if (assignee) {
-    // Different patterns to remove person name attribution
-    const namePatterns = [
-      new RegExp(`\\b${assignee}\\b\\s+(?:needs|should|will|must|has|is|can|to|needs to|has to|is going to|should|must)\\b.*?`, 'gi'),
-      new RegExp(`\\b${assignee}'s\\b`, 'gi'),
-      new RegExp(`\\b${assignee}\\b`, 'gi') // Only remove the bare name if other patterns don't match
-    ];
-    
-    // Try each pattern in order of specificity
-    for (const pattern of namePatterns) {
-      const beforeClean = cleanTitle;
-      cleanTitle = cleanTitle.replace(pattern, '').trim();
-      // If we removed something with this pattern, break to avoid over-cleaning
-      if (beforeClean !== cleanTitle) break;
-    }
-  }
-  
-  // Clean date mentions from title
-  if (dueDate) {
-    const datePatterns = [
-      /\b(?:by|before|due|on|deadline)\s+(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+\d{1,2}(?:st|nd|rd|th)?(?:,?\s+\d{4})?\b/gi,
-      /\b(?:by|before|due|on|deadline)\s+\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}\b/gi,
-      /\bwithin\s+(\d+|one|two|three|four|five|six|seven|eight|nine|ten)\s+(?:days?|hours?|weeks?)\b/gi,
-      /\bin\s+(\d+|one|two|three|four|five|six|seven|eight|nine|ten)\s+(?:days?|hours?|weeks?)\b/gi,
-      /\b(\d+|one|two|three|four|five|six|seven|eight|nine|ten)\s+(?:days?|hours?|weeks?)\s+(?:deadline|turnaround)\b/gi,
-      /\b(?:within|by|before|due)\s+24\s+hours?\b/gi,
-      /\b(?:within|by|before|due)\s+one day\b/gi,
-      /\b(?:tomorrow|next week|this|next)\s+(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/gi,
-      /\b(?:march|april|may|june|july|august|september|october|november|december|january|february)\s+\d{1,2}(?:st|nd|rd|th)?\b/gi
-    ];
-    
-    for (const pattern of datePatterns) {
-      cleanTitle = cleanTitle.replace(pattern, '').trim();
-    }
-  }
-  
-  // Clean duration mentions from title
-  if (duration) {
-    const durationPatterns = [
-      /\b(?:this|it)\s+will\s+take\s+([a-zA-Z0-9\s-]+)(?:\s+(?:hours?|hrs?|minutes?|mins?|days?))\b/gi,
-      /\b([a-zA-Z0-9\s-]+)(?:\s+(?:hours?|hrs?|minutes?|mins?|days?))\s+to\s+(?:complete|finish|do)\b/gi,
-      /\bestimated\s+time:?\s+([a-zA-Z0-9\s-]+)(?:\s+(?:hours?|hrs?|minutes?|mins?|days?))\b/gi,
-      /\bduration:?\s+([a-zA-Z0-9\s-]+)(?:\s+(?:hours?|hrs?|minutes?|mins?|days?))\b/gi,
-      /\btakes\s+([a-zA-Z0-9\s-]+)(?:\s+(?:hours?|hrs?|minutes?|mins?|days?))\b/gi,
-      /\b([a-zA-Z0-9\s-]+)(?:\s+(?:hours?|hrs?|minutes?|mins?|days?))\b/gi
-    ];
-    
-    for (const pattern of durationPatterns) {
-      cleanTitle = cleanTitle.replace(pattern, '').trim();
-    }
-  }
-  
-  // Fix for the "finished, she'll send to Danny" pattern that was causing issues
-  cleanTitle = cleanTitle.replace(/\.\s+(?:Once|When|After)\s+finished,\s+(?:she|he|they)(?:'ll|\s+will)?\s+send\s+(?:to|it\s+to)?\s+[A-Z][a-z]+/i, '');
-  
-  // Clean up spaces, dots, commas at beginning and end
-  cleanTitle = cleanTitle.replace(/^[,.\s]+/, '').replace(/[,.\s]+$/, '').trim();
-  cleanTitle = cleanTitle.replace(/\s{2,}/g, ' ');
-  
-  // Capitalize first letter
-  if (cleanTitle.length > 0) {
-    cleanTitle = cleanTitle.charAt(0).toUpperCase() + cleanTitle.slice(1);
-  }
-  
-  return cleanTitle;
+  // Return the user's input exactly as they typed it
+  // Only clean up excessive whitespace
+  return title.replace(/\s{2,}/g, ' ').trim();
 };

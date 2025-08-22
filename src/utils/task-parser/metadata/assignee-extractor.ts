@@ -16,14 +16,14 @@ export const extractAssignee = (text: string, defaultUser?: string): string | nu
     // Possessive forms
     /\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)'s\s+(?:task|responsibility|job|assignment)/i,
     
-    // Action patterns - someone doing something
-    /\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+(?:needs|should|will|to|can|must|has to|is going to|is supposed to)\b/i,
+    // Action patterns - someone doing something (allow lowercase first letter)
+    /\b([A-Za-z][a-z]+(?:\s+[A-Za-z][a-z]+)?)\s+(?:needs|should|will|to|can|must|has to|is going to|is supposed to)\b/i,
     
     // "X is responsible for", "X is going to", etc.
-    /\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+is\s+(?:responsible|going|supposed|expected)\b/i,
+    /\b([A-Za-z][a-z]+(?:\s+[A-Za-z][a-z]+)?)\s+is\s+(?:responsible|going|supposed|expected)\b/i,
     
     // "X must finish/do/complete" etc.
-    /\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+must\b/i,
+    /\b([A-Za-z][a-z]+(?:\s+[A-Za-z][a-z]+)?)\s+must\b/i,
     
     // Names in parentheses - common notation for assignees
     /\(([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\)/i,
@@ -57,5 +57,7 @@ export const extractAssignee = (text: string, defaultUser?: string): string | nu
   }
   
   // If no explicit assignee found, return default user (current Motion user)
-  return defaultUser || null;
+  // Always default to the current user if no assignee is specified
+  console.log(`No assignee found in text, using default user: ${defaultUser || 'Me'}`);
+  return defaultUser || 'Me';
 };

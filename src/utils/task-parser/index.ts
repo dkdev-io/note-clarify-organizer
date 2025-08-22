@@ -9,6 +9,7 @@ import { extractDate } from './date-parser';
 import { extractPriority, extractAssignee, extractStatus, isRecurringTask, extractProjectName, extractDuration } from './metadata-extractor';
 import { getCurrentUserName } from '../motion/current-user';
 import { splitIntoSubtasks, cleanupTaskTitle } from './task-text-processor';
+import { preprocessTaskText } from './text-preprocessor';
 import { validateTask, validateTasks } from './task-validator';
 import { refineTask } from './task-editor';
 import { tasksToCSV, downloadTasksAsCSV } from './export';
@@ -31,8 +32,12 @@ export const parseTextIntoTasks = async (text: string, defaultProjectName: strin
   const projectName = defaultProjectName || extractedProjectName || "Tasks";
   console.log("Using project name:", projectName);
   
+  // Preprocess text to join lines that belong together
+  const preprocessedText = preprocessTaskText(text);
+  console.log("Preprocessed text:", preprocessedText.substring(0, 200) + "...");
+  
   // Split text into lines and filter out meeting chatter
-  const lines = text.split(/\r?\n/).filter(filterMeetingChatter);
+  const lines = preprocessedText.split(/\r?\n/).filter(filterMeetingChatter);
   
   // Identify potential tasks by looking for action items, bullet points, numbered lists, etc.
   const taskIndicators = [
@@ -94,10 +99,23 @@ export const parseTextIntoTasks = async (text: string, defaultProjectName: strin
     
     isFirstLine = false;
     
-    // Clean up the task text (remove bullet points, numbering, etc.)
-    taskIndicators.forEach(indicator => {
+    // Clean up the task text (remove ONLY formatting like bullets, numbering, etc.)
+    // Don't remove semantic content like "will", "need to", etc.
+    console.log('🔍 BEFORE formatting removal:', taskText);
+    const formattingIndicators = [
+      /^\s*[\-\*•]\s+/,     // Bullet points
+      /^\s*\d+\.\s+/,       // Numbered lists
+    ];
+    
+    formattingIndicators.forEach((indicator, i) => {
+      const before = taskText;
       taskText = taskText.replace(indicator, '');
+      if (before !== taskText) {
+        console.log(`🔍 Formatting indicator ${i} changed text from '${before}' to '${taskText}'`);
+      }
     });
+    
+    console.log('🔍 AFTER formatting removal:', taskText);
     
     // Split into subtasks if needed
     const subtasks = splitIntoSubtasks(taskText);
@@ -116,7 +134,9 @@ export const parseTextIntoTasks = async (text: string, defaultProjectName: strin
       const duration = extractDuration(subtaskText); // Extract duration information
       
       // Clean up the task title - remove names, dates, priority, etc.
+      console.log('🔍 BEFORE cleanupTaskTitle:', subtaskText);
       let processedTitle = cleanupTaskTitle(subtaskText, assignee, dueDate, duration);
+      console.log('🔍 AFTER cleanupTaskTitle:', processedTitle);
       
       // Try to separate title from description if there's a colon or dash
       let title = processedTitle;

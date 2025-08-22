@@ -88,8 +88,12 @@ export const filterMeetingChatter = (line: string): boolean => {
 
 // Check if text is an introduction/header rather than a task
 export const isIntroductionText = (text: string): boolean => {
-  // Skip if it's empty or too short
-  if (!text.trim() || text.length < 10) return true;
+  // Skip if it's empty or VERY short (less than 5 chars)
+  if (!text.trim() || text.length < 5) return true;
+  
+  // If text contains a date pattern, it's likely a task, not an introduction
+  const hasDate = /\b(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday|\d{1,2}(?:st|nd|rd|th)|january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|tomorrow|today|next|this)\b/i.test(text);
+  if (hasDate) return false;
   
   // Check for common intro patterns
   const introPatterns = [
@@ -116,10 +120,16 @@ export const isIntroductionText = (text: string): boolean => {
     return true;
   }
   
-  // Check if it's a heading with no verbs
-  const isHeading = text.length < 50 && 
-                   !/\b(?:need|must|should|will|can|have to|going to|shall)\b/i.test(text) &&
-                   !/\b(?:create|update|review|prepare|schedule|organize|develop|design|implement|test|fix|build|draft|edit|add|remove|change|modify|analyze|evaluate|assess|report|present|discuss|meet|call|email|post|share|upload|download|generate|produce|deliver|submit|approve|verify|check|complete|finish|send|write)\b/i.test(text);
+  // Check if it's a heading with no verbs - but be more lenient
+  const actionVerbs = /\b(?:need|must|should|will|can|have to|going to|shall|launch|book|meeting|complete|finish|deliver|send|review|prepare|schedule|organize|develop|design|implement|test|fix|build|draft|edit|add|remove|change|modify|analyze|evaluate|assess|report|present|discuss|meet|call|email|post|share|upload|download|generate|produce|submit|approve|verify|check|write|create|update)\b/i;
+  
+  // If it has action verbs, it's likely a task
+  if (actionVerbs.test(text)) {
+    return false;
+  }
+  
+  // Only treat as heading if it's short AND has no action verbs AND no dates
+  const isHeading = text.length < 30 && !hasDate;
   
   return isHeading;
 };
