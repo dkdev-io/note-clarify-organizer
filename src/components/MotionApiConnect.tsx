@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { validateMotionApiKey, fetchWorkspaces, setMotionApiKey, fetchUsers } from '@/utils/motion';
@@ -19,6 +19,9 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
   const [isKeyValid, setIsKeyValid] = useState<boolean | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isProxyMode, setIsProxyMode] = useState(false);
+  const [isRateLimited, setIsRateLimited] = useState(false);
+  const [rateLimitRetryTime, setRateLimitRetryTime] = useState<Date | null>(null);
+  const validateStoredKeyRef = useRef<((key: string) => Promise<void>) | null>(null);
   const [rememberKey, setRememberKey] = useState(() => {
     // Check if user previously chose to remember their key
     try {
@@ -76,22 +79,43 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
         setIsKeyValid(true);
         setFetchedWorkspaces(workspaces);
         setShowWorkspaceSelection(true);
+        setIsRateLimited(false);
+        setRateLimitRetryTime(null);
         
         toast({
           title: "✓ Connected Successfully",
           description: "Using your saved API key. Please select your workspace and project.",
         });
-      } catch (error) {
+      } catch (error: any) {
         console.error('Stored API key validation failed:', error);
-        setIsKeyValid(false);
-        setIsAlreadyConnected(false);
-        clearStoredApiKey();
         
-        setErrorMessage("Your saved API key is no longer valid. Please enter a new one.");
+        // Check if this is a rate limit error
+        if (error?.message?.includes('429') || error?.message?.includes('rate limit')) {
+          setIsRateLimited(true);
+          const retryTime = new Date(Date.now() + 60000); // Wait 1 minute
+          setRateLimitRetryTime(retryTime);
+          
+          setErrorMessage("Motion API rate limit reached. Please wait a minute and try again.");
+          toast({
+            title: "Rate Limited",
+            description: "Too many requests to Motion API. Please wait a minute before trying again.",
+            variant: "destructive"
+          });
+          // DON'T clear the API key on rate limit errors
+        } else {
+          // Only clear API key for actual authentication failures
+          setIsKeyValid(false);
+          setIsAlreadyConnected(false);
+          clearStoredApiKey();
+          setErrorMessage("Your saved API key is no longer valid. Please enter a new one.");
+        }
       } finally {
         setIsValidating(false);
       }
     };
+    
+    // Store the function in the ref so it can be called from outside the useEffect
+    validateStoredKeyRef.current = validateStoredKey;
 
     checkForStoredApiKey();
   }, [toast, onConnect]);
@@ -164,7 +188,41 @@ const MotionApiConnect: React.FC<MotionApiConnectProps> = ({ onConnect, onSkip }
         </CardHeader>
         <CardContent>
           <div className="space-y-6">
-            {isAlreadyConnected && isKeyValid && !showWorkspaceSelection ? (
+            {isRateLimited ? (
+              <div className="space-y-4">
+                <div className="text-center py-4">
+                  <div className="text-yellow-600 text-4xl mb-2">⚠️</div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-1">Rate Limited</h3>
+                  <p className="text-muted-foreground text-sm">Motion API has rate limited our requests.</p>
+                  {rateLimitRetryTime && (
+                    <p className="text-muted-foreground text-sm mt-2">
+                      Please wait until: {rateLimitRetryTime.toLocaleTimeString()}
+                    </p>
+                  )}
+                </div>
+                <div className="flex gap-4 justify-center">
+                  <button
+                    onClick={() => {
+                      setIsRateLimited(false);
+                      setRateLimitRetryTime(null);
+                      if (apiKey && validateStoredKeyRef.current) {
+                        validateStoredKeyRef.current(apiKey);
+                      }
+                    }}
+                    disabled={rateLimitRetryTime && new Date() < rateLimitRetryTime}
+                    className="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Retry Connection
+                  </button>
+                  <button
+                    onClick={handleClearConnection}
+                    className="px-4 py-2 bg-secondary hover:bg-secondary/90 text-secondary-foreground rounded-md"
+                  >
+                    Use Different Key
+                  </button>
+                </div>
+              </div>
+            ) : isAlreadyConnected && isKeyValid && !showWorkspaceSelection ? (
               <div className="text-center py-8">
                 <div className="text-green-600 text-6xl mb-4">✓</div>
                 <h3 className="text-xl font-medium text-gray-900 mb-2">Connected Successfully</h3>
