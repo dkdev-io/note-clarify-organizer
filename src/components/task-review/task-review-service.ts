@@ -102,7 +102,8 @@ export const addTasksToMotionService = async (
       workspaceId, 
       apiProps.apiKey || undefined,
       projectId,
-      timeEstimate
+      timeEstimate,
+      apiProps.users // pass users for assignee lookup
     );
     
     return result;

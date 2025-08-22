@@ -129,7 +129,8 @@ export const handleAddToMotion = async (
         apiProps.selectedWorkspaceId,
         apiProps.apiKey,
         apiProps.selectedProjectId,
-        undefined // timeEstimate
+        undefined, // timeEstimate
+        apiProps.users // pass users for assignee lookup
       );
       
       if (result.success) {

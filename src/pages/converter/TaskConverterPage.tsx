@@ -149,7 +149,8 @@ const TaskConverterPage = () => {
           workspaceId,
           motionApiKey,
           selectedProjectId,
-          undefined // timeEstimate
+          undefined, // timeEstimate
+          users // pass users for assignee lookup
         );
         
         if (result.success) {

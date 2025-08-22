@@ -94,7 +94,9 @@ const TaskPreview: React.FC<TaskPreviewProps> = ({
         tasks, 
         apiProps.selectedWorkspaceId,
         apiProps.apiKey,
-        projectId
+        projectId,
+        undefined, // timeEstimate
+        undefined // users not available in this component
       );
       
       if (result.success) {

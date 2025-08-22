@@ -13,7 +13,8 @@ export const addTasksToMotion = async (
   workspaceId: string | null, 
   apiKey?: string,
   projectId?: string,
-  timeEstimate?: string
+  timeEstimate?: string,
+  users?: any[]
 ): Promise<{ success: boolean; message: string; errors?: any[] }> => {
   // If we're in proxy mode, simulate successful task creation
   if (apiKey === 'proxy_mode' || isUsingProxyMode()) {
@@ -106,9 +107,32 @@ export const addTasksToMotion = async (
         
         // Add assigneeId - CORRECT FIELD NAME: assigneeId (not assignee_id)
         if (task.assignee) {
-          // If a specific assignee is mentioned, use them
-          taskData.assigneeId = task.assignee;
-          console.log(`Task "${task.title}" assigned to: ${task.assignee}`);
+          // If a specific assignee is mentioned, look them up by name
+          let assigneeId = null;
+          
+          // Try to find the user by name in the users list
+          if (users && users.length > 0) {
+            const foundUser = users.find(u => 
+              u.name && u.name.toLowerCase().includes(task.assignee.toLowerCase())
+            );
+            if (foundUser) {
+              assigneeId = foundUser.id;
+              console.log(`Task "${task.title}" assigned to user '${foundUser.name}' (ID: ${foundUser.id})`);
+            } else {
+              console.log(`Could not find user '${task.assignee}' in Motion users list`);
+            }
+          }
+          
+          // If we found a user ID, use it; otherwise fall back to current user
+          if (assigneeId) {
+            taskData.assigneeId = assigneeId;
+          } else if (currentUser && currentUser.id) {
+            // Fallback to current user if we couldn't find the specified assignee
+            taskData.assigneeId = currentUser.id;
+            console.log(`Task "${task.title}" fallback assigned to current user: ${currentUser.name || currentUser.id}`);
+          } else {
+            console.log(`Task "${task.title}" will be unassigned (no user '${task.assignee}' found)`);
+          }
         } else if (currentUser && currentUser.id) {
           // If no assignee specified, assign to current Motion user
           taskData.assigneeId = currentUser.id;
